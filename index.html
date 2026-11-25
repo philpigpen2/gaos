@@ -371,6 +371,33 @@
   @keyframes idle { 0%,100% { margin-bottom:0; } 50% { margin-bottom:4px; } }
   .walk-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; }
   .walk-grid .act-btn { height:74px; font-size:15px; }
+  /* ===== Full-screen "through your eyes" ===== */
+  .pov-exit { display:none; }
+  body.immersive { overflow:hidden; }
+  body.immersive #app { width:100%; padding:0; }
+  body.immersive #app > h1, body.immersive .bgl, body.immersive .srv-btn, body.immersive .eyes-btn, body.immersive .scr-btn, body.immersive .scroll-btns, body.immersive .side-go { display:none !important; }
+  body.immersive .phone-btn:not(.srv-btn):not(.eyes-btn) { top:12px; bottom:auto; left:auto; right:76px; width:46px; height:46px; }
+  body.immersive .scene.pov { position:fixed; inset:0; margin:0; padding:0 !important; border-radius:0; background:#000 !important; z-index:5; }
+  body.immersive .pov-stage { position:absolute; inset:-3%; height:auto; margin:0; border-radius:0; background-size:cover !important; background-position:center !important; animation:lookAround 14s ease-in-out infinite; }
+  @keyframes lookAround { 0%,100% { transform:scale(1.02) translate(0,0); } 30% { transform:scale(1.05) translate(-1.6%,.5%); } 65% { transform:scale(1.04) translate(1.4%,-.4%); } }
+  body.immersive .pov-stage::before { background:radial-gradient(ellipse at 50% 45%, transparent 50%, rgba(5,2,12,.6) 100%), linear-gradient(rgba(255,240,210,.06), rgba(0,0,0,.12)); }
+  body.immersive .pov-label { top:calc(3% + 14px); left:calc(3% + 12px); background:rgba(20,12,30,.45); color:#fff; backdrop-filter:blur(6px); font-size:16px; }
+  body.immersive .pov-eye { display:none; }
+  body.immersive .pov-exit { display:block; position:fixed; top:12px; right:12px; z-index:40; width:54px; height:46px; padding:0; border-radius:14px; background:rgba(20,12,30,.55); color:#fff; font-size:15px; box-shadow:none; backdrop-filter:blur(6px); }
+  body.immersive .box { position:fixed; left:0; right:0; bottom:0; z-index:20; margin:0; border-radius:24px 24px 0 0; max-height:44vh; overflow-y:auto; padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(255,250,242,.8); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); box-shadow:0 -6px 24px rgba(0,0,0,.25); }
+  body.immersive .scene.pov > .bubble, body.immersive .scene.pov > p.sub { position:fixed; left:12px; right:12px; top:68px; z-index:12; margin:0; background:rgba(255,255,255,.9); border-radius:18px; padding:10px 14px; }
+  body.immersive .walk-grid { display:flex; overflow-x:auto; gap:8px; padding-bottom:4px; scroll-snap-type:x mandatory; }
+  body.immersive .walk-grid .act-btn { flex:0 0 118px; height:70px; scroll-snap-align:start; }
+  body.immersive.world .box h2 { font-size:18px; margin:0 0 8px; }
+  body.immersive .world-animal { bottom:calc(var(--y) * .5 + 160px) !important; height:calc(var(--h) * .58) !important; }
+  body.immersive .world-animal::after { content:""; position:absolute; bottom:-4%; left:15%; right:15%; height:9%; border-radius:50%; background:radial-gradient(rgba(0,0,0,.45), transparent 70%); z-index:-1; }
+  body.immersive .world-animal.far img { filter:blur(.6px) brightness(.93) saturate(.9) drop-shadow(0 4px 6px rgba(0,0,0,.35)); }
+  body.immersive .world-animal span { background:rgba(20,12,30,.5); color:#fff; font-size:13px; backdrop-filter:blur(4px); }
+  body.immersive.meet .pov-face { bottom:41vh; height:47%; }
+  body.immersive.meet .pov-face.side { height:40%; }
+  body.immersive.meet .pov-hearts { bottom:58%; }
+  body.immersive .pov-other { bottom:calc(var(--oy, 24%) + 120px); }
   .act-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
   .act-btn { position:relative; height:96px; border-radius:18px; padding:0; overflow:hidden; background-size:cover; background-position:center; box-shadow:0 4px 0 #c9a2b8; color:#fff; font-size:17px; display:flex; align-items:flex-end; justify-content:center; }
   .act-btn span { width:100%; padding:6px 6px 8px; background:linear-gradient(transparent, rgba(0,0,0,.65)); text-shadow:0 1px 3px #000; }
@@ -685,6 +712,7 @@ window.addEventListener("scroll", scrollButtons, { passive:true });
 window.addEventListener("resize", scrollButtons);
 setInterval(scrollButtons, 700);
 function show(html) {
+  document.body.classList.remove("immersive", "world", "meet");
   app.innerHTML = html;
   app.classList.remove("enter"); void app.offsetWidth; app.classList.add("enter");
   const m = html.match(/url\(art\/(\w+)\.png\)/); if (m) setBg(m[1]);
@@ -1119,6 +1147,7 @@ function povStage(f, bgCss, label, mood = "walk", key = "", extra = "", indoors 
         ${fresh ? `<div class="lids"></div>` : ""}
         <div class="pov-label">${label}</div>
         <button class="pov-eye" onclick="togglePov()">Side view</button>
+        <button class="pov-exit" onclick="exitEyes()">Exit</button>
         ${indoors ? "" : othersAround(f)}
         ${faceImg(f, mood)}
         ${loving ? `<div class="pov-hearts"><span></span><span></span><span></span></div>` : ""}
@@ -2471,25 +2500,27 @@ function whoIsAt(k) {
   if (here.length < 2) here = [...here, ...all.filter(f => !here.includes(f)).sort((a, b) => hashStr(a.name + k) - hashStr(b.name + k))].slice(0, 2);
   return here.slice(0, 4);
 }
+function exitEyes() { S.guest = null; S.meetPlace = null; mapScreen(); }
 function visitRedraw() { return S.meetPlace ? renderMeet() : houseScreen(); }
 function eyesScreen(k) {
   try { closePhone(); } catch (e) {}
   k = k || S.worldAt || "village"; S.worldAt = k; S.guest = null; S.meetPlace = null;
-  const here = whoIsAt(k), spots = [[20, 3, 50], [78, 4, 46], [40, 30, 24], [62, 33, 20]];
+  const here = whoIsAt(k), spots = [[18, 0, 50], [80, 2, 46], [40, 44, 22], [60, 50, 18]];
   const people = here.map((f, n) => { const [x, y, h] = spots[n], a = ART[f.emo];
-    return `<button class="world-animal" style="left:${x}%;bottom:${y}%;height:${h}%;z-index:${10 - n};animation-delay:${-n * 0.7}s" onclick="meetScreen('${f.name}')"><img class="${x > 50 ? "flip" : ""}" src="art/${a}.png" alt=""><span>${f.name}</span></button>`; }).join("");
+    return `<button class="world-animal ${n >= 2 ? "far" : ""}" style="left:${x}%;bottom:${y}%;--y:${y}%;--h:${h}%;height:${h}%;z-index:${10 - n};animation-delay:${-n * 0.7}s" onclick="meetScreen('${f.name}')"><img class="${x > 50 ? "flip" : ""}" src="art/${a}.png" alt=""><span>${f.name}</span></button>`; }).join("");
   const bye = S.worldBye || ""; S.worldBye = "";
   const fresh = S.povKey !== "world" + k; S.povKey = "world" + k;
   show(`<h1 style="font-size:34px">Through your eyes</h1>
     <div class="scene pov" style="padding:var(--pad)"><div class="pov-stage" style="background:${worldBg(k)}">
-      ${fresh ? `<div class="lids"></div>` : ""}<div class="pov-label">${WORLD_NAMES[k] || k}</div>${people}
+      ${fresh ? `<div class="lids"></div>` : ""}<div class="pov-label">${WORLD_NAMES[k] || k}</div><button class="pov-exit" onclick="exitEyes()">Exit</button>${people}
     </div>
     ${bye ? `<div class="bubble">${bye}</div>` : `<p class="sub" style="margin:6px 0;color:var(--ink);text-shadow:none">Tap someone to walk up and say hi!</p>`}</div>
     <div class="box center"><h2>Walk somewhere else</h2><div class="walk-grid">
       ${Object.keys(WORLD_NAMES).filter(x => x !== k).map(x => `<button class="act-btn" style="background:${worldBg(x)}" onclick="eyesScreen('${x}')"><span>${WORLD_NAMES[x]}</span></button>`).join("")}
     </div>
-    <div style="margin-top:12px"><button class="green" onclick="houseScreen()">Go home</button><button class="soft" onclick="mapScreen()">Village map</button></div></div>`);
+    <div style="margin-top:10px"><button class="green" onclick="houseScreen()">Go home</button><button class="soft" onclick="mapScreen()">Village map</button></div></div>`);
   app.classList.remove("enter");
+  document.body.classList.add("immersive", "world"); scrollTo(0, 0);
 }
 const MEET_HELLO = {
   0: ["Oh, hi! I didn't see you there. What's up?", "Hey! Fancy meeting you here!", "Hi! Nice to see you. What are you up to?"],
@@ -2529,7 +2560,8 @@ function renderMeet() {
       <p class="sub" style="margin:4px 0 0">${heartBar(S.hearts[f.name])}</p>
     </div>`);
   app.classList.remove("enter");
-  const box = document.getElementById("houseSay"); if (box && said) box.focus();
+  document.body.classList.add("immersive", "meet"); scrollTo(0, 0);
+  const box = document.getElementById("houseSay"); if (box && said) box.focus({ preventScroll:true });
 }
 // ===== Visits: invite an animal over to your house, give kisses, have sleepovers (all in the game) =====
 function visitBox(guest, partner) {
