@@ -1502,6 +1502,14 @@ function addHearts(f, n) {
 
 function hangout(i, place) {
   const f = friends()[i];
+  if (hasWebGL() && TOWN_SPOT[place]) {
+    if (place === f.place) { addHearts(f, 1); setTimeout(() => { chime(); floatHearts(1); }, 200); }
+    S.firstPlace = S.firstPlace || {}; if (!S.firstPlace[f.name]) S.firstPlace[f.name] = place;
+    S.chatBonus = 0; S.lastHang = f.name; maybeCaught(f.name, 0.4, PLACES[place] ? PLACES[place].name : "");
+    S.meetAt = S.meetAt || {}; S.meetAt[f.name] = { place, until: lifeAbs() + 600 };
+    S.hangWith = { name: f.name, i, place, loves: place === f.place, asked: false };
+    return eyesScreen(place);
+  }
   let bonus = "";
   const hello = S.hearts[f.name] >= 3 ? `<div class="bubble"><b>${f.name}:</b> "${LOVEY_HELLO[Math.floor(Math.random() * LOVEY_HELLO.length)].replace("{P}", pet(f))}"</div>` : "";
   if (place === f.place) { addHearts(f, 1); bonus = `<p class="center"><b>${f.name} LOVES it here! +1 ❤️</b></p>`; setTimeout(() => { chime(); floatHearts(1); }, 200); }
@@ -2148,7 +2156,7 @@ const SAFE = {
   apps: /do you have (a |an )?(snap|snapchat|insta|instagram|tiktok|discord|whatsapp|phone number|email|roblox account|account)/,
   info: /(address|where do you live|zip ?code|phone number|cell number|your number|my number|my cell|\b\d{3}[\s.-]?\d{3}[\s.-]?\d{4}\b|what (middle |elementary |high )?school|which school|my school is|i go to [a-z]+( [a-z]+)? (elementary|middle|high|school|academy)|i live (at|on|in)|full name|last name|real name|my name is [a-z]+ (?!(and|but|so|lol|haha|too|btw|i|i'm|you|not|what)\b)[a-z]{2,}|(what'?s|what is|give me|tell me|send me) your (snap|snapchat|insta|instagram|tiktok|discord|roblox|minecraft|fortnite|xbox|psn|gamer ?tag|username|user ?name|email|account|number|cell)|user ?name|gamer ?tag|(add|follow|dm|friend|text|call|message|snap|find) me (on|at)|add me\b|(snap|insta|tiktok|discord) is\b|my (snap|snapchat|insta|instagram|tiktok|discord|email|roblox|account)\b|email|meet (irl|in real life|in person)|meet up (irl|in real life|in person)|can we meet\??$|meet me (at|in|by) (the )?(mall|park|school|store|library|my house|target|walmart|mcdonalds|starbucks|bus stop|movies|church|playground|\d)|come to my real (house|home)|(real|irl) (house|home)|in real life|\birl\b|in person|\b[a-z]{3,}[._]?[a-z]*\d{3,4}\b)/,
   real: /(are you (real|an? ai|ai|a bot|a robot|a human|human|a person|chatgpt|chat gpt|siri|alexa|gemini|claude|a computer|fake)|is this (real|an? ai|a bot)|you'?re an? (ai|bot|robot|computer|program)|you'?re just a (robot|bot|computer|program|game)|real person|real human|human typing|person typing|someone typing|who (made|programmed|coded|created|built) you|how do you know what to say)/,
-  swear: /\b(damn|dammit|crap|crappy|shit|sh\*t|fuck|f\*ck|fk|wtf|stfu|bitch|b\*tch|ass|asshole|hell|piss|dumbass|bastard)\b/,
+  swear: /\b(damn|dammit|crap|crappy|shit\w*|sh\*t|fuck\w*|f\*ck\w*|fk|wtf|stfu|bitch\w*|b\*tch|ass|asshole|hell|piss\w*|dumbass|bastard|cunt|dick|whore|slut|retard\w*|fag\w*)\b/,
   gross: /\b(fart|farted|farts|poop|pooped|burp|burped|booger|boogers|snot|toot|tooted|barf|vomit|puke|picked my nose|picking my nose|pick my nose|threw up|throw up|throwing up|stinky|smelled like|smells like)\b/,
   kiss: /\b(kiss|kissy|smooch|mwah|kith)\b/,
   marry: /\b(marry me|will you marry|be my wife|be my husband|get married)\b/
@@ -3007,6 +3015,7 @@ function actBack() {
   return mapScreen();
 }
 function activity(key, step, pick = -1) {
+  if (hasWebGL() && step === 0 && pick === -1) return act3D(key);
   const f = friends()[S.act.i], A = ACTS.find(a => a[0] === key), st = stageOf(f);
   const N = x => x.replaceAll("{N}", f.name);
   let mood = "walk", story = "", say = "", qs = "";
@@ -4396,7 +4405,7 @@ function w3Start(start) {
     const lab = w3Label(f.name); lab.scale.set(2.4, .6, 1); lab.position.y = hgt + .45; lab.visible = false;
     const grp = new THREE.Group(); grp.add(ch.g, blob, lab); sc.add(grp);
     const w = whereNow(f), sp = w ? spotFor(i, w) : ANIMAL_HOME(i);
-    return { f, i, grp, ch, lab, hgt, x: sp[0] / 20 + (Math.random() - .5) * 3, z: sp[1] / 20 + (Math.random() - .5) * 3, tx: null, tz: null, wait: Math.random() * 4, spd: 0, moving: false, talkUntil: 0 };
+    return { f, i, grp, ch, lab, hgt, x: sp[0] / 20 + (Math.random() - .5) * 3, z: sp[1] / 20 + (Math.random() - .5) * 3, tx: null, tz: null, wait: Math.random() * .8, spd: 0, moving: false, talkUntil: 0 };
   });
   const mk = ART[S.animal[0]] || "fox", mh = w3Size(mk), mch = w3Animal(mk, [0x9b6bff, 0x2e3a55, 0xffffff, "rainbow"], xmas); mch.g.scale.setScalar(mh / 2);
   const meBlob = new THREE.Mesh(new THREE.CircleGeometry(mh * .28, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: .25, depthWrite: false })); meBlob.position.y = .02;
@@ -4405,6 +4414,7 @@ function w3Start(start) {
   const yaw0 = S.w3yaw || 0; S.w3yaw = null;
   W3 = { ball: BALL, me, mch, heading: yaw0 + Math.PI, jy: 0, vy: 0, view: S.w3view || "third", R, sc, cam, sun, hemi, stars, snow, ground, people, blds, x: start[0], z: start[1], yaw: yaw0, pitch: -.12, keys: {}, joy: { x: 0, y: 0 }, t: 0, last: performance.now(), bob: 0, talk: null, near: null };
   w3Controls(); w3Resize(); addEventListener("resize", w3Resize);
+  if (S.hangWith) { const hp = people.find(p => p.f.name === S.hangWith.name); if (hp) { hp.follow = true; [hp.x, hp.z] = w3CollideRaw(blds, start[0] + 1.6, start[1] - 1.2); hp.tx = null; setTimeout(() => w3HangOpen(hp), 900); } }
   const loop = () => { if (!W3) return; w3Tick(); W3.raf = requestAnimationFrame(loop); }; loop();
   W3.dog = setInterval(() => { if (W3 && performance.now() - W3.last > 200) w3Tick(); }, 100);
   setTimeout(() => { const h = document.getElementById("w3hint"); if (h) h.style.opacity = 0; }, 6000);
@@ -4463,23 +4473,23 @@ function w3Animal(kind, look, xmas) {
   const torsoG = w3Geo("torso", () => { const pts = [[.0, -.02], [.17, 0], [.19, .1], [.215, .28], [.235, .42], [.2, .52], [.09, .58], [0, .6]].map(([r, y]) => new THREE.Vector2(r, y)); return new THREE.LatheGeometry(pts, 24); });
   // legs: thigh + shin that bend at the knee, chunky sneakers
   const legs = [-1, 1].map(sd => { const L = new THREE.Group(); L.position.set(sd * .115, .9, 0); body.add(L);
-    if (bird) { add(L, CYL, 0xf2a93b, 0, -.42, 0, .035, .84, .035); const kn = new THREE.Group(); kn.position.y = -.84; L.add(kn); add(kn, SPH, 0xf2a93b, 0, -.02, .06, .1, .04, .14); L.userData.knee = kn; return L; }
-    add(L, cap(.098, .26), pants, 0, -.2, 0, 1, 1, 1, true, pantsM); const kn = new THREE.Group(); kn.position.y = -.42; L.add(kn); L.userData.knee = kn;
-    add(kn, cap(.085, .24), pants, 0, -.19, 0, 1, 1, 1, true, pantsM); add(kn, SPH, shoes, 0, -.42, .06, .11, .075, .18, true, w3Mat(shoes, { roughness: .45 })); add(kn, BOX, 0xf4f4f4, 0, -.475, .06, .21, .035, .34, false, w3Mat(0xf4f4f4, { roughness: .6 }));
+    if (bird) { add(L, cap(.12, .2), fur, 0, -.16, 0, 1, 1, 1, true, furM); add(L, CYL, 0xf2a93b, 0, -.6, 0, .05, .5, .05); const kn = new THREE.Group(); kn.position.y = -.84; L.add(kn); add(kn, SPH, 0xf2a93b, 0, -.02, .06, .1, .04, .14); L.userData.knee = kn; return L; }
+    add(L, cap(.112, .26), pants, 0, -.2, 0, 1, 1, 1, true, pantsM); const kn = new THREE.Group(); kn.position.y = -.42; L.add(kn); L.userData.knee = kn;
+    add(kn, cap(.098, .24), pants, 0, -.19, 0, 1, 1, 1, true, pantsM); add(kn, SPH, shoes, 0, -.42, .06, .11, .075, .18, true, w3Mat(shoes, { roughness: .45 })); add(kn, BOX, 0xf4f4f4, 0, -.475, .06, .21, .035, .34, false, w3Mat(0xf4f4f4, { roughness: .6 }));
     return L; });
-  add(body, SPH, pants, 0, .93, 0, .23, .13, .17, true, pantsM);
+  add(body, SPH, pants, 0, .93, 0, .25, .15, .19, true, pantsM);
   // upper body twists from the hips
   const spine = new THREE.Group(); spine.position.y = .9; body.add(spine);
-  const torso = add(spine, torsoG, shirt, 0, .02, 0, 1, 1, .78, true, clothM);
+  const torso = add(spine, torsoG, shirt, 0, .02, 0, 1.1, 1, .85, true, clothM);
   if (!bird) { add(spine, tor(.12, .045), shirt, 0, .55, -.01, 1, 1, .9, false, clothM).rotation.x = Math.PI / 2; add(spine, BOX, darker(shirt, .25), 0, .3, .182, .015, .42, .01); }
   if (bird) add(spine, SPH, belly, 0, .25, .11, .16, .22, .1);
   add(spine, CYL, fur, 0, .62, 0, .075, .14, .075, false, furM);
   // arms: shoulder + elbow, hands
-  const arms = [-1, 1].map(sd => { const A = new THREE.Group(); A.position.set(sd * .255, .48, 0); spine.add(A);
+  const arms = [-1, 1].map(sd => { const A = new THREE.Group(); A.position.set(sd * .28, .48, 0); spine.add(A);
     if (bird) { add(A, SPH, fur, sd * .05, -.24, -.02, .07, .3, .17, true, furM); A.userData.elbow = new THREE.Group(); A.add(A.userData.elbow); return A; }
-    add(A, SPH, shirt, 0, 0, 0, .085, .085, .085, false, clothM); add(A, cap(.07, .18), shirt, 0, -.13, 0, 1, 1, 1, true, clothM);
+    add(A, SPH, shirt, 0, 0, 0, .1, .1, .1, false, clothM); add(A, cap(.08, .18), shirt, 0, -.13, 0, 1, 1, 1, true, clothM);
     const el = new THREE.Group(); el.position.y = -.27; A.add(el); A.userData.elbow = el;
-    add(el, cap(.062, .15), shirt, 0, -.1, 0, 1, 1, 1, true, clothM); add(el, CYL, darker(shirt, .2), 0, -.2, 0, .066, .04, .066); add(el, SPH, fur, 0, -.27, .01, .068, .075, .06, false, furM);
+    add(el, cap(.072, .15), shirt, 0, -.1, 0, 1, 1, 1, true, clothM); add(el, CYL, darker(shirt, .2), 0, -.2, 0, .078, .045, .078); add(el, SPH, fur, 0, -.28, .01, .085, .09, .075, false, furM); [-1, 0, 1].forEach(k => add(el, SPH, fur, k * .035, -.355, .03, .028, .03, .028, false, furM));
     return A; });
   // head
   const head = new THREE.Group(); head.position.set(0, .9, .01); head.scale.setScalar(.95); spine.add(head);
@@ -4558,7 +4568,7 @@ function w3Anim(c, dt, speed, air, t) {
     A.forEach((X, i) => { X.rotation.x = -.5; X.rotation.z = (i ? 1 : -1) * 1.6; X.userData.elbow.rotation.x = -.6; }); c.spine.rotation.x = .1; }
   else {
     L.forEach((X, i) => { const si = i ? -s : s; X.rotation.x = -si * (.75 + .25 * runK) * a; X.userData.knee.rotation.x = Math.max(0, Math.sin(c.ph + (i ? Math.PI : 0) - 1.2)) * (1 + .6 * runK) * a; });
-    A.forEach((X, i) => { const si = i ? -s : s; X.rotation.x = si * (.6 + .3 * runK) * a; X.rotation.z = (i ? 1 : -1) * (.1 + .04 * Math.sin(t * 1.4)); X.userData.elbow.rotation.x = -(.25 + .9 * runK * a + .25 * a); });
+    A.forEach((X, i) => { const si = i ? -s : s; X.rotation.x = si * (.6 + .3 * runK) * a; X.rotation.z = (i ? 1 : -1) * (.15 + .05 * (1 - a) + .04 * Math.sin(t * 1.4)); X.userData.elbow.rotation.x = -(.38 + .9 * runK * a + .2 * a); });
     c.spine.rotation.x = (.06 + .22 * runK) * a; }
   c.body.position.y = Math.abs(Math.cos(c.ph)) * (.05 + .05 * runK) * a + Math.sin(t * 2) * .006;
   c.spine.rotation.y = s * .14 * a + (1 - a) * Math.sin(t * .7) * .05; c.body.rotation.z = (1 - a) * Math.sin(t * .9) * .025; c.body.rotation.x = 0;
@@ -4812,11 +4822,14 @@ function w3Tick() {
   // animals
   let near = null, nd = 1e9;
   W.people.forEach(p => {
-    const w = whereNow(p.f); p.grp.visible = !!w; if (!w) return;
+    const w = p.follow ? (whereNow(p.f) || "village") : whereNow(p.f); p.grp.visible = !!w; if (!w) return;
     if (W.talk === p) { p.moving = false; }
+    else if (p.follow) { const dx = W.x - p.x, dz = W.z - p.z, dd = Math.hypot(dx, dz);
+      if (dd > 2.3) { const sp = Math.min(dd - 2, (dd > 6 ? 6 : 3.4) * dt); [p.x, p.z] = w3Collide(p.x + dx / dd * sp, p.z + dz / dd * sp); p.moving = true; p.dx = dx; p.dz = dz; p.spd = sp / dt; } else p.moving = false;
+      if (dd > 25) { p.x = W.x + 1.5; p.z = W.z + 1.5; } }
     else if (p.tx !== null) { const dx = p.tx - p.x, dz = p.tz - p.z, d = Math.hypot(dx, dz), sp = (d > 12 ? 3.2 : 1.6) * dt;
-      if (d < .2) { p.tx = null; p.wait = 2 + Math.random() * 6; p.moving = false; } else { [p.x, p.z] = w3Collide(p.x + dx / d * sp, p.z + dz / d * sp); p.moving = true; p.dx = dx; p.dz = dz; p.spd = sp / dt; } }
-    else { p.wait -= dt; if (p.wait <= 0) { const sp = spotFor(p.i, w); p.tx = sp[0] / 20 + (Math.random() - .5) * 5; p.tz = sp[1] / 20 + (Math.random() - .5) * 5; [p.tx, p.tz] = w3Collide(p.tx, p.tz); } }
+      if (d < .2) { p.tx = null; p.wait = .4 + Math.random() * 1.8; p.moving = false; } else { [p.x, p.z] = w3Collide(p.x + dx / d * sp, p.z + dz / d * sp); p.moving = true; p.dx = dx; p.dz = dz; p.spd = sp / dt; } }
+    else { p.wait -= dt; if (p.wait <= 0) { const sp = spotFor(p.i, w); p.tx = sp[0] / 20 + (Math.random() - .5) * 13; p.tz = sp[1] / 20 + (Math.random() - .5) * 13; [p.tx, p.tz] = w3Collide(p.tx, p.tz); } }
     const d = Math.hypot(W.x - p.x, W.z - p.z); p.grp.position.set(p.x, w3HeightAt(p.x, p.z), p.z); p.lab.visible = d < 16 && d > 2.5;
     if (!p.moving) p.spd = 0;
     const want = W.talk === p || (!p.moving && d < 7) ? Math.atan2(W.x - p.x, W.z - p.z) : p.moving ? Math.atan2(p.dx, p.dz) : p.ch.heading;
@@ -4860,10 +4873,11 @@ function w3TalkOpen(i) {
   const box = document.getElementById("w3talk");
   box.innerHTML = `<div class="w3t-head">${face(f)}<b>${f.name}</b> <span class="rel-chip">${relLabel(f)}</span> <span class="job-chip">${jobTitle(f)}</span><span class="voice-tag">${voiceOf(f).tag}</span><small>${heartBar(S.hearts[f.name])}</small><span class="voice-tag">${relNext(f)}</span><button class="ph-x" onclick="w3TalkClose()">Bye</button></div>
     <div class="w3t-row"><input id="w3in" maxlength="140" placeholder="Say something to ${f.name}..." onkeydown="if(event.key==='Enter')w3Send()"><button class="green" onclick="w3Send()">Say</button></div>
-    <div class="tt-acts">${canPropose(f) ? `<button class="rainbow" onclick="w3TalkClose(); confessScreen('${f.name}')">Propose</button>` : ""}<button class="soft" onclick="w3Hug()">Hug</button><button class="rainbow" onclick="w3Kiss()">${stageOf(f) >= 1 ? "Kiss" : "Kiss on the cheek"}</button><button class="soft" onclick="w3TalkClose(); activityMenu(${i}, 'map')">Do something together</button>
+    <div class="tt-acts">${canPropose(f) ? `<button class="rainbow" onclick="w3TalkClose(); confessScreen('${f.name}')">Propose</button>` : ""}<button class="soft" onclick="w3Hug()">Hug</button><button class="rainbow" onclick="w3Kiss()">${stageOf(f) >= 1 ? "Kiss" : "Kiss on the cheek"}</button><button class="soft" onclick="act3DMenu(${i})">Do something together</button><button class="soft" onclick="this.parentNode.classList.toggle('open')">More...</button><span class="w3-more">
       <button class="soft" onclick="w3TalkClose(); planScreen('${f.name}')">Make plans</button><button class="soft" onclick="w3TalkClose(); planScreen('${f.name}', 'sleepover')">Sleepover</button><button class="soft" onclick="w3TalkClose(); PM = null; photoMaker()">Make a picture for them</button><button class="soft" onclick="picTogether('${f.name}', W3 && W3.place)">Take a picture together</button>
-      ${XMAS() ? `<button class="soft" onclick="giveGift('${f.name}')">Give a present</button>` : ""}<button class="soft" onclick="w3TalkClose(); houseScreen(); setTimeout(() => { try { inviteOver('${f.name}'); } catch (e) {} }, 50)">Come to my house</button></div>`;
+      ${XMAS() ? `<button class="soft" onclick="giveGift('${f.name}')">Give a present</button>` : ""}<button class="soft" onclick="w3TalkClose(); houseScreen(); setTimeout(() => { try { inviteOver('${f.name}'); } catch (e) {} }, 50)">Come to my house</button></span></div>`;
   box.classList.add("on"); noEmoji(box);
+  if (S.hangWith && f.name === S.hangWith.name) w3HangBar();
 }
 function w3Send() {
   const inp = document.getElementById("w3in"), said = inp.value.trim(); if (!said || !W3 || !W3.talk) return; inp.value = "";
@@ -4879,7 +4893,7 @@ function w3Send() {
 function w3Hug() { const p = W3.talk, f = p.f, st = stageOf(f); S.townHugDay = S.townHugDay || {};
   if (S.townHugDay[f.name] !== S.tday) { S.townHugDay[f.name] = S.tday; addHearts(f, 1); chime(); floatHearts(1); }
   w3Say(p, st === 0 ? pickOne(["Oh! A hug! Okay, hi! Haha.", "*awkward pat pat* Hehe."]) : st === 1 ? pickOne(["*hugs back, a little shy* Hi...", "Aww. *blushes*"]) : pickOne(["*squeezes you tight* Best hug EVER.", "*doesn't let go* Five more seconds."]), 5); }
-function w3TalkClose() { if (!W3) return; const p = W3.talk; W3.talk = null; W3.actKey = null; const box = document.getElementById("w3talk"); if (box) box.classList.remove("on"); if (p) { w3Say(p, pickOne(["Bye! See you around!", "Byeee! 👋", "Okay, see you later!"]), 3); p.wait = 3; } }
+function w3TalkClose() { if (!W3) return; const p = W3.talk; if (p && S.hangWith && p.f.name === S.hangWith.name) { p.follow = false; S.hangWith = null; } W3.talk = null; W3.actKey = null; const box = document.getElementById("w3talk"); if (box) box.classList.remove("on"); if (p) { w3Say(p, pickOne(["Bye! See you around!", "Byeee! 👋", "Okay, see you later!"]), 3); p.wait = 3; } }
 function w3Enter(what) { if (!W3) return; S.w3pos = [W3.x, W3.z + 1.5]; w3Stop(); townEnter(what); }
 function w3Exit() { w3Stop(); S.outside = ""; S.wasWalking = false; mapScreen(); }
 function w3Stop() {
@@ -4953,7 +4967,11 @@ function h3Start(partner, guest) {
   const up = () => { drag = null; }; cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
   H3 = { R, sc, cam, items, people, resize, t: 0, last: performance.now() }; addEventListener("resize", resize); h3Sel();
   const loop = () => { if (!H3 || !document.getElementById("roomC")) return h3Stop(); const now = performance.now(), dt = Math.min(.05, (now - H3.last) / 1000); H3.last = now; H3.t += dt;
-    H3.people.forEach((c, n) => { w3Anim(c, dt, 0, false, H3.t + n * 2); c.g.rotation.y = Math.sin(H3.t * .4 + n) * .25; });
+    H3.people.forEach((c, n) => { const g = c.g;
+      if (c.tx == null) { c.wt = (c.wt ?? n * .7) - dt; w3Anim(c, dt, 0, false, H3.t + n * 2); if (c.wt <= 0) { c.tx = -3.8 + Math.random() * 7.6; c.tz = -2.3 + Math.random() * 4.4; } }
+      else { const dx = c.tx - g.position.x, dz = c.tz - g.position.z, d = Math.hypot(dx, dz);
+        if (d < .1) { c.tx = null; c.wt = .8 + Math.random() * 2.2; w3Anim(c, dt, 0, false, H3.t); }
+        else { const sp = Math.min(d, 1.1 * dt); g.position.x += dx / d * sp; g.position.z += dz / d * sp; c.heading = w3Turn(c.heading || 0, Math.atan2(dx, dz), dt * 6); g.rotation.y = c.heading; w3Anim(c, dt, 2.2, false, H3.t); } } });
     H3.items.forEach(m => { if (m.userData.fire) m.userData.fire.scale.y = 1 + Math.sin(H3.t * 12) * .15; if (m.userData.sel) m.position.y = .04 + Math.abs(Math.sin(H3.t * 4)) * .05; else m.position.y = 0; });
     R.render(sc, cam); H3.raf = requestAnimationFrame(loop); };
   loop();
@@ -6241,13 +6259,21 @@ function gossipWrite(pick) {
   ph.innerHTML = `<div class="ph-screen gossip">${appTop("Spill some tea")}
     <div class="gc-hero">Who's the gossip about?</div>
     ${pick === undefined ? fr.map((f, i) => `<div class="ph-contact" onclick="gossipWrite(${i})">${face(f)}<div><b>${f.name}</b></div></div>`).join("")
-      : `<div class="gc-hero"><small>Pick what to post about ${fr[pick].name}. They might find out...</small></div>` + GOSSIP_MINE.map((t, k) => `<button class="gc-post-btn" onclick="gossipSend(${pick},${k})">${t.replaceAll("{A}", fr[pick].name)}</button>`).join("")}
+      : `<div class="gc-hero"><small>Write anything you want about ${fr[pick].name}... or pick one. They might find out!</small></div>
+        <div class="gc-write"><textarea id="gcIn" maxlength="140" placeholder="Write your gossip about ${fr[pick].name}..."></textarea><button class="gc-post-btn" onclick="gossipOwn(${pick})">Post it</button><p id="gcErr" class="gc-err"></p></div>` + GOSSIP_MINE.map((t, k) => `<button class="gc-post-btn" onclick="gossipSend(${pick},${k})">${t.replaceAll("{A}", fr[pick].name)}</button>`).join("")}
     <button class="ph-meet" onclick="gossipApp()">Back to the Gossip Cage</button>
   </div>`;
   noEmoji(ph); setTimeout(phMore, 30);
 }
-function gossipSend(i, k) {
-  const f = friends()[i], t = GOSSIP_MINE[k].replaceAll("{A}", f.name);
+function gossipOwn(i) {
+  const f = friends()[i], v = (document.getElementById("gcIn").value || "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
+  const t = normalize(v), err = document.getElementById("gcErr");
+  if (v.length < 3) { err.textContent = "Write a bit more!"; return; }
+  if (/https?:|www\.|\.com|@|\d{5,}/i.test(v) || SAFE.swear.test(t) || SAFE.info.test(t) || /\b(sexy|sex|naked|nude|boob|kill|die|nazi|drugs?|vape|weed|gun|suicide)\b/.test(t)) { err.textContent = "Ooh, that's too far for the Gossip Cage. Try something sillier!"; return; }
+  gossipSend(i, -1, v.toLowerCase().includes(f.name.toLowerCase()) ? v : f.name + ": " + v);
+}
+function gossipSend(i, k, own) {
+  const f = friends()[i], t = own ? esc(own) : GOSSIP_MINE[k].replaceAll("{A}", f.name);
   S.gossipMine = S.gossipMine || []; S.gossipMine.push({ about: f.name, t, day: S.tday || S.day });
   chime();
   if (Math.random() < .5) { addHearts(f, -1); setTimeout(() => textFrom(f.name, pickOne([`Um. I saw what you posted about me in the Gossip Cage. 😤 Not cool.`, `Everybody knows it was YOU who posted that about me. 😢 Why??`])), 3000); }
@@ -6265,7 +6291,102 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 .gc-post p{margin:6px 0;font-size:16px}
 .gc-acts{display:flex;flex-wrap:wrap;gap:6px}.gc-acts button{font-size:13px;padding:5px 10px;border-radius:14px;background:#f3e6fa;color:#5a2a7a}
 .gc-acts button.on{background:#ff5aa8;color:#fff}
+.gc-write{padding:0 14px;flex-shrink:0}.gc-write textarea{width:100%;min-height:70px;border-radius:14px;padding:8px;font-size:16px;border:2px solid #ff5aa8;box-sizing:border-box}.gc-write .gc-post-btn{width:100%;margin:6px 0}.gc-err{color:#ffd0e6;font-size:13px;margin:2px 0}
 .gc-foot{color:#fff;text-align:center;opacity:.7;font-size:13px;flex-shrink:0}
+</style>`);
+
+// ===== Hanging out happens in the 3D world: your friend walks with you and talks =====
+function w3HangOpen(p) {
+  if (!W3 || !S.hangWith || p.f.name !== S.hangWith.name) return;
+  const f = p.f; w3TalkOpen(p.i);
+  if (S.hangWith.act) { S.actRun = { key: S.hangWith.act, step: 0, i: S.hangWith.i }; S.hangWith.act = null; w3Say(p, voiceLine(f, pickOne(["We're here! This is going to be SO fun!", "Okay, let's do this! 😄", "I've been waiting all day for this!"])), 4); setTimeout(actShow, 1200); return; }
+  const hello = S.hangWith.loves ? `I LOVE it here! Best idea ever, ${petFor(f)}! 💕` : S.hearts[f.name] >= 3 ? LOVEY_HELLO[Math.floor(Math.random() * LOVEY_HELLO.length)].replace("{P}", pet(f)) : pickOne(["Hey! This is so fun. I'm glad you asked me to hang out!", "Hi! Okay, where should we go first?"]);
+  w3Say(p, voiceLine(f, hello), 5);
+  setTimeout(() => w3HangAsk(p), 2600);
+}
+function w3HangAsk(p) {
+  if (!W3 || W3.talk !== p || !S.hangWith) return;
+  const f = p.f, [q, answers] = TALKS[f.type][S.talkIdx[f.name] % TALKS[f.type].length];
+  const box = document.getElementById("w3talk"); if (!box) return;
+  const old = document.getElementById("w3ask"); if (old) old.remove();
+  const shuffled = answers.map((a, k) => [a, k]).sort(() => Math.random() - .5);
+  w3Say(p, voiceLine(f, fill(q).replace(/<[^>]+>/g, "")), 8);
+  box.insertAdjacentHTML("afterbegin", `<div id="w3ask" class="w3-ask"><div class="w3-q"><b>${f.name}:</b> ${fill(q)}</div>${shuffled.map(([a, k]) => `<button class="soft" onclick="w3Answer(${k})">${fill(a[0])}</button>`).join("")}</div>`);
+  w3HangBar();
+}
+function w3HangBar() {
+  const box = document.getElementById("w3talk"); if (!box || !S.hangWith || document.getElementById("w3hangbar")) return;
+  box.insertAdjacentHTML("beforeend", `<div id="w3hangbar" class="tt-acts"><button class="green" onclick="w3WalkTogether()">Walk together</button><button class="soft" onclick="w3HangAsk(W3.talk)">Ask me something</button><button class="soft" onclick="w3HangEnd()">Say goodbye (end the day)</button></div>`);
+}
+function w3Answer(k) {
+  const p = W3 && W3.talk; if (!p) return; const f = p.f;
+  const [, answers] = TALKS[f.type][S.talkIdx[f.name] % TALKS[f.type].length], pts = answers[k][1];
+  S.talkIdx[f.name]++; const st = stageOf(f); addHearts(f, pts);
+  w3Say(p, pts ? voiceLine(f, pickOne(ANSWER_REACT[pts >= 2 ? 2 : 1][st]).replace("{P}", petFor(f, st))) + ` (+${pts >= 2 ? 2 : 1} ❤️)` : "Hmm... okay! *smiles at you anyway*", 6);
+  if (pts) { chime(); floatHearts(pts); } else chime(false);
+  const a = document.getElementById("w3ask"); if (a) a.remove();
+  const hb = document.querySelector("#w3talk small"); if (hb) hb.innerHTML = heartBar(S.hearts[f.name]);
+}
+function w3WalkTogether() { if (!W3 || !W3.talk) return; const p = W3.talk; W3.talk = null; const box = document.getElementById("w3talk"); if (box) box.classList.remove("on"); p.follow = true; w3Say(p, voiceLine(p.f, pickOne(["Lead the way! I'm right behind you.", "Let's go! *walks next to you*", "Ooh, an adventure! Where are we going?"])), 4); }
+function w3HangEnd() { const f = S.hangWith && fName(S.hangWith.name); S.hangWith = null; if (f) { S.lastHang = f.name; if (S.meetAt) delete S.meetAt[f.name]; } try { w3Stop(); } catch (e) {} S.outside = ""; endDay(); }
+document.head.insertAdjacentHTML("beforeend", `<style>.w3-ask{margin-bottom:8px}.w3-ask .w3-q{font-size:15px;margin-bottom:6px}.w3-ask button{display:block;width:100%;text-align:left;margin:4px 0;font-size:14px}</style>`);
+// ===== Activities happen for real: in the 3D world (or your 3D house), with the real characters =====
+const ACT_SPOT = { kitchen: "village", boat: "lake" };
+function act3DSpot(A) { return TOWN_SPOT[A[2]] ? A[2] : ACT_SPOT[A[2]] || null; }
+function act3D(key) {
+  const f = friends()[S.act.i], A = ACTS.find(a => a[0] === key), spot = act3DSpot(A);
+  S.actRun = { key, step: 0, i: S.act.i };
+  if (!spot) { S.guest = f.name; S.visitSaid = ""; S.visitReply = ""; houseScreen(); setTimeout(actShow, 500); return; }
+  S.meetAt = S.meetAt || {}; S.meetAt[f.name] = { place: spot, until: lifeAbs() + 600 };
+  if (W3 && W3.talk && W3.talk.f.name === f.name && S.worldAt === spot) return actShow();
+  try { closePopup(); } catch (e) {}
+  S.hangWith = { name: f.name, i: S.act.i, place: spot, act: key };
+  if (W3) { try { w3Stop(); } catch (e) {} }
+  eyesScreen(spot);
+}
+function act3DMenu(i) {
+  const f = friends()[i]; S.act = { i, from: W3 ? "world" : "house" };
+  const favs = ACTS.filter(a => a[3].includes(f.type)).map(a => a[0]);
+  popup(`<h2>What should we do?</h2><p class="sub" style="margin-top:0">You'll go there together with ${f.name}.</p>
+    <div class="act-list">${ACTS.map(a => `<button class="soft ${favs.includes(a[0]) ? "fav" : ""}" onclick="closePopup(); act3D('${a[0]}')">${a[1]}${favs.includes(a[0]) ? " ★" : ""}</button>`).join("")}</div>
+    <button class="soft" onclick="closePopup()">Not now</button>`);
+}
+function actHost() { return W3 && W3.talk ? document.getElementById("w3talk") : null; }
+function actShow(pick) {
+  const R = S.actRun; if (!R) return;
+  const f = friends()[R.i], A = ACTS.find(a => a[0] === R.key), st = stageOf(f), N = x => x.replaceAll("{N}", f.name);
+  let say = "";
+  if (pick !== undefined) {
+    let r = A[5][R.step - 1][1][pick][1];
+    if (st === 0 && (LOVEY_STRONG.test(r) || LOVEY_SOFT.test(r) || /shoulder|holds your paw|takes your paw|blanket with you|umbrella/.test(r))) r = pickOne(ACT_FRIENDLY);
+    say = N(r); chime(); floatHearts(1);
+    if (W3 && W3.talk) { w3Say(W3.talk, voiceLine(f, say), 6); W3.talk.ch.nod = true; }
+  }
+  const last = R.step >= A[5].length;
+  let body;
+  if (!last) {
+    const [q, choices] = A[5][R.step];
+    body = `${R.step === 0 ? `<p class="act-story">${N(A[4])}</p>` : ""}<div class="w3-q"><b>${q}</b></div>${choices.map((c, k) => `<button class="soft" onclick="S.actRun.step++; actShow(${k})">${c[0]}</button>`).join("")}`;
+  } else {
+    S.actDay = S.actDay || {}; const id = f.name + R.key, fav = A[3].includes(f.type); let pts = 0;
+    if (S.actDay[id] !== S.day) { pts = fav ? 2 : 1; S.actDay[id] = S.day; addHearts(f, pts); }
+    const bye = st === 0 ? pickOne(["That was really fun! Thanks for asking me.", "Okay, that was awesome. Let's do it again sometime!"]) : st === 1 ? pickOne(["That was SO fun. I'm really glad it was with you.", "Can we do that again soon? Please?"]) : pickOne(["Best day ever. Because of you.", "I never want today to end. 💕"]);
+    if (pts) { chime(); floatHearts(pts); }
+    setTimeout(() => { if (W3 && W3.talk) w3Say(W3.talk, voiceLine(f, bye), 6); }, say ? 3500 : 0);
+    S.actRun = null; S.lastHang = f.name;
+    body = `<p class="act-story">${N(A[6])}</p><div class="w3-q"><b>${f.name}:</b> "${bye}" ${pts ? `<b>+${pts} ❤️</b>` : ""}</div>
+      <button class="rainbow" onclick="act3DMenu(${R.i})">Do something else</button>${W3 ? `<button class="green" onclick="w3WalkTogether()">Walk together</button>` : `<button class="soft" onclick="closePopup()">Done</button>`}`;
+  }
+  const host = actHost(), html = `<div id="w3ask" class="w3-ask"><div class="act-title">${A[1]} with ${f.name}</div>${say ? `<div class="w3-q"><b>${f.name}:</b> "${say}"</div>` : ""}${body}</div>`;
+  if (host) { const old = document.getElementById("w3ask"); if (old) old.remove(); host.insertAdjacentHTML("afterbegin", html); host.scrollTop = 0; noEmoji(host); }
+  else popup(html);
+}
+document.head.insertAdjacentHTML("beforeend", `<style>
+#w3talk{max-height:50vh;overflow-y:auto;overscroll-behavior:contain}
+#w3talk .tt-acts .w3-more{display:none}#w3talk .tt-acts.open .w3-more{display:contents}
+.act-title{font-weight:900;font-size:17px;color:#7a3fd1;margin-bottom:4px}
+.act-story{margin:2px 0 6px;font-size:14px;opacity:.85}
+.act-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}.act-list button{margin:0;font-size:14px;padding:8px}.act-list .fav{background:#ffe4f1}
 </style>`);
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
