@@ -458,6 +458,30 @@
   @media (max-width:600px) { .places-grid { grid-template-columns:1fr 1fr; } .places-grid .act-btn { height:96px; } }
   body.immersive .scene.pov > .bubble, body.immersive .scene.pov > p.sub, body.immersive .scene.pov > p.story { top:96px !important; }
   body.immersive .scene.pov > p.story + .bubble { top:auto !important; }
+  .ph-home { background:linear-gradient(160deg,#ffb3d9,#b39cff 50%,#7ab8ff) !important; }
+  .ph-status { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; color:#fff; font-size:16px; }
+  .apps { display:grid; grid-template-columns:repeat(4,1fr); gap:16px 6px; padding:16px 12px; flex:1; align-content:start; }
+  .app { background:none; box-shadow:none; padding:0; margin:0; display:flex; flex-direction:column; align-items:center; gap:5px; color:#fff; }
+  .app small { font-size:12px; text-shadow:0 1px 3px #0006; white-space:nowrap; }
+  .app-ic { position:relative; width:58px; height:58px; border-radius:15px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px #0003; }
+  .app-ic svg { width:34px; height:34px; } .app-ic .badge { position:absolute; top:-6px; right:-6px; animation:none; }
+  .bb { background:#eef1f7; gap:10px; }
+  .bb-new, .bb-reply { display:flex; gap:6px; } .bb-new input, .bb-reply input { flex:1; min-width:0; font-size:16px; padding:8px 12px; border-radius:20px; border:1px solid #ccd; }
+  .bb-new button, .bb-reply button { margin:0; padding:8px 14px; font-size:15px; }
+  .bb-post { background:#fff; border-radius:14px; padding:10px 12px; box-shadow:0 1px 3px #0002; }
+  .bb-post p { margin:8px 0; font-size:16px; } .bb-post .ph-pic { max-width:100%; align-self:auto; background:none; padding:0; }
+  .bb-head { display:flex; gap:10px; align-items:center; } .bb-head img { height:40px; width:40px; object-fit:contain; border-radius:50%; background:#f3eef8; }
+  .bb-acts button { margin:4px 0; padding:6px 14px; font-size:14px; background:#eef1f7; color:#3a5bd9; box-shadow:none; } .bb-acts button.on { background:#3a5bd9; color:#fff; }
+  .bb-c { font-size:15px; background:#f3f4f8; border-radius:12px; padding:6px 10px; margin:4px 0; } .bb-c b { color:#3a5bd9; }
+  .pgrid { display:grid !important; grid-template-columns:1fr 1fr; gap:6px; align-content:start; }
+  .pthumb { position:relative; aspect-ratio:1; border-radius:10px; background-size:cover; background-position:center; overflow:hidden; cursor:zoom-in; }
+  .pthumb img { position:absolute; bottom:-4px; left:50%; transform:translateX(-50%); height:75%; }
+  .pthumb.big { grid-column:1 / -1; }
+  .cam-view { position:relative; width:100%; aspect-ratio:3/4; border-radius:18px; background-size:cover; background-position:center; overflow:hidden; }
+  .cam-view img { position:absolute; bottom:-4%; left:50%; transform:translateX(-50%); height:70%; }
+  .cam-frame { position:absolute; inset:14px; border:2px solid #fff8; border-radius:12px; }
+  .cam-shutter { width:70px; height:70px; border-radius:50%; background:#fff; border:6px solid #ccc; box-shadow:0 0 0 3px #fff; margin:12px auto 4px; padding:0; }
+  .cal-item { background:#fff4f9; border-left:5px solid #ff5a6e; border-radius:8px; padding:8px 12px; margin:6px 0; font-size:15px; }
   body.immersive { overflow:hidden; }
   body.immersive #app { width:100%; padding:0; }
   body.immersive #app > h1, body.immersive .bgl, body.immersive .srv-btn, body.immersive .eyes-btn, body.immersive .scr-btn, body.immersive .scroll-btns, body.immersive .side-go { display:none !important; }
@@ -829,6 +853,25 @@ function show(html) {
 }
 
 // ====== Screens ======
+
+// ===== Saving: progress saves itself on this device, and Continue brings it back =====
+const SAVE_KEY = "gaosSave1";
+function saveGame() {
+  try { if (!S || !S.profileDone || !PLAYERS.length) return;
+    S.wasWalking = !!WALK;
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ v:1, MODE, TURN, PLAYERS, at: Date.now() })); } catch (e) {}
+}
+function loadSave() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); return d && d.PLAYERS && d.PLAYERS.length ? d : null; } catch (e) { return null; } }
+function continueGame() {
+  const d = loadSave(); if (!d) return titleScreen();
+  MODE = d.MODE; TURN = d.TURN || 0; PLAYERS = d.PLAYERS; S = PLAYERS[TURN];
+  S.guest = null; S.meetPlace = null; S.gs = null;
+  updateSky(); phoneButton();
+  if (S.wasWalking) eyesScreen(S.worldAt); else mapScreen();
+}
+setInterval(saveGame, 4000);
+addEventListener("pagehide", saveGame);
+document.addEventListener("visibilitychange", () => { if (document.hidden) saveGame(); });
 function titleScreen() {
   setBg("glade");
   show(`
@@ -837,6 +880,7 @@ function titleScreen() {
       <h1>${GAME_TITLE}</h1>
       <div class="lil rb">💖 Love is Love 💖</div>
       <p class="sub">A forest story about finding someone who loves you <b>just the way you are</b> 🌈</p>
+      ${loadSave() ? `<div class="center"><button class="green big-btn" onclick="continueGame()">Continue my game</button></div>` : ""}
       <div class="couples">
         <div><span class="bob">🦊</span><span class="beat">💕</span><span class="bob two">🦊</span></div>
         <div><span class="bob two">🐰</span><span class="beat">💜</span><span class="bob">🐰</span></div>
@@ -2274,10 +2318,12 @@ const KID_PHOTO = /\b(can|could|should|let) (i|me) (send|show)|i('?ll| will| can
 function openPhone(thread) {
   const ph = document.getElementById("phone");
   ph.style.display = "flex";
+  if (!thread) return phoneHome();
+  if (thread === "msgs") thread = "";
   ph.dataset.thread = thread || "";
   if (!thread) {
     ph.innerHTML = `<div class="ph-screen">
-      <div class="ph-top"><b>Messages</b><button class="ph-x" onclick="closePhone()">Close</button></div>
+      <div class="ph-top"><button class="ph-x" onclick="phoneHome()">Home</button><b>Messages</b><button class="ph-x" onclick="closePhone()">Close</button></div>
       <button class="ph-meet" onclick="closePhone(); eyesScreen()">Put the phone down and look around</button>
       ${friends().map(f => { const th = texts(f.name), last = th[th.length - 1], un = th.filter(m => m.from === "them" && !m.read).length;
         return `<div class="ph-contact" onclick="openPhone('${f.name}')">${face(f)}<div><b>${f.name}</b><br><small>${last ? esc(preview(last.t)).slice(0, 34) : "Say hi!"}</small></div>${un ? `<span class="badge">${un}</span>` : ""}</div>`; }).join("")}
@@ -2286,7 +2332,7 @@ function openPhone(thread) {
     const f = friends().find(x => x.name === thread);
     texts(thread).forEach(m => m.read = true);
     ph.innerHTML = `<div class="ph-screen">
-      <div class="ph-top"><button class="ph-x" onclick="openPhone()">Back</button>${face(f)}<b>${f.name}</b></div>
+      <div class="ph-top"><button class="ph-x" onclick="openPhone('msgs')">Back</button>${face(f)}<b>${f.name}</b></div>
       <button class="ph-meet" onclick="putPhoneDown('${f.name}')">Put the phone down and go see ${f.name}</button>
       <button class="ph-meet ph-plan" onclick="planScreen('${f.name}')">Make plans with ${f.name}</button>
       <div class="ph-msgs" id="phMsgs">${texts(thread).map(msgHTML).join("")}</div>
@@ -2943,6 +2989,7 @@ function showEnd(win, say, score, dateF, dateI) {
   const g = S.gs, s = showOf(g.k); S.trophies = S.trophies || {}; S.showDay = S.showDay || {};
   let prize = "";
   if (win) { S.trophies[g.k] = (S.trophies[g.k] || 0) + 1; prize = `<h2>You won the ${s.prize}!</h2>`; chime(); floatHearts(5, "⭐"); }
+  try { postFeed(pickOne(friends()).name, win ? `Did EVERYONE see ${S.name} win ${s.name}?! 🏆📺` : `${S.name} was on ${s.name} tonight! Robbed, honestly. 😤📺`); } catch (e) {}
   const fan = dateF || pickOne(friends().filter(f => f.name !== g.rival));
   if (S.showDay[g.k] !== S.day) { S.showDay[g.k] = S.day; addHearts(fan, 1); }
   setTimeout(() => textFrom(fan.name, dateF ? pickOne(["Okay that was the cutest thing ever on TV. 😳💕", "Everyone saw you pick me. EVERYONE. *happy screaming*"]) : win ? pickOne(["OMG I watched you on TV!! You were AMAZING 😍", "I screamed so loud when you won. My mom told me to be quiet 😂💕"]) : pickOne(["You were robbed!! ROBBED! 😤 You were the best one.", "Losing on TV is still more famous than me. You're a star ⭐"])), 2200);
@@ -3034,6 +3081,7 @@ function shopScreen(k) {
 function shopDate(k, i) {
   S.act = { i, from: "shop" };
   const f = friends()[i];
+  if (Math.random() < .6) setTimeout(() => postFeed(pickOne(friends().filter(x => x.name !== f.name)).name, pickOne([`Spotted: ${S.name} and ${f.name} at ${SHOPS[k].name}. 👀 Just saying.`, `${SHOPS[k].name} is SO romantic tonight. Wonder who's there... 👀 (${f.name}, it's you.)`])), 4000);
   if (Math.random() < 0.5) { const spy = pickOne(friends().filter(x => x.name !== f.name));
     setTimeout(() => textFrom(spy.name, pickOne([`Um. Did I just see you at ${SHOPS[k].name} with ${f.name}?? 👀`, `${SHOPS[k].name}? With ${f.name}?? I'm not jealous. I'm NOT. 😤`, `Everyone's talking about you and ${f.name} at ${SHOPS[k].name}. Spill. ☕`])), 9000); }
   activity(k, 0);
@@ -3168,6 +3216,154 @@ function placesScreen() {
       <button class="act-btn" style="background:${SHOW_BG("tvstudio")}" onclick="gameShows()"><span>Game Shows</span></button>
       <button class="act-btn" style="background:${worldBg("village")}" onclick="mapScreen()"><span>Village Map</span></button>
     </div></div>`);
+}
+// ===== Phone apps: home screen, Burrowbook (pretend animal social page), Photos, Camera, Calendar =====
+const APP_ICON = {
+  msgs:`<svg viewBox="0 0 24 24"><path d="M4 5h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-9l-5 4v-4H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" fill="#fff"/></svg>`,
+  book:`<svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3" fill="#fff"/><circle cx="16" cy="9" r="3" fill="#fff"/><path d="M3 19c.6-3.4 2.6-5 5-5s4.4 1.6 5 5Zm8 0c.6-3.4 2.6-5 5-5s4.4 1.6 5 5Z" fill="#fff"/></svg>`,
+  photos:`<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="#fff"/><path d="m5 17 4-5 3 3 2-2 5 4Z" fill="#5fb3ff"/><circle cx="16" cy="9" r="1.6" fill="#ffc83d"/></svg>`,
+  camera:`<svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" fill="#fff"/><circle cx="12" cy="13" r="3.6" fill="#444"/></svg>`,
+  cal:`<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" fill="#fff"/><rect x="3" y="5" width="18" height="5" rx="2" fill="#ff5a6e"/><path d="M7 3v4M17 3v4" stroke="#fff" stroke-width="2"/></svg>`,
+  map:`<svg viewBox="0 0 24 24"><path d="M12 2a6 6 0 0 1 6 6c0 4.5-6 12-6 12S6 12.5 6 8a6 6 0 0 1 6-6Z" fill="#fff"/><circle cx="12" cy="8" r="2.3" fill="#3fae5a"/></svg>`,
+  clock:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#fff"/><path d="M12 7v5l3 2" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+  shows:`<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2" fill="#fff"/><path d="m8 3 4 3 4-3" stroke="#fff" stroke-width="2" fill="none"/><path d="m10 9 5 3-5 3Z" fill="#9775fa"/></svg>`
+};
+function phoneHome() {
+  const ph = document.getElementById("phone"); ph.style.display = "flex"; ph.dataset.thread = "";
+  const un = unreadCount(), newPosts = (S.feed || []).filter(p => !p.seen).length;
+  const app = (k, name, bg, go, badge) => `<button class="app" onclick="${go}"><span class="app-ic" style="background:${bg}">${APP_ICON[k]}${badge ? `<span class="badge">${badge}</span>` : ""}</span><small>${name}</small></button>`;
+  ph.innerHTML = `<div class="ph-screen ph-home">
+    <div class="ph-status"><b>${fmtTime(S.clock ?? 480)}</b><button class="ph-x" onclick="closePhone()">Close</button></div>
+    <div class="apps">
+      ${app("msgs", "Messages", "linear-gradient(#5fe07a,#2bb673)", "openPhone('msgs')", un)}
+      ${app("book", "Burrowbook", "linear-gradient(#7aa7ff,#3a5bd9)", "bookApp()", newPosts)}
+      ${app("photos", "Photos", "linear-gradient(#fff,#e9e3f5)", "photosApp()")}
+      ${app("camera", "Camera", "linear-gradient(#777,#333)", "cameraApp()")}
+      ${app("cal", "Calendar", "linear-gradient(#fff,#f3e9ee)", "calendarApp()")}
+      ${app("map", "Map", "linear-gradient(#a8ec9f,#3fae5a)", "closePhone(); placesScreen()")}
+      ${app("clock", "Clock", "linear-gradient(#444,#111)", "closePhone(); clockPanel()")}
+      ${app("shows", "Game Shows", "linear-gradient(#ff9ad5,#9775fa)", "closePhone(); gameShows()")}
+    </div>
+    <button class="ph-meet" onclick="closePhone(); eyesScreen()">Put the phone down and look around</button>
+  </div>`;
+  phoneButton();
+}
+function appTop(title) { return `<div class="ph-top"><button class="ph-x" onclick="phoneHome()">Home</button><b>${title}</b></div>`; }
+// --- Burrowbook ---
+const POST_TEXT = {
+  shy:["Read three chapters today and drank two cocoas. Perfect day. 📖", "Does anyone else get shy when someone says hi? Asking for me. 🙈", "The garden smells SO good today. 🌷", "Wrote a poem. Not sharing it. Okay, maybe later. ✨", "Rainy day = blanket day. 🌧️"],
+  adventure:["Climbed the TALLEST tree in the forest. Who's next? 🌲", "Found a secret cave. Going back tomorrow. Who's brave enough? 😏", "Race me to Starry Hill. Loser bakes cookies. 🏃", "Sunset from the top of the hill. No filter. 🌅", "Fell in the creek. Still won the race. 💪"],
+  funny:["Tripped into the pond. On purpose. For the views. 😂", "Rate my new hat 1-10. Wrong answers only. 🎩", "Me: I'll be busy today. Also me: *naps for four hours* 😴", "If you see my sandwich, no you didn't. 🥪", "Told a joke so bad a bird flew away. Iconic. 🐦"],
+  baker:["Fresh honey buns are OUT. First come, first served! 🍯", "Baked a cake so tall it has its own weather. 🎂", "Kitchen is a disaster. Worth it. 🧁", "Who wants to taste test? Honest opinions only. (Nice ones.) 🍪", "Cinnamon rolls + rain = happiness. ☕"]
+};
+const POST_SOAP = ["Some animals need to learn how to keep a secret. 🙄 Not naming names. ({O})", "Not me seeing {O} and {O2} at the cafe together. 👀👀", "Okay, who ate my cupcake? I KNOW it was you, {O}. 😤", "Feeling cute. Might delete later. 💅", "Some of you are SO dramatic. Anyway, love you all. 💕", "{O} said my fur looks messy today. Well, {O}'s fur looks like a broom. 🙃", "Unfollowing anyone who doesn't like pancakes. Bye. 💅", "Guess who's NOT invited to my party. 🙂 ({O}, it's you.)"];
+const POST_ME = { 1:["{ME} said hi to me today and now I can't stop smiling. 🙈", "Is it weird that I like when {ME} texts me? Asking for a friend. 😳"], 2:["Shoutout to {ME} for being the BEST. 💖", "Me and {ME} >>> everyone else. Sorry not sorry. 💅💕", "{ME} is SO cute. That's it. That's the post. 😍"] };
+const COMMENTS = ["OMG 😍", "Iconic. 💅", "Who's {O}?? 👀", "Not you doing this AGAIN 😂", "I want some!!", "Okay, but why wasn't I invited? 😤", "Love this 💕", "Drama. I love it. 🍿", "Ummm explain?? 👀", "Same, honestly.", "Best post today ✨", "Rude. 😒 (jk love you)", "HAHAHA", "Wait what 😳", "This is so you 😂"];
+function soapFill(x, who) { const o = friends().filter(f => f.name !== who).sort(() => Math.random() - .5); return x.replaceAll("{O}", o[0].name).replaceAll("{O2}", o[1].name).replaceAll("{ME}", S.name || "you"); }
+function makePost(f, text, pic) {
+  const c = friends().filter(x => x.name !== f.name).sort(() => Math.random() - .5).slice(0, 1 + Math.floor(Math.random() * 3));
+  return { who: f.name, text, pic: pic || (Math.random() < .45 ? makePhoto(f) : ""), likes: 2 + Math.floor(Math.random() * 30), liked: false, at: nowAbs(), seen: false,
+    comments: c.map(x => ({ who: x.name, t: soapFill(pickOne(COMMENTS), f.name) })) };
+}
+function postFeed(name, text, pic) { const f = fName(name); if (!f) return; S.feed = S.feed || []; S.feed.unshift(makePost(f, text, pic || "")); S.feed = S.feed.slice(0, 40); phoneButton(); }
+function freshPosts() {
+  S.feed = S.feed || [];
+  const since = nowAbs() - (S.feedAt || 0), n = !S.feed.length ? 6 : Math.min(3, Math.floor(since / 90));
+  for (let i = 0; i < n; i++) {
+    const f = pickOne(friends()), st = stageOf(f), r = Math.random();
+    const text = r < .35 ? soapFill(pickOne(POST_SOAP), f.name) : r < .5 && st >= 1 ? soapFill(pickOne(POST_ME[st]), f.name) : pickOne(POST_TEXT[f.type]);
+    S.feed.unshift(makePost(f, text));
+  }
+  if (n) S.feedAt = nowAbs();
+  S.feed = S.feed.slice(0, 40);
+}
+function bookApp() {
+  freshPosts();
+  const ph = document.getElementById("phone"); ph.style.display = "flex"; ph.dataset.thread = "";
+  const pf = n => n === "me" ? `<img src="art/${ART[S.animal[0]]}.png" alt="">` : face(fName(n));
+  ph.innerHTML = `<div class="ph-screen">${appTop("Burrowbook")}
+    <div class="ph-msgs bb">
+      <div class="bb-new"><input id="bbIn" maxlength="120" placeholder="What's on your mind?" onkeydown="if(event.key==='Enter')bookPost()"><button onclick="bookPost()">Post</button></div>
+      ${S.feed.map((p, i) => { p.seen = true; return `<div class="bb-post">
+        <div class="bb-head">${pf(p.who)}<div><b>${p.who === "me" ? esc(S.name) : p.who}</b><br><small>${fmtTime(p.at)}</small></div></div>
+        <p>${esc(p.text)}</p>${p.pic ? msgHTML({ from: "them", t: p.pic }) : ""}
+        <div class="bb-acts"><button class="${p.liked ? "on" : ""}" onclick="bookLike(${i})">${p.liked ? "Liked" : "Like"} ${p.likes}</button></div>
+        ${p.comments.map(c => `<div class="bb-c"><b>${c.who === "me" ? esc(S.name) : c.who}</b> ${esc(c.t)}</div>`).join("")}
+        <div class="bb-reply"><input id="bbc${i}" maxlength="100" placeholder="Write a comment..." onkeydown="if(event.key==='Enter')bookComment(${i})"><button onclick="bookComment(${i})">Send</button></div>
+      </div>`; }).join("")}
+    </div></div>`;
+  phoneButton();
+}
+function bookLike(i) {
+  const p = S.feed[i]; p.liked = !p.liked; p.likes += p.liked ? 1 : -1;
+  S.likeDay = S.likeDay || {};
+  if (p.liked && p.who !== "me" && S.likeDay[p.who] !== S.tday) { S.likeDay[p.who] = S.tday; addHearts(fName(p.who), 1); chime(); }
+  const y = document.querySelector(".bb").scrollTop; bookApp(); document.querySelector(".bb").scrollTop = y;
+}
+function bookComment(i) {
+  const inp = document.getElementById("bbc" + i), said = (inp.value || "").trim(); if (!said) return;
+  const p = S.feed[i]; p.comments.push({ who: "me", t: said });
+  const y = document.querySelector(".bb").scrollTop; bookApp(); document.querySelector(".bb").scrollTop = y;
+  const f = p.who === "me" ? pickOne(friends()) : fName(p.who);
+  setTimeout(() => { const r = chatReply(f, said); p.comments.push({ who: f.name, t: r.say });
+    if (!r.safe && Math.random() < .5) { const o = pickOne(friends().filter(x => x.name !== f.name)); p.comments.push({ who: o.name, t: soapFill(pickOne(["Wait, why are you two being so cute in the comments? 👀", "Get a room. 🙄😂", "Okay I'm jealous now. 😤", "Hehe, I see you two. 👀"]), o.name) }); }
+    if (document.querySelector(".bb")) { const yy = document.querySelector(".bb").scrollTop; bookApp(); document.querySelector(".bb").scrollTop = yy; } }, 1500);
+}
+function bookPost(pic) {
+  const inp = document.getElementById("bbIn"), said = ((inp && inp.value) || "").trim(); if (!said && !pic) return;
+  S.feed = S.feed || [];
+  const p = { who: "me", text: said, pic: pic || "", likes: 0, liked: false, at: nowAbs(), seen: true, comments: [] };
+  S.feed.unshift(p); bookApp();
+  const safe = said ? chatReply(friends()[0], said) : null;
+  if (safe && safe.safe) { setTimeout(() => { p.comments.push({ who: friends()[0].name, t: safe.say }); bookApp(); }, 1200); return; }
+  friends().slice().sort(() => Math.random() - .5).slice(0, 3).forEach((f, n) => setTimeout(() => {
+    const st = stageOf(f); p.likes += 1 + Math.floor(Math.random() * 3);
+    p.comments.push({ who: f.name, t: soapFill(pickOne(st === 0 ? ["Cool!", "Nice 👍", "Haha, same.", "Okay, this is actually good.", "Who even posts this? 😂 (jk)"] : st === 1 ? ["Hehe, love this 😊", "Okay this made me smile 🙈", "Cute!! 💕", "Why is this so you 😂"] : ["My FAVORITE post ever 😍", "Stop, you're too cute 💖", "Everyone look at how amazing they are 💕", "Liked it 100 times. 💅"]), f.name) });
+    if (n === 1 && Math.random() < .6) { const o = pickOne(friends().filter(x => x.name !== f.name)); p.comments.push({ who: o.name, t: soapFill(pickOne([`Why did ${f.name} comment so fast?? 👀`, "Didn't even tag me. Wow. 😒", "The drama in these comments 🍿"]), o.name) }); }
+    if (document.querySelector(".bb")) bookApp();
+  }, 1500 + n * 1800));
+}
+// --- Photos and Camera ---
+function allPhotos() {
+  const out = [];
+  friends().forEach(f => texts(f.name).forEach(m => { if (typeof m.t === "string" && m.t.startsWith("PIC|")) out.push(m.t); }));
+  (S.feed || []).forEach(p => { if (p.pic) out.push(p.pic); });
+  (S.myPics || []).forEach(t => out.push(t));
+  return [...new Set(out)].reverse();
+}
+function photosApp() {
+  const ph = document.getElementById("phone"); ph.style.display = "flex"; ph.dataset.thread = "";
+  const pics = allPhotos();
+  ph.innerHTML = `<div class="ph-screen">${appTop("Photos")}<div class="ph-msgs pgrid">
+    ${pics.length ? pics.map(t => { const [, kind, place, who, item] = t.split("|");
+      return `<div class="pthumb" style="background-image:url(art/${place}.png)" onclick="this.classList.toggle('big')">${who && HAVE.has(who) ? `<img src="art/${who}.png" alt="">` : ""}</div>`; }).join("") : `<p class="sub" style="color:var(--ink);text-shadow:none">No photos yet. Ask someone for a selfie, or use the Camera!</p>`}
+  </div></div>`;
+}
+function cameraApp(shot) {
+  const ph = document.getElementById("phone"); ph.style.display = "flex"; ph.dataset.thread = "";
+  const place = HAVE.has(S.worldAt) ? S.worldAt : pickOne(Object.keys(PHOTO_PLACES).filter(p => HAVE.has(p)));
+  const me = ART[S.animal[0]];
+  ph.innerHTML = `<div class="ph-screen">${appTop("Camera")}<div class="ph-msgs" style="align-items:center">
+    ${shot ? msgHTML({ from: "them", t: shot }) : `<div class="cam-view" style="background-image:url(art/${place}.png)"><img src="art/${me}.png" alt=""><div class="cam-frame"></div></div>`}
+    ${shot ? `<button class="rainbow" onclick="cameraPost()">Post it on Burrowbook</button><button class="soft" onclick="cameraApp()">Take another</button>`
+           : `<button class="cam-shutter" aria-label="Take a selfie" onclick="cameraSnap('${place}')"></button><small>Take a selfie of your animal</small>`}
+  </div></div>`;
+}
+function cameraSnap(place) {
+  const t = `PIC|selfie|${place}|${ART[S.animal[0]]}||${pickOne(["Me today!", "Selfie time!", "Looking good, if I say so myself.", "Hi from me!"])}`;
+  S.myPics = S.myPics || []; S.myPics.push(t); S.lastShot = t; chime(); cameraApp(t);
+}
+function cameraPost() { phoneHome(); bookApp(); const inp = document.getElementById("bbIn"); inp.value = pickOne(["Selfie! 📸", "Feeling cute today ✨", "Hi everyone!! 💕"]); bookPost(S.lastShot); }
+// --- Calendar ---
+function calendarApp() {
+  const ph = document.getElementById("phone"); ph.style.display = "flex"; ph.dataset.thread = "";
+  const plans = (S.plans || []).filter(p => !p.done).sort((a, b) => a.at - b.at);
+  ph.innerHTML = `<div class="ph-screen">${appTop("Calendar")}<div class="ph-msgs">
+    <h3 style="margin:4px 0">Today, ${fmtTime(S.clock ?? 480)}</h3>
+    ${plans.length ? plans.map(p => `<div class="cal-item"><b>${fmtTime(p.at)}${Math.floor(p.at / 1440) > (S.tday || 1) ? " (tomorrow)" : ""}</b><br>${PLAN_WHAT[p.what][1]} with ${p.who}</div>`).join("") : `<p>No plans yet!</p>`}
+    <h3 style="margin:10px 0 4px">Make plans with...</h3>
+    ${friends().map(f => `<div class="ph-contact" onclick="planScreen('${f.name}')">${face(f)}<div><b>${f.name}</b></div></div>`).join("")}
+  </div></div>`;
 }
 // ===== Walking around, through your eyes =====
 Object.assign(WORLD_NAMES, { forest:"Whispering Forest", pines:"Pine Woods", creek:"Mossy Creek", birch:"Golden Birch Wood" });
