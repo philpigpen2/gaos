@@ -1208,7 +1208,7 @@ const CAUGHT_TEXT = [
 function maybeCaught(withName, chance, where = "") {
   const sh = sweetheart();
   if (!sh || sh.name === withName || S.caught || Math.random() > chance) return;
-  S.caught = { by: sh.name, with: withName, where };
+  S.caught = { by: sh.name, with: withName, where }; if (S.wed && S.wed.done) S.caughtWith = withName;
   addHearts(sh, -2);
   deliver(sh.name, pickOne(CAUGHT_TEXT).map(l => l.replace("{X}", withName)));
 }
@@ -1275,7 +1275,7 @@ function confront(choice) {
     </div>
     <div class="box story">
       <p>${end}</p>
-      <div class="center"><button onclick="mapScreen()">Back to the village</button></div>
+      <div class="center">${choice === 4 && spouse() ? `<button class="soft" onclick="courtScreen(0)">Go to Divorce Court ⚖️</button>` : ""}<button onclick="mapScreen()">Back to the village</button></div>
     </div>
   `);
 }
@@ -1382,15 +1382,16 @@ function mapScreen() {
   setBg("village");
   if (!S.profileDone) return profileScreen(true);
   if (S.caught) return confrontScreen();
+  if (S.proposeNext && !spouse()) return theyProposeScreen(S.proposeNext);
   S.fightChecked = S.fightChecked || {}; S.fights = S.fights || 0;
   if (S.day >= 2 && !S.fightChecked[S.day] && S.fights < 2) {
     S.fightChecked[S.day] = true;
     const close = friends().filter(f => S.hearts[f.name] >= 3);
     if (close.length && Math.random() < 0.45) { S.fights++; return fightScreen(close[Math.floor(Math.random() * close.length)].name); }
   }
-  const ready = friends().filter(f => S.hearts[f.name] >= 10);
+  const ready = friends().filter(f => canPropose(f)), engagedTo = S.wed && !S.wed.done && S.wed.f;
   show(`
-    <div class="center"><span class="day">☀️ Day ${S.day} of ${DAYS}</span></div>
+    <div class="center">${lifeChip()}</div>
     <div class="banner"><h1 style="font-size:44px;margin:0">${VILLAGE}</h1></div>
     <div class="center"><button class="green" onclick="houseScreen()">My House</button><button class="green" onclick="profileScreen()">My Dating Profile</button><button class="rainbow" onclick="swipeScreen()">Paw Match</button><button class="rainbow" onclick="townScreen()">Walk around town</button><button class="rainbow" onclick="eyesScreen()">Look through my eyes</button><button class="rainbow" onclick="gameShows()">Game Shows</button></div>
     ${MODE === 2 ? `<p class="sub"><b>${S.animal[0]} ${esc(S.name)}'s turn 🎮</b></p>` : ""}
@@ -1409,7 +1410,7 @@ function mapScreen() {
           <button class="soft" onclick="activityMenu(${i},'map')">Activity</button>
         </div>`).join("")}
     </div>
-    ${ready.map(f => `<div class="center"><button class="rainbow" onclick="confessScreen('${f.name}')">💌 Ask ${f.name} to be your partner</button></div>`).join("")}
+    ${ready.map(f => `<div class="center"><button class="rainbow" onclick="confessScreen('${f.name}')">💍 Propose to ${f.name}</button></div>`).join("")}${engagedTo ? `<div class="center"><button class="rainbow" onclick="journeyScreen('${engagedTo}')">💒 Plan your wedding with ${engagedTo}</button></div>` : ""}
   `);
 }
 
@@ -1417,7 +1418,7 @@ function placeScreen(i) {
   setBg("village");
   const f = friends()[i];
   show(`
-    <div class="center"><span class="day">☀️ Day ${S.day} of ${DAYS}</span></div>
+    <div class="center">${lifeChip()}</div>
     <div class="box center">
       <div class="big">${f.emo}</div>
       <h2>Where should you and ${f.name} go?</h2>
@@ -2457,7 +2458,7 @@ function phoneButton() {
   const u = on ? unreadCount() : 0;
   badge.style.display = u ? "flex" : "none"; badge.textContent = u;
 }
-function textFrom(fname, msg) { texts(fname).push({ from:"them", t:msg, read:false }); phoneButton(); notify(fname, msg); }
+function textFrom(fname, msg) { noteSay(fname, msg); texts(fname).push({ from:"them", t:msg, read:false }); phoneButton(); notify(fname, msg); }
 function face(f) { const n = ART[f.emo]; return HAVE.has(n) ? `<img src="art/${n}.png" alt="">` : ""; }
 // ===== Photos: the animals send you pictures (made from the game's own art, nothing real) =====
 const PHOTO_PLACES = { picnic:"the Picnic Meadow", stars:"Starry Hill", pond:"the Frozen Pond", garden:"the Flower Garden", village:"Animal Burrow", path:"the forest path" };
@@ -2623,7 +2624,7 @@ function deliver(fname, lines, k = 0, keep = false) {
   setTimeout(() => {
     const b = box();
     if (line !== null) {
-      const m = { from:"them", t: line, read: !!b };
+      const m = { from:"them", t: line, read: !!b }; noteSay(fname, line);
       texts(fname).push(m);
       if (!b) notify(fname, line);
       if (b) { const stick = near(b); dropTyping(b); b.insertAdjacentHTML("beforeend", msgHTML(m)); if (stick) b.scrollTop = b.scrollHeight; }
@@ -3418,6 +3419,7 @@ const KISS_LINES = {
   seen: ["WAIT. Did you and {N} just KISS?!?! In the MIDDLE of town?! 😱", "Okay I SAW that kiss. Everyone saw that kiss. 👀💕", "You and {N}... KISSING?! I'm screaming. 😭", "Not me walking past right when you kissed {N}. My eyes!! 🙈 (I'm happy for you tho)"]
 };
 function doKiss(f) {
+  try { jealousCheck(f, W3 ? "town" : S.guest === f.name ? "your house" : ""); } catch (e) {}
   const st = stageOf(f); S.kissDay = S.kissDay || {}; let pts = 0;
   if (S.kissDay[f.name] !== S.tday) { S.kissDay[f.name] = S.tday; pts = 1; addHearts(f, 1); }
   try { chime(); floatHearts(st >= 1 ? 5 : 2); } catch (e) {}
@@ -3624,7 +3626,7 @@ function arriveYes() {
 }
 function arriveNo(missed) {
   const p = ARRIVING; ARRIVING = null; document.getElementById("call").style.display = "none"; if (!p) return;
-  if (missed) textFrom(p.who, pickOne(["I'm here... where are you? 🥺", "Hellooo? I'm waiting! ⏰"]));
+  if (missed) { textFrom(p.who, pickOne(["I'm here... where are you? 🥺", "Hellooo? I'm waiting! ⏰"])); if (p.what === "house" || p.what === "sleepover") S.atHome = { name: p.who, until: lifeAbs() + 240 }; else if (TOWN_SPOT[p.what]) { S.meetAt = S.meetAt || {}; S.meetAt[p.who] = { place: p.what, until: lifeAbs() + 120 }; } }
   else { addHearts(fName(p.who), -1); textFrom(p.who, pickOne(["You're not coming?? I got ready and EVERYTHING. 😭 (-1 heart)", "Wow. Okay. Cancelled. 😒 (-1 heart)"])); }
 }
 
@@ -4815,7 +4817,7 @@ function w3Ball(B, dt, spd) {
 }
 function w3Jump(e) { if (e) e.preventDefault(); if (W3 && !W3.jy && !W3.vy) { W3.vy = 8.5; W3.jy = .001; } }
 function w3View() { if (!W3) return; W3.view = S.w3view = W3.view === "third" ? "first" : "third"; }
-function w3Say(p, txt, secs = 4) { const el = document.getElementById("w3say"); if (!el || !W3) return; el.textContent = txt; noEmoji(el); W3.say = { p, until: W3.t + secs }; }
+function w3Say(p, txt, secs = 4) { if (p && p.f) noteSay(p.f.name, txt); const el = document.getElementById("w3say"); if (!el || !W3) return; el.textContent = txt; noEmoji(el); W3.say = { p, until: W3.t + secs }; }
 function w3TalkOpen(i) {
   const p = W3.people.find(q => q.i === i), f = p.f; W3.talk = p; W3.actKey = null; document.getElementById("w3act").innerHTML = "";
   const isAdm = S.admirer === f.name && !S.admirerGone && !S.admirerOk;
@@ -4823,7 +4825,7 @@ function w3TalkOpen(i) {
   const box = document.getElementById("w3talk");
   box.innerHTML = `<div class="w3t-head">${face(f)}<b>${f.name}</b> <span class="rel-chip">${relLabel(f)}</span> <span class="job-chip">${jobTitle(f)}</span><span class="voice-tag">${voiceOf(f).tag}</span><small>${heartBar(S.hearts[f.name])}</small><span class="voice-tag">${relNext(f)}</span><button class="ph-x" onclick="w3TalkClose()">Bye</button></div>
     <div class="w3t-row"><input id="w3in" maxlength="140" placeholder="Say something to ${f.name}..." onkeydown="if(event.key==='Enter')w3Send()"><button class="green" onclick="w3Send()">Say</button></div>
-    <div class="tt-acts"><button class="soft" onclick="w3Hug()">Hug</button><button class="rainbow" onclick="w3Kiss()">${stageOf(f) >= 1 ? "Kiss" : "Kiss on the cheek"}</button><button class="soft" onclick="w3TalkClose(); activityMenu(${i}, 'map')">Do something together</button>
+    <div class="tt-acts">${canPropose(f) ? `<button class="rainbow" onclick="w3TalkClose(); confessScreen('${f.name}')">Propose</button>` : ""}<button class="soft" onclick="w3Hug()">Hug</button><button class="rainbow" onclick="w3Kiss()">${stageOf(f) >= 1 ? "Kiss" : "Kiss on the cheek"}</button><button class="soft" onclick="w3TalkClose(); activityMenu(${i}, 'map')">Do something together</button>
       <button class="soft" onclick="w3TalkClose(); planScreen('${f.name}')">Make plans</button><button class="soft" onclick="w3TalkClose(); planScreen('${f.name}', 'sleepover')">Sleepover</button><button class="soft" onclick="w3TalkClose(); PM = null; photoMaker()">Make a picture for them</button><button class="soft" onclick="picTogether('${f.name}', W3 && W3.place)">Take a picture together</button>
       ${XMAS() ? `<button class="soft" onclick="giveGift('${f.name}')">Give a present</button>` : ""}<button class="soft" onclick="w3TalkClose(); houseScreen(); setTimeout(() => { try { inviteOver('${f.name}'); } catch (e) {} }, 50)">Come to my house</button></div>`;
   box.classList.add("on"); noEmoji(box);
@@ -4897,7 +4899,10 @@ function h3Start(partner, guest) {
   const trim = new THREE.Mesh(new THREE.BoxGeometry(10, .25, .08), w3Mat(0xffffff)); trim.position.set(0, .12, -4.16); sc.add(trim);
   const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.5), new THREE.MeshBasicMaterial({ map: w3Canvas("winview", 256, 160, () => {}) })); win.position.set(2.2, 2.6, -4.18); sc.add(win);
   const items = (S.house || []).map((it, i) => { const m = h3Furn(it.k); const [x, z] = h3Pos(it); m.position.set(x, 0, m.userData.wall ? -4.1 : z); m.rotation.y = it.r || 0; m.scale.setScalar(Math.max(.4, Math.min(2.5, (it.w || FURN_BIG[it.k] || 16) / (FURN_BIG[it.k] || 16)))); m.userData.i = i; sc.add(m); return m; });
-  const people = [partner, guest].filter(Boolean).map((f, n) => { const c = w3Animal(ART[f.emo], W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], XMAS()); c.g.scale.setScalar(w3Size(ART[f.emo]) / 2); c.g.position.set(n ? 1.3 : -.4, 0, .3); sc.add(c.g); c.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return c; });
+  const fam = [partner, guest, ...(S.mates || []).filter(n => !guest || n !== guest.name).map(n => friends().find(x => x.name === n))].filter(Boolean).map(f => ({ kind: ART[f.emo], look: W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], sc: 1 }));
+  (S.kids || []).forEach((k, n) => fam.push({ kind: k.kind, look: W3_OUTFIT[(n * 3 + 2) % W3_OUTFIT.length], sc: kidStage(k)[2] }));
+  const spots = [[-.4, .3], [1.3, .3], [-2.1, 1], [2.7, 1], [.5, 1.7], [-1.2, 1.9], [2, 2.1], [-2.9, 2.2]];
+  const people = fam.slice(0, 8).map((p, n) => { const c = w3Animal(p.kind, p.look, XMAS()); c.g.scale.setScalar(w3Size(p.kind) / 2 * p.sc); c.g.position.set(spots[n][0], 0, spots[n][1]); sc.add(c.g); c.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return c; });
   const cam = new THREE.PerspectiveCamera(50, 1, .1, 60);
   const resize = () => { const w = cv.clientWidth, h = cv.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.fov = w < h ? 62 : 48; cam.updateProjectionMatrix(); }; resize();
   cam.position.set(0, 7.2, 7.4); cam.lookAt(0, -1.6, -.4);
@@ -5172,12 +5177,13 @@ const ROUTINE = {
 };
 function lifeSlot() { const h = (S.clock ?? 480) / 60; return h < 6 || h >= 22.5 ? -1 : h < 9 ? 0 : h < 12 ? 1 : h < 14 ? 2 : h < 17 ? 3 : h < 20 ? 4 : 5; }
 function whereNow(f) {
+  const lw = lifeWhere(f); if (lw === "myhouse") return null; if (lw) return lw;
   const sl = lifeSlot(); if (sl < 0) return null;
   if (typeof JOBS !== "undefined" && atWork(f)) { const j = jobOf(f); return j === "library" || j === "lake" ? j : "job_" + j; }
   const opts = (ROUTINE[f.type] || ROUTINE.shy)[sl];
   return opts[hashStr(f.name + (S.tday || 1) + sl) % opts.length];
 }
-const whereWord = f => { const w = whereNow(f); return !w ? "Asleep" : atWork(f) ? `At work (${JOBS[jobOf(f)].place})` : "At " + (WORLD_NAMES[w] || w); };
+const whereWord = f => { if (lifeWhere(f) === "myhouse") return "At your house"; const w = whereNow(f); return !w ? "Asleep" : atWork(f) ? `At work (${JOBS[jobOf(f)].place})` : "At " + (WORLD_NAMES[w] || w); };
 const CHITCHAT = [["Did you see {ME}'s post?", "Obviously. 👀"], ["I'm SO hungry.", "Cafe? Cafe."], ["Race you to the lake!", "You're ON!"], ["Is it true about {O}??", "I can't say... 😶"], ["Nice scarf!", "Thanks, I made it! 💕"],
   ["Have you seen {ME} today?", "Shh, they're right there! 😳"], ["Ugh, {O} is SO annoying.", "Right?! ...Wait, don't tell them I said that."], ["Want ice cream later?", "Only if it's strawberry! 🍓"], ["Did you hear thunder?", "That was my tummy. 😂"],
   ["{ME} is so cool.", "I know, right? 🥰"], ["Where are you going?", "Secret mission. 🤫"], ["I saw {O} and {O2} holding paws!", "NO WAY. 😱"], ["Your fur looks nice today.", "Aww, stop it! 😊"], ["I'm going to win the quiz show.", "In your dreams. 💅"]];
@@ -5341,9 +5347,10 @@ function visitBox(guest, partner) {
         <button class="soft" onclick="visitDo('snack')">Share a snack</button>
         <button class="rainbow" onclick="activityMenu(friends().findIndex(x => x.name === S.guest),'house')">Do an activity</button>
         <button class="rainbow" onclick="sleepover()">Have a sleepover</button>
+        ${guest !== spouse() && !(S.mates || []).includes(guest.name) && (S.mates || []).length < 2 ? `<button class="soft" onclick="askMoveIn('${guest.name}')">Ask to be housemates</button>` : ""}
         <button class="soft" onclick="visitDo('bye')">Say goodbye</button>
       </div>
-      <p class="sub" style="margin:4px 0 0">${heartBar(S.hearts[guest.name])}</p>
+      <p class="sub" style="margin:4px 0 0"><span class="rel-chip">${relLabel(guest)}</span> ${heartBar(S.hearts[guest.name])}</p>
     </div>`;
 }
 const ARRIVE = {
@@ -5377,6 +5384,7 @@ function visitDo(what) {
     say = st === 0 ? pickOne(["Oh! Haha, okay! *friendly hug*", "A hug? Sure! *pats your back* Friends hug!"]) : st === 1 ? pickOne(["*hugs you back and goes a bit pink* That was nice.", "*squeezes you* Hehe, you give the best hugs."]) : pickOne(["*hugs you and doesn't let go* This is my favorite place in the whole world.", "*wraps you in the coziest hug ever* Mmm. Five more minutes."]);
     if (S.hugDay[f.name] !== S.day) { pts = 1; S.hugDay[f.name] = S.day; }
   } else if (what === "kiss") {
+    try { if (st > 0) jealousCheck(f, "your house"); } catch (e) {}
     if (st === 0) say = pickOne(["Whoa! Um... we only just met, haha! How about a high five instead? *high five*", "Hehe, slow down! Let's be friends first. *gives you a high five*"]);
     else {
       say = st === 1 ? pickOne(["*gives you a tiny kiss on the cheek and turns bright red* ...I can't believe I just did that!", "*kisses your cheek super fast and hides behind a pillow* Eep!"])
@@ -5455,9 +5463,14 @@ function actBtns(done) {
   return SLEEP_ACTS.filter(a => !done.includes(a[0])).map(a => `<button class="soft" onclick="sleepover(${done.length + 1}, ${JSON.stringify([...done, a[0]]).replace(/"/g, "'")})">${a[1]}</button>`).join("");
 }
 function houseScreen() {
+  if (S.caught && !S.guest) return confrontScreen();
+  if (!S.guest && S.atHome && lifeAbs() < S.atHome.until && friends().some(x => x.name === S.atHome.name)) {
+    S.guest = S.atHome.name; S.atHome = null; S.visitSaid = ""; S.visitMood = "happy";
+    S.visitReply = pickOne(["There you are! I said I'd come over, so here I am. 😊", "Finally! I've been waiting on your doorstep. I said I'd be here!", "Surprise! Well, not really a surprise. I TOLD you I was coming. 💕"]);
+  }
   setBg("room");
   S.house = S.house || [];
-  const partner = S.wed && S.wed.f ? friends().find(x => x.name === S.wed.f) : null;
+  const partner = spouse();
   const guest = S.guest ? friends().find(x => x.name === S.guest) : null;
   show(`
     <h1 style="font-size:40px">${esc(S.name)}'s House</h1>
@@ -5472,6 +5485,7 @@ function houseScreen() {
     </div>
     <div class="house-panel">
     ${visitBox(guest, partner)}
+    ${homeBox(guest)}
     <div class="box center">
       ${hasWebGL() ? `<p style="margin:0 0 6px">Tap a thing to pick it, then drag it around the room.</p><div id="h3bar" style="margin-bottom:8px;${SEL >= 0 ? "" : "display:none"}"><button class="soft" onclick="furnSize(1.2)">Bigger</button><button class="soft" onclick="furnSize(0.83)">Smaller</button><button class="soft" onclick="furnTurn()">Turn</button><button onclick="furnRemove()">Take away</button></div>
         <div style="margin-bottom:8px"><button class="soft" onclick="houseWall()">Wall colour</button><button class="soft" onclick="houseFloor()">Floor</button></div>
@@ -5524,9 +5538,9 @@ function endDay() {
     if (fl && Math.random() < 0.5) textFrom(S.lastHang, makePhoto(fl));
     S.lastHang = null;
   }
-  S.day++;
-  if (S.day > DAYS) return festivalScreen();
-  if (S.day >= 3) return grumbleScreen();
+  S.day++; lifeNewDay();
+  if (S.day === DAYS + 1 && !S.festDone) { S.festDone = true; return festivalScreen(); }
+  if (S.day >= 3 && S.day <= DAYS) return grumbleScreen();
   nextTurn();
 }
 
@@ -5630,14 +5644,14 @@ function grumbleChoice(c, fname) {
 
 function festivalScreen() {
   const best = [...friends()].sort((a, b) => S.hearts[b.name] - S.hearts[a.name])[0];
-  if (S.hearts[best.name] >= 7) return confessScreen(best.name, true);
+  if (S.hearts[best.name] >= 7 && !S.wed && relOf(best) >= 1) return confessScreen(best.name, true);
   show(`
     <div class="scene" style="background:url(art/stars.png) center/cover, linear-gradient(#1d2157,#6a3f8c);color:#fff">
       <div class="place-name" style="color:var(--ink)">🏮 Lantern Festival</div>
       <div class="pair"><span class="bob">${S.animal[0]}</span></div>
       <p class="story center">The lanterns float into the sky. You made some lovely friends in ${VILLAGE}! 🏮✨<br>But your special someone is still out there...</p>
     </div>
-    <div class="center">${finishStory(`${S.animal[0]} made lovely friends and is still looking for true love 💫`)}</div>
+    <div class="center"><button class="rainbow" onclick="nextTurn()">Keep living in ${VILLAGE}</button></div>
   `);
 }
 
@@ -5653,9 +5667,9 @@ function confessScreen(fname, festival = false) {
     </div>
     <div class="box answers">
       <h2>What do you say?</h2>
-      <button class="soft" onclick="yesScreen('${f.name}')">💕 "${f.name}, you make me so happy. Will you be my partner?"</button>
-      <button class="soft" onclick="yesScreen('${f.name}')">🌸 "I picked this flower for you... because I really, really like you."</button>
-      <button class="soft" onclick="yesScreen('${f.name}')">🌟 "Every day is better with you in it. Will you be my special someone?"</button>
+      <button class="soft" onclick="yesScreen('${f.name}')">💍 "${f.name}, you make me so happy. Will you marry me?"</button>
+      <button class="soft" onclick="yesScreen('${f.name}')">🌸 "I picked this flower AND this ring for you... Will you be mine forever?"</button>
+      <button class="soft" onclick="yesScreen('${f.name}')">🌟 "Every day is better with you in it. Let's spend all of them together. Marry me?"</button>
     </div>
   `);
 }
@@ -5783,14 +5797,14 @@ function weddingKiss(v) {
   show(`
     ${wedTop("boop")}
       <div class="bubble"><b>${f.name}:</b> "I promise to love you forever and ever, too. 🥹💕"</div>
-      <div class="bubble"><b>Olive the Owl:</b> "Then by the power of the forest, I now pronounce you <b>partners for life!</b> You may share a nose boop! 🐽💕"</div>
+      <div class="bubble"><b>Olive the Owl:</b> "Then by the power of the forest, I now pronounce you <b>partners for life!</b> You may kiss! 💋" *a sweet little kiss, and everyone goes AWWW* ""</div>
     </div>
     <div class="box story center">
       <h2>🌈 Just Married! 🌈</h2>
       <p>Everyone in ${VILLAGE} cheers and throws flower petals! 🌸🌸🌸</p>
       <p>${friends()[3].name} the Bear baked a giant <b>six-layer rainbow wedding cake</b>, and everyone dances under the lanterns until the moon comes up. 🎂🌙💃</p>
       ${grumble}
-      <button class="green" onclick="adoptScreen('${f.name}')">What happens next? 🏡</button>
+      <button class="rainbow" onclick="moveInScreen('${f.name}')">Move in together 🏡</button>
     </div>
   `);
 }
@@ -5837,6 +5851,262 @@ function familyScreen(fname, k) {
       ${finishStory(`${S.animal[0]} 💕 ${f.emo} and their baby ${BABIES[k][0]} ${esc(babyName)}`)}
     </div>
   `);
+}
+
+// ===== Life: proposals, married life, babies, growing up, housemates, divorce court =====
+const spouse = () => S.wed && S.wed.done ? friends().find(x => x.name === S.wed.f) : null;
+const canPropose = f => !spouse() && relOf(f) === 2 && S.hearts[f.name] >= 10;
+const myKind = () => ART[S.animal[0]] || "fox";
+const lifeImg = (kind, cls = "life-pic") => `<img class="${cls}" src="art/${kind}.png" alt="">`;
+const KID_STAGES = [[0, "Baby", .34], [2, "Little kid", .5], [4, "Big kid", .64], [6, "Teen", .84], [8, "Grown-up", 1]];
+function kidStage(k) { const age = Math.max(0, S.day - k.born); let s = KID_STAGES[0]; KID_STAGES.forEach(x => { if (age >= x[0]) s = x; }); return s; }
+const KID_SAY = {
+  "Baby": ["Goo goo! *grabs your nose and won't let go*", "*giggles and blows a raspberry* Pbbbbt!", "Da-da! Ma-ma! ...Banana!", "*yawns the tiniest yawn ever*"],
+  "Little kid": ["Can we play hide and seek?? I'll hide first! *hides behind the curtain, feet showing*", "I drew you a picture! It's you! And a dragon! The dragon is nice.", "Why is the sky blue? Why? Why? Whyyyy?", "I want pancakes for dinner. And breakfast. Forever."],
+  "Big kid": ["I got a gold star at school today! Want to see?", "Can my friends come over for a sleepover? Pleeeease?", "I scored a goal at football practice! Did you see? DID YOU SEE?", "I'm basically a grown-up now. I can make toast ALL by myself."],
+  "Teen": ["Ugh, you're SO embarrassing. ...Okay, fine, you're kind of cool too.", "Can I go to the mall with my friends? I'll be back before dark, I promise.", "I made the football team!! Don't make it weird. ...Okay you can make it a little weird.", "*rolls eyes* Yes, I cleaned my room. Mostly. The floor is a shelf."],
+  "Grown-up": ["I found my own little house in town! I'll visit every Sunday for dinner.", "Thanks for raising me. You're the best parents in all of Animal Burrow.", "Guess what? I got a job at the bakery! Free cookies for family. 🍪", "Remember when I was tiny? Now I'm taller than you. Ha!"]
+};
+const CHORES = [
+  ["cook", "Cook dinner together", ["*stirs the pot* Taste this! Is it too much pepper? ...It's too much pepper.", "You chop, I'll stir. Teamwork! 🍝", "Dinner by candlelight? Look at us being fancy."]],
+  ["dishes", "Do the dishes", ["You wash, I dry. And no splashing! ...Okay, ONE splash.", "Bubbles fight! *puts bubbles on your nose*", "This is the cleanest our kitchen has ever been."]],
+  ["laundry", "Fold the laundry", ["Why do socks always lose their partner? Not like us. We stay together. 🧦", "*throws a warm towel over you* Cozy attack!", "Who owns THIS many hoodies? ...Oh. Me."]],
+  ["tidy", "Tidy the house", ["Found the TV remote! It was in the fridge. Don't ask.", "Ta-da! Now it looks like a magazine house.", "Can we dance while we tidy? *turns up the music*"]],
+  ["garden", "Water the garden", ["Look, the tomatoes are growing! We're real gardeners now.", "*sprays you with the hose* Oops! Totally an accident. 😜", "These flowers are almost as pretty as you."]],
+  ["movie", "Movie night on the sofa", ["I made popcorn! Extra butter. You can have the blanket. Half the blanket.", "If it gets scary, I'm holding your paw. For your sake. Obviously.", "Best. Movie night. Ever."]]
+];
+const KID_CHORES = [
+  ["feed", "Feed the kids", ["Here comes the airplane! Nyoooom! 🥄", "Who wants pancakes? EVERYONE wants pancakes!"]],
+  ["bath", "Bath time", ["Bubble beards for everyone! 🛁", "*splash* Okay, the bathroom is a swimming pool now."]],
+  ["story", "Bedtime story", ["...and the brave little hedgehog saved the whole forest. The end. *everyone is asleep*", "Okay, one more story. ONE. ...Okay, two."]],
+  ["school", "Walk the kids to school", ["Have a great day! Don't forget your lunch! 🎒", "*waves at the school gate* Love you! ...They're pretending not to know us."]]
+];
+const MATE_SAY = ["Hey housemate! Who ate my yogurt?! ...Was it me? It was me.", "I'm making smoothies, want one?", "House meeting! Topic: whose turn is it to take out the trash? (Yours.)", "Living here is SO fun. It's like a sleepover that never ends!", "I put a plant in the bathroom. Its name is Kevin."];
+
+function lifeChip() {
+  const sp = spouse(), kids = S.kids || [];
+  return `<span class="day">Day ${S.day} · Age ${S.age || 18}${sp ? ` · Married to ${sp.name}` : ""}${kids.length ? ` · ${kids.length} kid${kids.length > 1 ? "s" : ""}` : ""}</span>`;
+}
+function lifeNewDay() {
+  S.age = S.age || 18;
+  if (S.day > 1 && S.day % 3 === 1) {
+    S.age++;
+    setTimeout(() => { try { chime(); confetti(); popup(`<h2>Happy birthday! 🎂</h2><div class="life-row">${lifeImg(myKind())}</div><p>You're <b>${S.age}</b> now! Everyone in ${VILLAGE} sings to you.</p><button class="rainbow" onclick="closePopup()">Yay!</button>`); } catch (e) {} }, 600);
+    friends().slice(0, 3).forEach((f, n) => setTimeout(() => textFrom(f.name, pickOne([`HAPPY BIRTHDAY!!! 🎂🎉 ${S.age}?! You don't look a day over ${S.age - 1}.`, `Happy birthday, ${pet(f)}! Cake at my place later? 🎂`, `It's your birthday!! I made you a card. It has glitter. Sorry about the glitter. ✨`])), 2500 + n * 1800));
+  }
+  (S.kids || []).forEach(k => { const st = kidStage(k)[1]; if (k.stage !== st) { const was = k.stage; k.stage = st; if (was) setTimeout(() => { try { popup(`<h2>${esc(k.name)} is growing up!</h2><div class="life-row">${lifeImg(k.kind, "life-pic kid-" + st.replace(/\W/g, ""))}</div><p>${esc(k.name)} is a <b>${st.toLowerCase()}</b> now.</p><p class="bubble"><b>${esc(k.name)}:</b> "${pickOne(KID_SAY[st])}"</p><button class="rainbow" onclick="closePopup()">Aww!</button>`); } catch (e) {} }, 1200); } });
+  const sp = spouse();
+  if (!sp) {
+    const asker = friends().find(f => relOf(f) === 2 && S.hearts[f.name] >= 8 && !(S.theyAsked || {})[f.name]);
+    if (asker && Math.random() < .6) { S.proposeNext = asker.name; setTimeout(() => textFrom(asker.name, `Can you meet me at the Old Oak Tree tonight? I have something REALLY important to ask you. 💓`), 1500); }
+  }
+}
+function theyProposeScreen(fname) {
+  const f = friends().find(x => x.name === fname); S.theyAsked = S.theyAsked || {}; S.theyAsked[fname] = true; S.proposeNext = null;
+  setBg("glade"); chime();
+  show(`
+    <div class="scene" style="background:linear-gradient(#1d2157,#6a3f8c);color:#fff">
+      ${fireflies(22)}
+      <div class="place-name" style="color:var(--ink)">Under the Old Oak Tree</div>
+      <div class="life-row">${lifeImg(myKind())}<span class="life-ring">💍</span>${lifeImg(ART[f.emo])}</div>
+      <div class="bubble" style="color:var(--ink)"><b>${f.name}:</b> "${voiceLine(f, `I've been practising this all day and now I forgot every word. Okay. ${esc(S.name)}... from the first day I met you, my heart went BOOM.`)}"</div>
+      <div class="bubble" style="color:var(--ink)"><b>${f.name}:</b> "*gets down on one knee and opens a tiny box* Will you marry me? 💍"</div>
+    </div>
+    <div class="box answers">
+      <h2>${f.name} is asking you to marry them!</h2>
+      <button class="rainbow" onclick="yesScreen('${f.name}')">"YES! A million times yes!" 💕</button>
+      <button class="soft" onclick="notYet('${f.name}')">"I love you... but I'm not ready yet."</button>
+    </div>`);
+}
+function notYet(fname) {
+  const f = friends().find(x => x.name === fname); addHearts(f, -1);
+  show(`<div class="box story center"><div class="life-row">${lifeImg(ART[f.emo])}</div><div class="bubble"><b>${f.name}:</b> "Oh... okay. *closes the box slowly* That's okay. I'll wait for you. I'm not going anywhere. 🥺"</div><button onclick="mapScreen()">Back to the village</button></div>`);
+}
+function moveInScreen(fname) {
+  const f = friends().find(x => x.name === fname);
+  S.wed.done = true; S.wed.day = S.day; S.rel[fname] = 4; S.hearts[fname] = Math.max(S.hearts[fname], 6);
+  setBg("village"); chime(); floatHearts(4);
+  try { postFeed(fname, `Moving in with my ${S.gender === "boy" ? "husband" : "wife"} today!! 📦💕 Our house, our rules (mostly theirs).`); } catch (e) {}
+  show(`
+    <div class="box story center">
+      <div class="life-row">${lifeImg(myKind())}<span class="life-ring">🏡</span>${lifeImg(ART[f.emo])}</div>
+      <h2>${f.name} moves in!</h2>
+      <p>Boxes everywhere! ${f.name} brought ${pickOne(["seventeen cushions", "a giant plant called Steve", "a box labelled 'VERY IMPORTANT SNACKS'", "their favourite lamp (it's ugly, but they love it)"])}.</p>
+      <div class="bubble"><b>${f.name}:</b> "Our house. OUR house! I'm never getting used to saying that. 💕"</div>
+      <p>Now you can do home life together, start a family, and decorate your house. Tap <b>My House</b> any time.</p>
+      <button class="rainbow" onclick="houseScreen()">Go home together</button>
+      <button class="soft" onclick="mapScreen()">Back to the village</button>
+    </div>`);
+}
+function homeBox(guest) {
+  if (guest) return "";
+  const sp = spouse(), kids = S.kids || [], mates = (S.mates || []).map(n => friends().find(x => x.name === n)).filter(Boolean);
+  if (!sp && !kids.length && !mates.length) return "";
+  S.choreDay = S.choreDay || {};
+  const fam = [sp ? `<button class="soft guest-pick" onclick="lifeTalk('sp')">${lifeImg(ART[sp.emo], "")}<span>${sp.name}</span></button>` : "",
+    ...kids.map((k, n) => `<button class="soft guest-pick" onclick="lifeTalk('kid',${n})">${lifeImg(k.kind, "")}<span>${esc(k.name)} <small>${kidStage(k)[1]}</small></span></button>`),
+    ...mates.map(m => `<button class="soft guest-pick" onclick="lifeTalk('mate','${m.name}')">${lifeImg(ART[m.emo], "")}<span>${m.name} <small>Housemate</small></span></button>`)].join("");
+  const chores = sp ? CHORES.concat(kids.length ? KID_CHORES : []).map(([k, n]) => `<button class="soft ${S.choreDay[k] === S.day ? "picked" : ""}" onclick="doChore('${k}')">${n}</button>`).join("") : "";
+  return `<div class="box center"><h2>Home life</h2><div class="life-fam">${fam}</div>
+    ${chores ? `<div style="margin-top:6px">${chores}</div>` : ""}
+    <div style="margin-top:8px">${sp && kids.length < 4 ? `<button class="rainbow" onclick="babyScreen()">${kids.length ? "Have another baby" : "Start a family"} 🍼</button>` : ""}
+    ${sp ? `<button class="soft" onclick="courtScreen(0)">File for divorce ⚖️</button>` : ""}</div></div>`;
+}
+function lifeTalk(who, x) {
+  let f, line, pic;
+  if (who === "sp") { f = spouse(); pic = ART[f.emo]; line = voiceLine(f, pickOne([`Hi, ${pet(f)}! I was just thinking about you. Again. 💕`, "Want to cuddle on the sofa and do absolutely nothing?", "I love our life. I love our house. I love YOU.", "*kisses your cheek* That's for being you."])); }
+  else if (who === "kid") { const k = S.kids[x]; pic = k.kind; f = { name: k.name }; line = pickOne(KID_SAY[kidStage(k)[1]]); }
+  else { f = friends().find(y => y.name === x); pic = ART[f.emo]; line = voiceLine(f, pickOne(MATE_SAY)); }
+  chime();
+  popup(`<div class="life-row">${lifeImg(pic)}</div><div class="bubble"><b>${esc(f.name)}:</b> "${line}"</div>
+    ${who === "mate" ? `<button class="soft" onclick="mateOut('${x}')">Ask them to move out</button>` : ""}<button class="rainbow" onclick="closePopup()">Aww</button>`);
+}
+function doChore(k) {
+  const sp = spouse(); if (!sp) return; const c = CHORES.concat(KID_CHORES).find(x => x[0] === k);
+  S.choreDay = S.choreDay || {}; const first = S.choreDay[k] !== S.day; S.choreDay[k] = S.day;
+  if (first) addHearts(sp, 1); chime(); floatHearts(first ? 2 : 1);
+  popup(`<h2>${c[1]}</h2><div class="life-row">${lifeImg(myKind())}${lifeImg(ART[sp.emo])}${(S.kids || []).slice(0, 2).map(x => lifeImg(x.kind, "life-pic kid-" + kidStage(x)[1].replace(/\W/g, ""))).join("")}</div><div class="bubble"><b>${sp.name}:</b> "${voiceLine(sp, pickOne(c[2]))}"</div>${first ? "<p><b>+1 ❤️</b></p>" : ""}<button class="rainbow" onclick="closePopup();houseScreen()">Done</button>`);
+}
+function babyScreen(pick) {
+  const sp = spouse(); if (!sp) return;
+  const kinds = [myKind(), ART[sp.emo]];
+  setBg("glade");
+  show(`
+    <div class="scene" style="background:linear-gradient(#ffd6ec,#d7b8ff);">
+      ${fireflies(14)}
+      <div class="place-name">Animal Burrow Nursery</div>
+      <div class="life-row">${lifeImg(myKind())}<span class="life-ring">🧺</span>${lifeImg(ART[sp.emo])}</div>
+      <p class="story center">You and ${sp.name} make a wish together on the Rainbow Wishing Star. ✨<br>The next morning... <b>KNOCK KNOCK!</b> Stella the Stork is at the door with a little basket from the Animal Burrow Nursery. Inside is a baby who looks <b>just like both of you</b>! 🍼</p>
+    </div>
+    <div class="box center">
+      <h2>Who does the baby look like?</h2>
+      <div class="life-fam">${kinds.map((k, n) => `<button class="soft guest-pick ${pick === n ? "picked" : ""}" onclick="babyScreen(${n})">${lifeImg(k, "")}<span>${n ? `Like ${sp.name}` : "Like you"}</span></button>`).join("")}</div>
+      ${pick !== undefined ? `<p class="story">What will you name your baby?</p><input id="babyNm" maxlength="14" placeholder="Baby's name"><div><button class="rainbow" onclick="babyHome(${pick})">Bring the baby home 🏡</button></div>` : ""}
+    </div>`);
+}
+function babyHome(pick) {
+  const sp = spouse(), kind = [myKind(), ART[sp.emo]][pick];
+  let nm = (document.getElementById("babyNm").value || "").replace(/[<>]/g, "").trim();
+  if (!nm || placeNameProblem(nm)) nm = pickOne(["Bean", "Sunny", "Peaches", "Pebble", "Daisy", "Buttons", "Twig", "Honey"]);
+  S.kids = S.kids || []; S.kids.push({ name: nm, kind, born: S.day, stage: "Baby" });
+  addHearts(sp, 2); chime(); floatHearts(6); try { confetti(); } catch (e) {}
+  try { postFeed(sp.name, `Everyone meet ${nm}!!! 🍼💕 Our family just got bigger. I'm crying. Happy crying.`); } catch (e) {}
+  friends().filter(x => x.name !== sp.name).slice(0, 2).forEach((f, n) => setTimeout(() => textFrom(f.name, pickOne([`A BABY?!? Congratulations!! Can I babysit? I'll be the fun one. 🍼`, `${nm} is the cutest baby in Animal Burrow. That's a fact. 💕`, `I'm knitting ${nm} a tiny hat right now!! 🧶`])), 2000 + n * 2000));
+  show(`
+    <div class="box story center">
+      <div class="life-row">${lifeImg(myKind())}${lifeImg(kind, "life-pic kid-Baby")}${lifeImg(ART[sp.emo])}</div>
+      <h2>Welcome home, ${esc(nm)}! 🍼</h2>
+      <div class="bubble"><b>${sp.name}:</b> "${voiceLine(sp, `Look at their tiny paws! ${esc(nm)}, we're your family. We love you SO much already.`)}"</div>
+      <p>${esc(nm)} will grow up a little every couple of days: baby, little kid, big kid, teen, then grown-up!</p>
+      <button class="rainbow" onclick="houseScreen()">Go inside</button>
+    </div>`);
+}
+function askMoveIn(name) {
+  const f = friends().find(x => x.name === name); S.mates = S.mates || [];
+  if (S.mates.includes(name) || S.mates.length >= 2) return;
+  S.mates.push(name); S.guest = null; chime(); floatHearts(2); addHearts(f, 1);
+  try { postFeed(name, `New housemate alert!! I'm moving in with ${S.name}! 📦🏡`); } catch (e) {}
+  popup(`<div class="life-row">${lifeImg(ART[f.emo])}</div><h2>${f.name} moves in!</h2><div class="bubble"><b>${f.name}:</b> "${voiceLine(f, "Housemates?! YES! I call the room with the window! I'll bring snacks every day. Okay, most days.")}"</div><button class="rainbow" onclick="closePopup();houseScreen()">Welcome home!</button>`);
+}
+function mateOut(name) { S.mates = (S.mates || []).filter(n => n !== name); closePopup(); popup(`<p><b>${name}:</b> "Aww. Okay! It was fun living with you. I'm only taking ONE of the cushions." 📦</p><button class="rainbow" onclick="closePopup();houseScreen()">Bye!</button>`); }
+
+// ---- Divorce court ----
+const COURT_REASONS = [
+  ["snore", "They snore SO loud the windows rattle", "I do NOT snore! ...I purr. Loudly. That's different!"],
+  ["cookie", "They ate my last cookie. AGAIN.", "It was calling my name! What was I supposed to do, ignore it?!"],
+  ["socks", "They leave socks EVERYWHERE. Even in the fridge.", "The fridge is the only place they stay cool!"],
+  ["fun", "We just don't have fun together any more", "*sniff* ...Maybe that's true. We used to laugh all the time."]
+];
+function courtScreen(step, r) {
+  const sp = spouse(); if (!sp) return mapScreen();
+  setBg("room");
+  const reasons = COURT_REASONS.slice();
+  if (S.caughtWith) reasons.push(["other", `I fell for ${S.caughtWith}`, `I KNEW it! Everyone in ${VILLAGE} saw you two!`]);
+  const top = (judge, extra = "") => `
+    <div class="scene court">
+      <div class="place-name">${VILLAGE} Courthouse</div>
+      <div class="court-bench">${lifeImg("owl", "life-pic court-judge")}<div class="court-sign">JUDGE HOOTSWORTH</div></div>
+      <div class="life-row court-sides">${lifeImg(myKind())}<span class="court-table">⚖️</span>${lifeImg(ART[sp.emo])}</div>
+      <div class="court-crowd">${friends().filter(x => x.name !== sp.name).slice(0, 5).map(x => lifeImg(ART[x.emo], "court-face")).join("")}</div>
+      <div class="bubble"><b>Judge Hootsworth:</b> "${judge}"</div>${extra}
+    </div>`;
+  if (step === 0) return show(`${top(`ORDER! Order in the court! Hoo-HOO! ${esc(S.name)} and ${sp.name}, why are you here today?`)}
+    <div class="box answers"><h2>Tell the judge why</h2>${reasons.map(x => `<button class="soft" onclick="courtScreen(1,'${x[0]}')">"${x[1]}"</button>`).join("")}
+    <button class="soft" onclick="houseScreen()">Never mind, let's go home</button></div>`);
+  const rs = reasons.find(x => x[0] === r) || reasons[0];
+  if (step === 1) { chime(false); return show(`${top("Hmm. HOO-mmm. And what does the other side say?", `<div class="bubble"><b>${sp.name}:</b> "${rs[2]}"</div><div class="court-gasp">The whole courtroom gasps! 😮</div>`)}
+    <div class="box answers"><h2>What now?</h2>
+      <button class="soft" onclick="courtScreen(2,'${r}')">"OBJECTION!" 🙋</button>
+      <button class="rainbow" onclick="courtMakeUp()">"Wait... I'm sorry. Can we try again?" 💕</button>
+      <button class="soft" onclick="courtScreen(3,'${r}')">"Judge, please decide."</button></div>`); }
+  if (step === 2) return show(`${top(`Objection... ${pickOne(["OVERRULED! Hoo-hoo! I've always wanted to say that.", "Sustained! Wait, what were we objecting to? I forgot. Hoo.", "Noted! *writes it down with a feather* Very dramatic. I love it."])}`)}
+    <div class="box answers"><h2>Last chance</h2>
+      <button class="rainbow" onclick="courtMakeUp()">"Okay, okay. I still love you. Let's go home." 💕</button>
+      <button class="soft" onclick="courtScreen(3,'${r}')">"Judge, please decide."</button></div>`);
+  // step 3: the decision
+  const kids = S.kids || [];
+  S.exes = S.exes || []; S.exes.push(sp.name);
+  S.rel[sp.name] = 0; S.hearts[sp.name] = 2; S.wed = null; S.caughtWith = null; S.theyAsked = S.theyAsked || {}; S.theyAsked[sp.name] = true;
+  try { document.body.classList.add("door-slam"); setTimeout(() => document.body.classList.remove("door-slam"), 700); } catch (e) {}
+  try { postFeed(pickOne(friends().filter(x => x.name !== sp.name)).name, `BIG news in ${VILLAGE}: ${S.name} and ${sp.name} are getting divorced. 😱 Be nice to both of them, okay?`); } catch (e) {}
+  setTimeout(() => textFrom(sp.name, pickOne(["I'm sad... but I hope we can still be friends one day. 💔", "I packed my things. I left you the good mug. Take care of yourself. 💔"])), 4000);
+  show(`${top(`*BANG BANG* goes the gavel! The court has decided: this marriage is OVER. ${esc(S.name)} keeps the house. ${kids.length ? `The kids live with ${esc(S.name)} and visit ${sp.name} every weekend. ` : ""}${sp.name} gets the ugly lamp. And EVERYONE must stay kind to each other. Court dismissed! Hoo-hoo!`, `<div class="court-gavel">🔨</div>`)}
+    <div class="box story center"><p>${sp.name} moves out. It's sad, but you'll be okay. Your friends are here for you. 💔➡️❤️‍🩹</p>
+    <button onclick="mapScreen()">Back to the village</button></div>`);
+}
+function courtMakeUp() {
+  const sp = spouse(); addHearts(sp, 2); S.caughtWith = null; chime(); floatHearts(6);
+  show(`<div class="scene court"><div class="life-row">${lifeImg(myKind())}<span class="life-ring">💕</span>${lifeImg(ART[sp.emo])}</div>
+    <div class="bubble"><b>${sp.name}:</b> "${voiceLine(sp, "I'm sorry too. I don't want to lose you. Let's go home.")}"</div>
+    <div class="bubble"><b>Judge Hootsworth:</b> "Case DISMISSED! Love wins! *wipes a tear with a feather* I'm not crying. YOU'RE crying."</div></div>
+    <div class="box center"><p><b>+2 ❤️</b></p><button class="rainbow" onclick="houseScreen()">Go home together</button></div>`);
+}
+document.head.insertAdjacentHTML("beforeend", `<style>
+.life-row{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin:8px 0}
+.life-pic{height:120px;width:auto;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}
+.life-pic.kid-Baby{height:56px}.life-pic.kid-Littlekid{height:72px}.life-pic.kid-Bigkid{height:88px}.life-pic.kid-Teen{height:104px}
+.life-ring{font-size:44px;align-self:center}
+.life-fam{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.life-fam small{display:block;opacity:.7;font-size:11px}
+.scene.court{background:linear-gradient(#6b4a2f 0 18%,#8a5f3c 18% 62%,#c9a27a 62%);color:#fff;text-align:center;padding:14px 10px}
+.court-bench{display:inline-block;background:#4a2f1c;border:4px solid #c9a24a;border-radius:10px 10px 0 0;padding:6px 18px 0}
+.court-judge{height:110px}
+.court-sign{font-weight:800;color:#ffe9a8;letter-spacing:1px;font-size:13px;padding:4px 0}
+.court-sides .life-pic{height:110px}.court-table{font-size:40px;align-self:center}
+.court-crowd{display:flex;justify-content:center;gap:4px;margin:4px 0}.court-face{height:46px;width:auto}
+.scene.court .bubble{color:var(--ink);text-align:left}
+.court-gasp{font-weight:800;margin:6px 0}
+.court-gavel{font-size:64px;animation:gavel .5s ease-in-out 3}
+@keyframes gavel{0%{transform:rotate(-30deg)}50%{transform:rotate(25deg)}100%{transform:rotate(-30deg)}}
+</style>`);
+
+// ===== Say it, do it: if an animal says they'll be somewhere, they're really there =====
+const COMING_OVER = /\b(coming (over|to your (house|place|door))|on my way( over| to you)?|i'?ll (come|be) (over|at your (house|place))|see you at your (house|place)|i'?m (at|outside) your (house|place|door)|knocking on your door)\b/i;
+const NOT_COMING = /\b(not|can'?t|cannot|won'?t|never)\b[^.!?]{0,20}\b(come|coming|be there)\b/i;
+function lifeAbs() { try { return nowAbs(); } catch (e) { return (S.tday || 1) * 1440; } }
+function noteSay(fname, line) {
+  if (!fname || typeof line !== "string" || line.startsWith("PIC|")) return;
+  const f = friends().find(x => x.name === fname); if (!f) return;
+  if (COMING_OVER.test(line) && !NOT_COMING.test(line)) { S.atHome = { name: fname, until: lifeAbs() + 240 }; return; }
+  if (!/\b(meet|see you|i'?m at|i'?m going|i'?m heading|heading|come to|come find me|i'?ll be at|i'?ll wait)\b/i.test(line)) return;
+  const low = line.toLowerCase();
+  const names = Object.entries(WORLD_NAMES).concat(Object.entries(SHOPS).map(([k, v]) => [k, v.name])).filter(([k]) => TOWN_SPOT[k] && k !== "village");
+  const hit = names.find(([k, n]) => low.includes(n.toLowerCase().replace(/^the /, "")));
+  if (hit) { S.meetAt = S.meetAt || {}; S.meetAt[fname] = { place: hit[0], until: lifeAbs() + 180 }; }
+}
+function lifeWhere(f) {
+  const now = lifeAbs();
+  if (S.atHome && S.atHome.name === f.name && now < S.atHome.until && S.guest !== f.name) return "myhouse";
+  const m = S.meetAt && S.meetAt[f.name]; if (m && now < m.until) return m.place;
+  return "";
+}
+// jealousy: your sweetheart sees (or hears about) you kissing someone else
+function jealousCheck(f, where) {
+  const sh = sweetheart(); if (!sh || sh.name === f.name || S.caught) return;
+  let saw = false;
+  if (W3 && W3.people) { const q = W3.people.find(p => p.f && p.f.name === sh.name && p.grp && p.grp.visible && Math.hypot(p.grp.position.x - W3.x, p.grp.position.z - W3.z) < 30); if (q) { saw = true; try { w3Say(q, pickOne(["EXCUSE me?! 😠", "Are you SERIOUS right now?!", "I can SEE you, you know! 😤"]), 5); } catch (e) {} } }
+  if (where === "your house" && spouse() && spouse().name === sh.name) saw = true;
+  maybeCaught(f.name, saw ? 1 : .5, where);
 }
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
