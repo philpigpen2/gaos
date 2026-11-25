@@ -373,6 +373,68 @@
   .walk-grid .act-btn { height:74px; font-size:15px; }
   /* ===== Full-screen "through your eyes" ===== */
   .pov-exit { display:none; }
+  .show-stage .spot { position:absolute; left:50%; top:-10%; width:70%; height:120%; transform:translateX(-50%); background:radial-gradient(ellipse at 50% 100%, rgba(255,240,190,.45), transparent 60%); pointer-events:none; z-index:2; animation:spotSway 6s ease-in-out infinite; }
+  @keyframes spotSway { 0%,100% { transform:translateX(-56%) } 50% { transform:translateX(-44%) } }
+  .show-animal { pointer-events:none; }
+  .show-animal .door { height:100%; aspect-ratio:3/5; margin:0 auto; border-radius:40% 40% 6px 6px / 22% 22% 6px 6px; background:linear-gradient(135deg,#ff7eb3,#ffb86b 35%,#ffe66b 55%,#7ee0a1 75%,#7ab8ff); border:4px solid #fff6; box-shadow:0 10px 24px rgba(0,0,0,.45), inset 0 0 0 6px rgba(255,255,255,.35); color:#fff; font:900 42px/1 inherit; display:flex; align-items:center; justify-content:center; text-shadow:0 2px 6px rgba(0,0,0,.4); }
+  body.gshow .pov-stage { display:block !important; }
+  body.immersive.gshow .scene.pov > .bubble { max-height:30vh; overflow-y:auto; }
+  body.immersive .walk-stage { inset:0; animation:none; background:#0d0a14 !important; touch-action:none; user-select:none; -webkit-user-select:none; }
+  .walk-cam { position:absolute; inset:-12px; will-change:transform; }
+  .walk-bg { position:absolute; background-size:100% 100%; background-repeat:no-repeat; will-change:transform; filter:saturate(1.06) contrast(1.04); }
+  .walk-haze { position:absolute; inset:0; pointer-events:none; z-index:1001; background:linear-gradient(180deg, transparent 30%, var(--haze) 46%, transparent 62%), radial-gradient(ellipse at 50% 30%, rgba(255,240,200,.12), transparent 60%); mix-blend-mode:screen; }
+  .walker { position:absolute; transform:translateX(-50%); background:none; box-shadow:none; padding:0; margin:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; border-radius:0; }
+  .walker img { height:100%; filter:drop-shadow(0 8px 10px rgba(0,0,0,.35)); animation:breatheW 3.2s ease-in-out infinite; transform-origin:50% 100%; }
+  .walker img.flip { transform:scaleX(-1); animation-name:breatheWf; }
+  .walker.walking img { animation:waddle .5s ease-in-out infinite; }
+  .walker.walking img.flip { animation-name:waddleF; }
+  @keyframes breatheW { 0%,100% { transform:scale(1,1) } 50% { transform:scale(1.012,1.022) } }
+  @keyframes breatheWf { 0%,100% { transform:scaleX(-1) } 50% { transform:scale(-1.012,1.022) } }
+  @keyframes waddle { 0%,100% { transform:translateY(0) rotate(-1.5deg) } 50% { transform:translateY(-3%) rotate(1.5deg) } }
+  @keyframes waddleF { 0%,100% { transform:scaleX(-1) translateY(0) rotate(-1.5deg) } 50% { transform:scaleX(-1) translateY(-3%) rotate(1.5deg) } }
+  .walker::after { content:""; position:absolute; bottom:-3%; left:8%; right:8%; height:8%; border-radius:50%; background:radial-gradient(rgba(0,0,0,.5), transparent 70%); z-index:-1; }
+  .walker span { position:absolute; top:-26px; white-space:nowrap; background:rgba(20,12,30,.5); color:#fff; font-size:13px; padding:3px 10px; border-radius:20px; backdrop-filter:blur(4px); }
+  .walk-near { display:none; position:absolute; left:50%; transform:translateX(-50%); bottom:calc(var(--boxh, 170px) + 96px); z-index:1100; background:rgba(255,255,255,.92); color:var(--ink); border-radius:30px; padding:12px 22px; font-size:17px; box-shadow:0 6px 20px rgba(0,0,0,.35); animation:pop .3s; }
+  .dpad { position:absolute; right:14px; bottom:calc(var(--boxh, 170px) + 12px); width:132px; height:132px; z-index:1100; }
+  .dp { position:absolute; width:46px; height:46px; padding:0; margin:0; border-radius:50%; background:rgba(20,12,30,.45); backdrop-filter:blur(6px); box-shadow:0 3px 10px rgba(0,0,0,.3); touch-action:none; }
+  .dp::after { content:""; position:absolute; left:50%; top:50%; border:9px solid transparent; transform:translate(-50%,-50%); }
+  .dp:active { background:rgba(255,255,255,.55); }
+  .dp.up { left:43px; top:0; } .dp.up::after { border-bottom:13px solid #fff; border-top-width:0; }
+  .dp.down { left:43px; bottom:0; } .dp.down::after { border-top:13px solid #fff; border-bottom-width:0; }
+  .dp.left { left:0; top:43px; } .dp.left::after { border-right:13px solid #fff; border-left-width:0; }
+  .dp.right { right:0; top:43px; } .dp.right::after { border-left:13px solid #fff; border-right-width:0; }
+  .walk-hint { position:absolute; left:14px; right:160px; bottom:calc(var(--boxh, 170px) + 30px); z-index:1100; color:#fff; font-size:14px; text-shadow:0 1px 4px rgba(0,0,0,.7); transition:opacity .6s; pointer-events:none; }
+  body.walking .walk-stage .pov-label, body.walking .walk-stage .pov-exit { z-index:1200; }
+  body.immersive.walking .box { max-height:none; padding-top:10px; }
+  body.immersive.walking .walk-grid .act-btn { height:58px; flex-basis:104px; }
+  body.immersive .pov-stage:not(.walk-stage) .pov-exit { top:calc(3% + 12px); right:calc(3% + 12px); }
+  body.immersive.gshow .world-animal { bottom:calc(var(--boxh, 200px) + var(--y) * .5) !important; height:calc(var(--h) * .7) !important; }
+  .walker.shop img { animation:none; filter:drop-shadow(0 12px 14px rgba(0,0,0,.4)); }
+  .walker.shop::after { bottom:-1%; left:4%; right:4%; height:6%; }
+  .pov-other.keeper { left:70%; bottom:30%; height:34%; animation:none; filter:brightness(.95) blur(.4px); }
+  .date-pick { position:relative; background:rgba(255,255,255,.85) !important; }
+  .date-pick img { position:absolute; left:50%; top:4px; height:62%; transform:translateX(-50%); }
+  .date-pick span { position:absolute; bottom:4px; left:0; right:0; color:var(--ink) !important; text-shadow:none !important; }
+  body.immersive .scene.pov > p.story { position:fixed; left:12px; right:12px; top:68px; z-index:12; margin:0; background:rgba(255,255,255,.9); border-radius:18px; padding:10px 14px; font-size:16px; }
+  body.immersive .scene.pov > p.story + .bubble { top:auto; bottom:calc(var(--boxh, 200px) + 10px); }
+  body.immersive .pov-other.keeper { left:70%; bottom:calc(var(--boxh, 200px) + 18vh); height:22%; }
+  body.immersive.walking .walk-grid .act-btn { height:48px; flex-basis:96px; font-size:13px; }
+  .walk-btns { display:flex; gap:6px; justify-content:center; margin-top:6px; }
+  .walk-btns button { margin:0; padding:9px 14px; font-size:15px; }
+  body.immersive.walking .walk-grid { scrollbar-width:none; } body.immersive.walking .walk-grid::-webkit-scrollbar { display:none; }
+  #sky { display:none; position:fixed; inset:0; z-index:6; pointer-events:none; background:var(--sky); opacity:var(--a); mix-blend-mode:multiply; transition:opacity 1s, background 1s; }
+  body.immersive #sky { display:block; }
+  body.immersive.house #sky, body.immersive.gshow #sky { opacity:calc(var(--a) * .45); }
+  #sky .stars-lay { position:absolute; inset:0 0 50% 0; opacity:0; transition:opacity 2s; mix-blend-mode:screen; background-image:radial-gradient(1.5px 1.5px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 33% 8%, #fff, transparent), radial-gradient(1.5px 1.5px at 58% 22%, #fff, transparent), radial-gradient(1px 1px at 77% 12%, #fff, transparent), radial-gradient(2px 2px at 89% 30%, #fff, transparent), radial-gradient(1px 1px at 46% 35%, #fff, transparent), radial-gradient(1px 1px at 22% 40%, #fff, transparent), radial-gradient(1.5px 1.5px at 68% 5%, #fff, transparent); }
+  body.immersive.world #sky.night .stars-lay { opacity:1; }
+  #clock { position:fixed; top:58px; left:12px; z-index:1300; display:none; align-items:center; gap:7px; margin:0; padding:5px 11px 5px 7px; border-radius:20px; background:rgba(20,12,30,.5); color:#fff; font-size:14px; box-shadow:none; backdrop-filter:blur(6px); }
+  body.immersive #clock { display:flex; }
+  #clock i { width:16px; height:16px; border-radius:50%; background:radial-gradient(circle at 40% 40%, #fff7c2, #ffc83d); box-shadow:0 0 8px #ffd54a; }
+  #clock.night i { background:radial-gradient(circle at 65% 35%, transparent 45%, #f3f0ff 47%); box-shadow:none; }
+  #call { z-index:1500 !important; }
+  #clockPanel { position:fixed; left:12px; right:12px; top:100px; z-index:1400; background:rgba(255,255,255,.96); border-radius:22px; padding:14px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.35); max-height:70vh; overflow-y:auto; }
+  #clockPanel h2 { margin:0 0 6px; } #clockPanel p { margin:4px 0; font-size:15px; }
+  .ph-plan { background:linear-gradient(90deg,#ffb347,#ff6fae); box-shadow:0 4px 0 #b0436f; }
   body.immersive { overflow:hidden; }
   body.immersive #app { width:100%; padding:0; }
   body.immersive #app > h1, body.immersive .bgl, body.immersive .srv-btn, body.immersive .eyes-btn, body.immersive .scr-btn, body.immersive .scroll-btns, body.immersive .side-go { display:none !important; }
@@ -398,6 +460,22 @@
   body.immersive.meet .pov-face.side { height:40%; }
   body.immersive.meet .pov-hearts { bottom:58%; }
   body.immersive .pov-other { bottom:calc(var(--oy, 24%) + 120px); }
+  body.immersive.house #app > p.sub, body.immersive.house .me-in-room, body.immersive.house .guest-in-room, body.immersive.house .house-panel .scene.pov { display:none !important; }
+  body.immersive.house .room { position:fixed; inset:0; height:auto; border-radius:0; z-index:5; background-size:cover !important; background-position:center !important; }
+  body.immersive.house .room::before { content:""; position:absolute; inset:0; z-index:300; pointer-events:none; background:radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(5,2,12,.55) 100%); }
+  body.immersive.house .room .pov-label { position:absolute; top:14px; left:12px; z-index:310; }
+  body.immersive.house .room .pov-exit { z-index:320; }
+  body.immersive.house .room .lids::before, body.immersive.house .room .lids::after { z-index:400; }
+  .room-face { pointer-events:none; z-index:250 !important; }
+  body.immersive.house .room-face { bottom:42vh; height:44%; }
+  body.immersive.house .room-face.side { height:36%; }
+  body.immersive.house .room .pov-hearts { bottom:60%; z-index:260; }
+  body.immersive.house .house-panel { position:fixed; left:0; right:0; bottom:0; z-index:20; max-height:44vh; overflow-y:auto; padding:6px 12px calc(10px + env(safe-area-inset-bottom));
+    background:rgba(255,250,242,.82); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-radius:24px 24px 0 0; box-shadow:0 -6px 24px rgba(0,0,0,.25); }
+  body.immersive.house .house-panel .box { position:static; max-height:none; background:none; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; padding:6px 0; margin:0; border-radius:0; }
+  body.immersive.house .house-panel .grid { display:flex; overflow-x:auto; gap:8px; padding-bottom:6px; }
+  body.immersive.house .house-panel .grid button { flex:0 0 92px; }
+  body.immersive.house .house-panel h2 { font-size:19px; margin:4px 0; }
   .act-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
   .act-btn { position:relative; height:96px; border-radius:18px; padding:0; overflow:hidden; background-size:cover; background-position:center; box-shadow:0 4px 0 #c9a2b8; color:#fff; font-size:17px; display:flex; align-items:flex-end; justify-content:center; }
   .act-btn span { width:100%; padding:6px 6px 8px; background:linear-gradient(transparent, rgba(0,0,0,.65)); text-shadow:0 1px 3px #000; }
@@ -712,7 +790,7 @@ window.addEventListener("scroll", scrollButtons, { passive:true });
 window.addEventListener("resize", scrollButtons);
 setInterval(scrollButtons, 700);
 function show(html) {
-  document.body.classList.remove("immersive", "world", "meet");
+  document.body.classList.remove("immersive", "world", "meet", "house", "gshow", "walking"); WALK = null;
   app.innerHTML = html;
   app.classList.remove("enter"); void app.offsetWidth; app.classList.add("enter");
   const m = html.match(/url\(art\/(\w+)\.png\)/); if (m) setBg(m[1]);
@@ -722,6 +800,8 @@ function show(html) {
   app.querySelectorAll(".bubble").forEach(b => wordsIn(b, 0.07));
   app.querySelectorAll(".story > p").forEach(b => wordsIn(b, 0.03));
   window.scrollTo(0, 0);
+  try { updateSky(); } catch (e) {}
+  requestAnimationFrame(() => { const bx = document.querySelector("body.immersive .box"); if (bx) document.documentElement.style.setProperty("--boxh", bx.offsetHeight + "px"); });
 }
 
 // ====== Screens ======
@@ -1075,7 +1155,7 @@ function mapScreen() {
   show(`
     <div class="center"><span class="day">☀️ Day ${S.day} of ${DAYS}</span></div>
     <div class="banner"><h1 style="font-size:44px;margin:0">${VILLAGE}</h1></div>
-    <div class="center"><button class="green" onclick="houseScreen()">My House</button><button class="green" onclick="profileScreen()">My Dating Profile</button><button class="rainbow" onclick="swipeScreen()">Paw Match</button><button class="rainbow" onclick="eyesScreen()">Look through my eyes</button></div>
+    <div class="center"><button class="green" onclick="houseScreen()">My House</button><button class="green" onclick="profileScreen()">My Dating Profile</button><button class="rainbow" onclick="swipeScreen()">Paw Match</button><button class="rainbow" onclick="eyesScreen()">Look through my eyes</button><button class="rainbow" onclick="gameShows()">Game Shows</button></div>
     ${MODE === 2 ? `<p class="sub"><b>${S.animal[0]} ${esc(S.name)}'s turn 🎮</b></p>` : ""}
     <p class="sub">Who do you want to hang out with today?</p>
     <div class="box">
@@ -2101,6 +2181,7 @@ function openPhone(thread) {
     ph.innerHTML = `<div class="ph-screen">
       <div class="ph-top"><button class="ph-x" onclick="openPhone()">Back</button>${face(f)}<b>${f.name}</b></div>
       <button class="ph-meet" onclick="putPhoneDown('${f.name}')">Put the phone down and go see ${f.name}</button>
+      <button class="ph-meet ph-plan" onclick="planScreen('${f.name}')">Make plans with ${f.name}</button>
       <div class="ph-msgs" id="phMsgs">${texts(thread).map(msgHTML).join("")}</div>
       <div class="emoji-bar">${TEXT_EMOJI.map(e => `<button class="emo-btn" onclick="addEmoji('${e}')">${e}</button>`).join("")}</div>
       <div class="ph-type"><input id="phIn" maxlength="140" autocomplete="off" placeholder="Text ${f.name}..." onkeydown="if(event.key==='Enter')sendText('${f.name}')"><button onclick="sendText('${f.name}')">Send</button></div>
@@ -2115,6 +2196,38 @@ function addEmoji(e) { const i = document.getElementById("phIn"); i.value += e; 
 const LOVE_EMOJI = ["❤️","💕","💖","🥰","😍","😘"];
 const REPLY_EMOJI = { blush:["😳","🥺","☺️","💕"], happy:["🥰","💖","✨","😊"], nod:["😊","🙂","🌸"], close:["🤗","💕"], confused:["😢","🥺"] };
 // extra messages they send after their first reply, like a real texter
+// ===== Soap-opera texting: sassy, dramatic, gossipy, and lovey-dovey once you're close (kid-friendly sass, never cruel) =====
+const SOAP = {
+  gossip: ["Also. Did you hear {O} and {O2} were at the pond TOGETHER? 👀 I'm just saying.", "Okay don't tell ANYONE but {O} tripped into the honey pot today. 🍯😂 Iconic.",
+    "{O} said my scarf was 'interesting.' INTERESTING?! 😤 The nerve.", "So {O} is NOT talking to {O2} right now. I know why. I'm not telling. 🤐 ...okay maybe later.",
+    "Breaking news: {O} is baking a cake for someone. WHO?! 👀", "Guess who just walked past my house twice. {O}. Twice. Suspicious. 🕵️",
+    "{O} asked me about you today. I said nothing. NOTHING. 💅", "The whole village is talking about the Lantern Festival. Who are you going with? 👀"],
+  sass: ["And another thing... you took forever to reply. I counted. 🙄", "Not you leaving me on read earlier. 😤", "I'm not jealous. I'm just very... observant. 💅",
+    "Wow. Okay. I see how it is. 😒 ...I'm kidding. Mostly.", "Excuse me?? Say that again. Slowly. 💅", "Hmph. 😤", "The DRAMA in this village today. I can't. 🙄",
+    "Don't 'lol' me. 😤 ...okay fine, lol.", "Plot twist: I'm still mad you didn't wave at me yesterday. 😒"],
+  drama: ["We need to talk. ...JK. Unless?? 👀", "This is the most dramatic day of my ENTIRE life. 😱", "*gasps* *gasps again* *faints* 😵", "Okay so this changes EVERYTHING. 😱",
+    "I can't believe what just happened at the pond. I'll tell you tomorrow. 😏", "Brb, dramatically staring out the window. 🌧️"],
+  sweet0: ["Anyway. You're kind of cool, I guess. 🙄 Don't let it go to your head.", "Okay fine, you're fun to text. 😏", "You're the best person to gossip with. Don't tell {O}. 🤫"],
+  sweet1: ["Ugh, why do you have to be so cute?? It's SO annoying. 😳", "Not me smiling at my phone because of YOU. 🙈", "If {O} texts you, ignore it. You're MY texting buddy. 😤💕"],
+  sweet2: ["...but you know I adore you, right? 💕", "Text me back RIGHT now or I'll faint. 💕 (Dramatically.)", "I'd fight the whole village for you. Verbally. 😤💖", "You're mine and everyone knows it. 💍💕", "Ugh. I love you. There, I said it. 😍"],
+  short: ["'{X}'?? That's IT? 🙄", "Wow, '{X}.' So much detail. 😒", "'{X}'? Hello?? I need MORE. 💅", "That's all I get? '{X}'? Rude. 😤 ...hi though."]
+};
+function soapLines(f, said, r) {
+  if (r.safe || r.fixed) return [];
+  const others = friends().filter(x => x.name !== f.name).sort(() => Math.random() - .5);
+  const fill = x => x.replaceAll("{O}", others[0].name).replaceAll("{O2}", others[1].name);
+  const st = stageOf(f), out = [];
+  if (r.mood === "confused") return [pickOne(["I CANNOT believe you right now. 😤", "Wow. WOW. 😒", "*slams phone down* ...*picks it back up* Still mad. 😤"])];
+  const pool = [...SOAP.gossip, ...SOAP.sass, ...SOAP.drama];
+  out.push(fill(pickOne(pool)));
+  if (Math.random() < 0.6) out.push(fill(pickOne(st === 0 ? SOAP.sweet0 : st === 1 ? SOAP.sweet1 : SOAP.sweet2)));
+  return out;
+}
+function soapFirst(f, said, r) {
+  const n = normalize(said);
+  if (!r.safe && /^(ok|k|lol|same|idk|i don't know|hmm|cool|nice|fine|yeah|ya|sure|wow)$/.test(n) && Math.random() < 0.6) return pickOne(SOAP.short).replace("{X}", said.trim().slice(0, 12));
+  return null;
+}
 const FOLLOW = {
   shy: [["Um... can I tell you something?", "I really, really like texting you. 🥺"], ["Sorry if I'm texting too much!", "You just make me happy. 🌸"], ["I'm smiling at my phone right now.", "Is that weird? 😳"]],
   adventure: [["Also!! Guess what I found today?", "A SECRET waterfall. We HAVE to go together. ✨"], ["Wait, are you free tomorrow?", "I want to show you the view from Starry Hill! ⭐"], ["Okay I can't stop grinning", "You're the best, you know that? 💖"]],
@@ -2172,7 +2285,13 @@ function tryRing() {
   const ok = S && S.hearts && Object.keys(S.hearts).length && S.profileDone && document.getElementById("phone").style.display === "none" && !RINGING;
   const quiet = n => S.byeAt && S.byeAt[n] && Date.now() - S.byeAt[n] < 240000;
   const callers = ok ? friends().filter(x => !quiet(x.name)) : [];
-  if (callers.length) ring(pickOne(callers).name);
+  if (callers.length) {
+    const who = pickOne(callers);
+    if (Math.random() < 0.2 && !S.rumor) { sendRumor(who); chime(); }
+    else if (Math.random() < 0.45) { const others = friends().filter(x => x.name !== who.name).sort(() => Math.random() - .5);
+      textFrom(who.name, pickOne([...SOAP.gossip, ...SOAP.drama]).replaceAll("{O}", others[0].name).replaceAll("{O2}", others[1].name)); chime(); }
+    else ring(who.name);
+  }
   ringLater();
 }
 function ring(fname) {
@@ -2231,6 +2350,8 @@ function sendText(fname) {
     addHearts(f, -1);
     return setTimeout(() => deliver(fname, [...pickOne(TEXT_FIGHT[f.type]), "(-1 heart)"]), 1200);
   }
+  const rumor = rumorReply(f, said);
+  if (rumor) { addHearts(f, 1); rumor[2] += "  (+1 heart)"; return setTimeout(() => deliver(fname, rumor), 1200); }
   if (KID_PHOTO.test(said)) return setTimeout(() => deliver(fname, [pickOne(["Aww, that's sweet! But let's not send real photos of you, okay? That's a big safety rule online. I'll send you one of me instead!", "Real photos of you stay private, even with me! That's the rule. But here, have a picture of ME!"]), makePhoto(f, "selfie")]), 1200);
   if (PHOTO_ASK.test(said)) { addHearts(f, S.textDay?.[fname] === S.day ? 0 : 1); return setTimeout(() => deliver(fname, [pickOne(["Okay, hold on! Let me find my good side...", "A picture? Of ME? Okay, okay, one second!", "Hehe, okay! Don't laugh!"]), makePhoto(f, pickOne(["selfie", "selfie", "item"])), pickOne(["What do you think?", "Was that okay? I'm blushing.", "Your turn to tell me about your day!"])]), 1200); }
   setTimeout(() => {
@@ -2245,8 +2366,9 @@ function sendText(fname) {
     if (pts) chime();
     const bye = /\b(bye|byee|good night|got to go|talk to you later|see you|be right back|cya|later|i have to go|i need to go|leaving)\b/.test(normalize(said)) && !r.safe;
     if (bye) { S.byeAt = S.byeAt || {}; S.byeAt[fname] = Date.now(); }
-    const extra = FOLLOW[f.type][Math.floor(Math.random() * FOLLOW[f.type].length)];
-    const lines = [r.say + " " + em[Math.floor(Math.random() * em.length)], ...(bye ? [] : extra.slice(0, 1 + Math.floor(Math.random() * extra.length)))];
+    const extra = Math.random() < 0.3 ? FOLLOW[f.type][Math.floor(Math.random() * FOLLOW[f.type].length)].slice(0, 1) : soapLines(f, said, r);
+    const sass = soapFirst(f, said, r);
+    const lines = [...(sass ? [sass] : []), r.say + " " + em[Math.floor(Math.random() * em.length)], ...(bye ? [] : extra)];
     if (pts > 0) lines[lines.length - 1] += `  (+${pts} heart${pts > 1 ? "s" : ""})`;
     if (pts < 0) lines[lines.length - 1] += `  (${pts} heart)`;
     if (!bye && !r.safe && pts >= 0 && !S.fightOpen?.[fname] && Math.random() < 0.18) lines.push(makePhoto(f));
@@ -2454,6 +2576,7 @@ function actBack() {
   const a = S.act || {}; const f = friends()[a.i];
   if (a.from === "house") return houseScreen();
   if (a.from === "meet") return renderMeet();
+  if (a.from === "shop") return eyesScreen();
   if (a.from === "date") { S.lastHang = f.name; return endDay(); }
   return mapScreen();
 }
@@ -2482,12 +2605,195 @@ function activity(key, step, pick = -1) {
       <button class="soft" onclick="actBack()">${S.act.from === "date" ? "Finish the date" : "Done"}</button></div>`;
     if (pts) { chime(); floatHearts(pts); }
   }
-  show(`<div class="scene pov">${povStage(f, ACT_BG[A[2]], A[1], mood, "act" + key)}
+  const keeper = A[7] && SHOPS[A[7]] ? `<img class="pov-other keeper" src="art/${SHOPS[A[7]].art}.png" alt="">` : "";
+  show(`<div class="scene pov">${povStage(f, ACT_BG[A[2]], A[1], mood, "act" + key, keeper, !!keeper)}
       ${story ? `<p class="story" style="text-align:center">${story}</p>` : ""}
       ${say ? `<div class="bubble"><b>${f.name}:</b> "${say}"</div>` : ""}
     </div>
     <div class="box center">${qs}${end}</div>`);
   app.classList.remove("enter");
+  document.body.classList.add("immersive", "meet"); scrollTo(0, 0);
+}
+
+// ===== Game shows: apply, get picked, play on TV =====
+const SHOWS = [
+  { k:"quiz",   name:"Acorn Quiz Showdown", bg:"tvstudio",    blurb:"Answer quick questions and beat your rival.", prize:"Golden Acorn" },
+  { k:"talent", name:"Sparkle Stage",       bg:"talentstage", blurb:"Show your talent to three judges.",          prize:"Sparkle Star" },
+  { k:"date",   name:"Mystery Date Doors",  bg:"tvstudio",    blurb:"Three doors, three secret animals. Pick one for a date!", prize:"Rose Ribbon" },
+  { k:"bake",   name:"Bake Battle",         bg:"kitchen",     blurb:"Out-bake your rival before the timer runs out.", prize:"Golden Whisk" }
+];
+const SHOW_BG = k => ({ tvstudio:"url(art/tvstudio.png) center/cover, radial-gradient(circle at 50% 30%, #ffd86b, #c2185b 45%, #2a0f45)",
+  talentstage:"url(art/talentstage.png) center/cover, radial-gradient(circle at 50% 40%, #fff3b0, #8e1b3a 50%, #1a0a24)", kitchen:ACT_BG.kitchen })[k] || ACT_BG[k.replace("in_", "")] || `url(art/${k}.png) center/cover, #3a2a20`;
+const HOST = "Hoot";
+const showOf = k => SHOWS.find(s => s.k === k);
+const fName = n => friends().find(x => x.name === n);
+function stageScreen(bg, label, people, bubble, panel) {
+  // people: [[friend or "host", x%, size%, mood]]
+  const art = p => p === "host" ? "owl" : p.art || ART[p.emo];
+  const who = people.map(([p, x, h, hidden], n) => `<div class="world-animal show-animal ${hidden ? "hidden-door" : ""}" style="left:${x}%;bottom:${n % 2 ? 4 : 0}%;--y:${n % 2 ? 4 : 0}%;--h:${h}%;height:${h}%;z-index:${10 - n};animation-delay:${-n * 0.6}s">
+      ${hidden ? `<div class="door">${hidden}</div>` : `<img class="${x > 50 ? "flip" : ""}" src="art/${art(p)}.png" alt="">`}<span>${hidden ? "Door " + hidden : p === "host" ? HOST + " (host)" : p.name}</span></div>`).join("");
+  show(`<h1 style="font-size:34px">${label}</h1>
+    <div class="scene pov" style="padding:var(--pad)"><div class="pov-stage show-stage" style="background:${SHOW_BG(bg)}">
+      <div class="spot"></div><div class="pov-label">${label}</div><button class="pov-exit" onclick="mapScreen()">Exit</button>${who}
+    </div>${bubble ? `<div class="bubble">${bubble}</div>` : ""}</div>
+    <div class="box center">${panel}</div>`);
+  app.classList.remove("enter");
+  document.body.classList.add("immersive", "world", "gshow"); scrollTo(0, 0);
+}
+function gameShows() {
+  S.trophies = S.trophies || {};
+  const won = SHOWS.filter(s => S.trophies[s.k]).map(s => `${s.prize} x${S.trophies[s.k]}`).join(", ");
+  stageScreen("tvstudio", "Game Shows", [["host", 50, 46]],
+    `<b>${HOST}:</b> "${pickOne(["Welcome, welcome! Which show do you want to be on today?", "Lights! Camera! YOU! Pick a show and apply!", "Ooh, a new star! Which show are you applying for?"])}"`,
+    `<h2>Apply for a show</h2><div class="walk-grid">
+      ${SHOWS.map(s => `<button class="act-btn" style="background:${SHOW_BG(s.bg)}" onclick="applyShow('${s.k}')"><span>${s.name}</span></button>`).join("")}</div>
+      ${won ? `<p class="sub" style="margin:8px 0 0">Your trophies: ${won}</p>` : ""}
+      <div style="margin-top:8px"><button class="soft" onclick="mapScreen()">Back to the village</button></div>`);
+}
+const APPLY_WHY = [["I'm super smart", "Smart AND brave. I like it!"], ["I'm a total superstar", "A superstar! The cameras will LOVE you."], ["My friends dared me", "Hoo hoo! The best stars start with a dare."], ["I just want to WIN", "Ooh, fierce! That's what TV needs."]];
+function applyShow(k, step = 0, pick = 0) {
+  const s = showOf(k);
+  if (step === 0) return stageScreen(s.bg, s.name, [["host", 50, 46]], `<b>${HOST}:</b> "So you want to be on <b>${s.name}</b>? ${s.blurb} Fill in your application!"`,
+    `<h2>Why should you be on the show?</h2>${APPLY_WHY.map((w, n) => `<button class="soft" onclick="applyShow('${k}', 1, ${n})">${w[0]}</button>`).join("")}
+     <div style="margin-top:6px"><button class="soft" onclick="gameShows()">Pick a different show</button></div>`);
+  if (step === 1) { stageScreen(s.bg, s.name, [["host", 50, 46]], `<b>${HOST}:</b> "${APPLY_WHY[pick][1]} *opens a big golden envelope*..."`, `<h2>Checking your application...</h2><p class="sub">Fingers crossed!</p>`);
+    return setTimeout(() => applyShow(k, 2), 1800); }
+  chime(); floatHearts(3, "⭐");
+  const tattle = pickOne(friends());
+  setTimeout(() => textFrom(tattle.name, pickOne([`Wait. You're going on ${s.name}?? And you didn't tell me FIRST?? 😤`, `Everyone is saying you got picked for ${s.name}!! I'm watching. Don't embarrass us. 💅`, `OMG ${s.name}!! I'm making popcorn. 🍿 Win it or I'm not talking to you. (Kidding. Mostly.)`])), 2500);
+  stageScreen(s.bg, s.name, [["host", 50, 46]], `<b>${HOST}:</b> "YOU'RE IN! Welcome to <b>${s.name}</b>! Places, everyone!"`,
+    `<button class="rainbow" onclick="startShow('${k}')">Walk onto the stage</button>`);
+}
+function startShow(k) {
+  const all = friends().slice().sort(() => Math.random() - .5);
+  S.gs = { k, rival: all[0].name, step: 0, me: 0, them: 0 };
+  if (k === "quiz") { S.gs.qs = QUIZ.slice().sort(() => Math.random() - .5).slice(0, 5); return quizShow(); }
+  if (k === "talent") { S.gs.judges = all.slice(0, 3).map(f => f.name); return talentShow(); }
+  if (k === "date") { const seen = new Set(); S.gs.doors = all.filter(f => !seen.has(f.type) && seen.add(f.type)).slice(0, 3).map(f => f.name); S.gs.qn = 0; S.gs.qsUsed = []; return dateShow(); }
+  S.gs.judges = all.slice(1, 3).map(f => f.name); return bakeShow();
+}
+// --- Acorn Quiz Showdown ---
+const QUIZ = [
+  ["How many legs does a spider have?", ["6", "8", "10"], 1], ["What do bees make?", ["Milk", "Honey", "Jam"], 1],
+  ["Which animal is the tallest?", ["Giraffe", "Elephant", "Bear"], 0], ["Blue + yellow paint makes...?", ["Green", "Purple", "Orange"], 0],
+  ["What's a baby kangaroo called?", ["A joey", "A kit", "A calf"], 0], ["How many days are in a week?", ["5", "7", "10"], 1],
+  ["What do caterpillars turn into?", ["Butterflies", "Bees", "Birds"], 0], ["Which animal sleeps all winter?", ["Owl", "Bear", "Deer"], 1],
+  ["How many colors are in a rainbow?", ["5", "7", "9"], 1], ["Which bird hoots at night?", ["Robin", "Duck", "Owl"], 2],
+  ["What do pandas mostly eat?", ["Bamboo", "Fish", "Carrots"], 0], ["Which is the biggest ocean?", ["Atlantic", "Pacific", "Indian"], 1],
+  ["How many sides does a triangle have?", ["3", "4", "5"], 0], ["What is 7 x 8?", ["54", "56", "58"], 1],
+  ["Which animal has black and white stripes?", ["Lion", "Hippo", "Zebra"], 2], ["What planet do we live on?", ["Mars", "Earth", "Venus"], 1],
+  ["Frozen water is called...?", ["Steam", "Ice", "Mud"], 1], ["Which one is a mammal?", ["Dolphin", "Shark", "Goldfish"], 0],
+  ["Where do penguins live?", ["The desert", "The jungle", "Antarctica"], 2], ["How many legs does an insect have?", ["4", "6", "8"], 1]
+];
+function quizShow(pick) {
+  const g = S.gs, r = fName(g.rival); let say = "";
+  if (pick !== undefined) {
+    const q = g.qs[g.step], right = pick === q[2], theyRight = Math.random() < 0.55;
+    if (right) g.me++; if (theyRight) g.them++;
+    say = `<b>${HOST}:</b> "${right ? pickOne(["CORRECT!", "Yes! Point for you!", "Hoo hoo, RIGHT!"]) : `Ooh, no! It was ${q[1][q[2]]}.`}"<br><b>${r.name}:</b> "${right ? pickOne(["Ugh. Lucky guess. 🙄", "Okay, show-off. 💅", "I KNEW that. I was just being nice."]) : theyRight ? pickOne(["Too easy. 😏", "Hehe. Point for me!", "Sorry not sorry! 💅"]) : pickOne(["Oop, we BOTH got it wrong 😂", "Okay that one was hard!"])}"`;
+    g.step++;
+  } else say = `<b>${HOST}:</b> "Welcome to the <b>Acorn Quiz Showdown</b>! Tonight, you're up against... <b>${r.name}</b>!"<br><b>${r.name}:</b> "${pickOne(["Hope you studied. 😏", "May the best animal win. (It's me.) 💅", "Don't cry when you lose, okay? Hehe."])}"`;
+  const score = `<p class="sub" style="margin:4px 0">You ${g.me} - ${g.them} ${r.name}</p>`;
+  if (g.step >= g.qs.length) return showEnd(g.me >= g.them, say + `<br><b>${HOST}:</b> "${g.me >= g.them ? (g.me === g.them ? "A TIE! But you buzzed in first, so YOU win!" : "And the winner is... YOU!") : `${r.name} wins this time!`}"`, score);
+  const q = g.qs[g.step];
+  stageScreen("tvstudio", "Acorn Quiz Showdown", [["host", 22, 40], [r, 78, 42]], say,
+    `${score}<h2>Question ${g.step + 1}: ${q[0]}</h2>${q[1].map((a, n) => `<button class="soft" onclick="quizShow(${n})">${a}</button>`).join("")}`);
+}
+// --- Sparkle Stage (talent show) ---
+const TALENTS = [["Sing a song", "You sing so loud the lanterns wobble."], ["Dance", "You spin, you slide, you do the worm!"], ["Do a magic trick", "You pull a flower out of thin air. Gasp!"], ["Juggle acorns", "One acorn, two, three, FOUR acorns flying!"], ["Tell jokes", "Why did the bear cross the road? To get to the HONEY side!"]];
+const TALENT_STEPS = [["How do you start?", ["Slow and dreamy", "BIG and loud", "With a cute wave"]], ["Time for the big finish!", ["A giant spin", "A dramatic bow", "Throw glitter everywhere"]]];
+function talentShow(pick) {
+  const g = S.gs;
+  if (g.step === 0 && pick === undefined) return stageScreen("talentstage", "Sparkle Stage", [["host", 50, 38]], `<b>${HOST}:</b> "Welcome to <b>Sparkle Stage</b>! Tonight's judges are ${g.judges.join(", ")}! What's your talent?"`,
+    `<h2>Pick your talent</h2>${TALENTS.map((t, n) => `<button class="soft" onclick="talentShow(${n})">${t[0]}</button>`).join("")}`);
+  if (g.step === 0) { g.talent = pick; g.step = 1; }
+  else { g.me += 1 + Math.floor(Math.random() * 3); g.step++; }
+  const [j1, j2, j3] = g.judges.map(fName);
+  const react = g.step === 1 ? `<b>${HOST}:</b> "${TALENTS[g.talent][1]}"` : `<b>${j1.name}:</b> "${pickOne(["Okay, that was actually good. 👀", "WOW. Okay. I'm shook.", "Hmm. Interesting choice. 🤔"])}" <b>${j2.name}:</b> "${pickOne(["Ugh, I'm not crying, YOU'RE crying. 😭", "Honestly? Iconic. 💅", "*whispers to " + j3.name + "* Did you see that?!"])}"`;
+  if (g.step > TALENT_STEPS.length) {
+    const sc = g.judges.map((n, k) => Math.min(10, 7 + Math.floor(Math.random() * 3) + (k === 2 ? -1 : 0) + (g.me >= 5 ? 1 : 0)));
+    const total = sc.reduce((a, b) => a + b, 0);
+    const lines = g.judges.map((n, k) => { const f = fName(n); return `<b>${n}:</b> "${k === 2 ? pickOne(["Mmm. It was... fine. 💅", "Not my favorite. But okay, the glitter was cute.", "I've seen better. ...But not MUCH better."]) : stageOf(f) >= 2 ? pickOne(["You were PERFECT. I'm so proud of you! 💕", "Best act of the night. Obviously. 😍"]) : pickOne(["That was so fun to watch!", "You were great up there!"])}" <b>${sc[k]}/10</b>`; }).join("<br>");
+    return showEnd(total >= 24, lines + `<br><b>${HOST}:</b> "That's ${total} out of 30! ${total >= 24 ? "You win the Sparkle Star!" : "So close! Come back and try again!"}"`, "");
+  }
+  const [q, opts] = TALENT_STEPS[g.step - 1];
+  stageScreen("talentstage", "Sparkle Stage", [[j1, 12, 30], [j2, 50, 26], [j3, 88, 30]], react,
+    `<h2>${q}</h2>${opts.map((o, n) => `<button class="soft" onclick="talentShow(${n})">${o}</button>`).join("")}`);
+}
+// --- Mystery Date Doors ---
+const DOOR_Q = [
+  ["What's your perfect day?", { shy:"Reading in a cozy corner... with someone sweet next to me.", adventure:"Climbing the tallest tree and yelling WOOHOO at the top!", funny:"Making everyone laugh so hard they snort.", baker:"Baking a giant cake and sharing every single crumb." }],
+  ["What would you bring on a date?", { shy:"A pressed flower. And maybe a poem, if I'm brave.", adventure:"A map, a flashlight and snacks for a LONG walk.", funny:"A whoopee cushion. Obviously.", baker:"Warm cookies in a basket with a little bow." }],
+  ["Describe yourself in three words.", { shy:"Quiet. Kind. Dreamy.", adventure:"Fast. Brave. Never bored!", funny:"Silly, sillier, silliest.", baker:"Sweet, warm, sprinkly." }],
+  ["What's your secret talent?", { shy:"I can name every star in the sky. Shh.", adventure:"I can hold my breath underwater for a whole minute!", funny:"I can do 12 different animal noises. Moo.", baker:"I can smell when cookies are ready from a mile away." }]
+];
+function dateShow(qi, pickDoor) {
+  const g = S.gs, doors = g.doors.map(fName);
+  if (pickDoor !== undefined) {
+    const f = doors[pickDoor], i = friends().indexOf(f);
+    const st = stageOf(f);
+    const say = `<b>${HOST}:</b> "Behind door number ${pickDoor + 1} is... <b>${f.name}</b>!"<br><b>${f.name}:</b> "${st === 0 ? pickOne(["Oh! Hi! You picked ME? Okay, this is fun!", "Wait, it's you? Haha, cool!"]) : st === 1 ? pickOne(["*blushes* You picked me... I was hoping you would.", "Oh my gosh. Hi. *hides face*"]) : pickOne(["I KNEW it would be you! 💕", "Of course you picked me. We're meant to be! 😍"])}"`;
+    doors.filter(x => x !== f).forEach((x, n) => setTimeout(() => textFrom(x.name, pickOne([`You picked ${f.name} over ME?? On TV?? 😭`, `Wow. Door number ${pickDoor + 1}. Okay. I see how it is. 😒`, `It's FINE. I'm FINE. Totally fine. 🙂 ...not fine.`])), 3000 + n * 2500));
+    return showEnd(true, say, "", f, i);
+  }
+  let say = `<b>${HOST}:</b> "Welcome to <b>Mystery Date Doors</b>! Behind each door is a secret animal. Ask them questions, then pick one!"`;
+  if (qi !== undefined) { g.qsUsed.push(qi); g.qn++; say = `<b>You:</b> "${DOOR_Q[qi][0]}"<br>` + doors.map((d, n) => `<b>Door ${n + 1}:</b> "${DOOR_Q[qi][1][d.type]}"`).join("<br>"); }
+  const left = DOOR_Q.map((q, n) => n).filter(n => !g.qsUsed.includes(n));
+  stageScreen("tvstudio", "Mystery Date Doors", [["host", 50, 26], [null, 14, 30, 1], [null, 86, 30, 3], [null, 50, 34, 2]].map((p, n) => n === 0 ? p : p), say,
+    g.qn < 2 ? `<h2>Ask the doors a question</h2>${left.map(n => `<button class="soft" onclick="dateShow(${n})">${DOOR_Q[n][0]}</button>`).join("")}`
+             : `<h2>Pick a door!</h2>${doors.map((d, n) => `<button class="rainbow" onclick="dateShow(undefined, ${n})">Door ${n + 1}</button>`).join("")}`);
+}
+// --- Bake Battle ---
+const BAKE_STEPS = [["What are you baking?", ["Honey cake", "Strawberry tart", "Chocolate cupcakes"]], ["Uh oh, the timer! What do you do?", ["Bake faster!", "Stay calm", "Turn the oven up"]], ["Decorate it!", ["Sprinkles everywhere", "Flower petals", "A tiny picture of the judges"]]];
+function bakeShow(pick) {
+  const g = S.gs, r = fName(g.rival); let say;
+  if (pick === undefined) say = `<b>${HOST}:</b> "Welcome to <b>Bake Battle</b>! You're baking against... <b>${r.name}</b>! Ready, set, BAKE!"<br><b>${r.name}:</b> "${pickOne(["My cake is going to make yours CRY. 😏", "Hope you like losing. Hehe. 💅", "Good luck. You'll need it. 😇"])}"`;
+  else {
+    const pts = g.step === 1 && pick === 2 ? (Math.random() < 0.5 ? 3 : 0) : 1 + Math.floor(Math.random() * 3);
+    g.me += pts; g.them += 1 + Math.floor(Math.random() * 3);
+    say = g.step === 1 && pick === 2 && !pts ? `<b>${HOST}:</b> "Oh no, a little smoke! It's okay, it's still yummy... ish."` : `<b>${HOST}:</b> "${pickOne(["Ooh, it smells AMAZING over here!", "Look at that! Beautiful!", "The judges are drooling!"])}"`;
+    say += `<br><b>${r.name}:</b> "${pickOne(["*bumps your bowl* Oops. 😇 Totally an accident.", "Did you just copy my sprinkles?! 😤", "Mine looks better. Just saying. 💅", "Wait, how is yours so good?? 😳"])}"`;
+    g.step++;
+  }
+  if (g.step >= BAKE_STEPS.length) {
+    const win = g.me >= g.them, [j1, j2] = g.judges.map(fName);
+    return showEnd(win, say + `<br><b>${j1.name}:</b> "${pickOne(["*takes a bite* ...OH. Oh wow.", "Mmm! Can I have seconds?"])}" <b>${j2.name}:</b> "${pickOne(["Honestly? Yours is better than " + r.name + "'s. Don't tell them. 🤫", "Ooh, that's a tough one. They're both yummy!"])}"<br><b>${HOST}:</b> "${win ? "The Golden Whisk goes to... YOU!" : r.name + " wins by one crumb!"}"`, "");
+  }
+  const [q, opts] = BAKE_STEPS[g.step];
+  stageScreen("kitchen", "Bake Battle", [["host", 50, 30], [r, 82, 40]], say, `<h2>${q}</h2>${opts.map((o, n) => `<button class="soft" onclick="bakeShow(${n})">${o}</button>`).join("")}`);
+}
+function showEnd(win, say, score, dateF, dateI) {
+  const g = S.gs, s = showOf(g.k); S.trophies = S.trophies || {}; S.showDay = S.showDay || {};
+  let prize = "";
+  if (win) { S.trophies[g.k] = (S.trophies[g.k] || 0) + 1; prize = `<h2>You won the ${s.prize}!</h2>`; chime(); floatHearts(5, "⭐"); }
+  const fan = dateF || pickOne(friends().filter(f => f.name !== g.rival));
+  if (S.showDay[g.k] !== S.day) { S.showDay[g.k] = S.day; addHearts(fan, 1); }
+  setTimeout(() => textFrom(fan.name, dateF ? pickOne(["Okay that was the cutest thing ever on TV. 😳💕", "Everyone saw you pick me. EVERYONE. *happy screaming*"]) : win ? pickOne(["OMG I watched you on TV!! You were AMAZING 😍", "I screamed so loud when you won. My mom told me to be quiet 😂💕"]) : pickOne(["You were robbed!! ROBBED! 😤 You were the best one.", "Losing on TV is still more famous than me. You're a star ⭐"])), 2200);
+  if (g.k !== "date" && g.rival) setTimeout(() => textFrom(g.rival, win ? pickOne(["I let you win. Obviously. 💅", "Rematch. Tomorrow. Be there. 😤", "Fine. You were good. Don't let it go to your head. 🙄"]) : pickOne(["GG. 😏 Better luck next time!", "Don't be sad. Not everyone can be ME. 💅 ...You were good though."])), 5200);
+  const people = g.k === "date" ? [["host", 22, 36], [dateF, 72, 46]] : g.k === "talent" ? g.judges.map((n, k) => [fName(n), [12, 50, 88][k], 28]) : [["host", 22, 40], [fName(g.rival), 78, 42]];
+  stageScreen(s.bg, s.name, people, say, `${score || ""}${prize}
+    ${dateF ? `<button class="rainbow" onclick="activityMenu(${dateI}, 'map')">Go on your prize date!</button>` : `<button class="rainbow" onclick="startShow('${g.k}')">Play again</button>`}
+    <button class="soft" onclick="gameShows()">Other shows</button><button class="soft" onclick="mapScreen()">Back to the village</button>`);
+}
+
+// ===== Gossip behind your back =====
+const RUMORS = ["snore like a leaf blower", "dance like a flapping penguin", "sing in the bath SUPER loud", "ate ALL the cookies at the party", "text like a grandma", "have a secret crush on somebody", "tripped in front of everyone and pretended it was a dance move", "think you're the best at everything", "still sleep with a teddy bear", "talk to your plants"];
+function sendRumor(teller) {
+  const about = pickOne(friends().filter(x => x.name !== teller.name));
+  const what = pickOne(RUMORS);
+  S.rumor = { teller: teller.name, about: about.name, what };
+  textFrom(teller.name, pickOne([`Psst. Don't be mad, but ${about.name} was talking about you behind your back. 👀`, `Okay, I wasn't going to tell you, but... ${about.name} was gossiping about you. 🤐`, `Um. So. I heard ${about.name} say something about you. 😬`]));
+  setTimeout(() => { textFrom(teller.name, `They said you ${what}. 😱 I'm just SAYING. Don't tell them I told you!`); chime(); }, 2500);
+}
+const CONFRONT = /behind my back|talking about me|talked about me|gossip|you said|did you say|rumou?r|heard (that )?you|why did you say|told me you|said i |said that i|said about me|spreading/;
+function rumorReply(f, said) {
+  const R = S.rumor; if (!R || R.about !== f.name || !CONFRONT.test(normalize(said))) return null;
+  S.rumor = null;
+  const T = R.teller;
+  setTimeout(() => textFrom(T, pickOne([`Um why is ${f.name} mad at me now?? You TOLD them?? 😭`, `Wow. I trusted you with that tea and you spilled it. 😤 ...Okay fine I deserved it.`])), 15000);
+  return [pickOne([`WHAT?! Who told you that? ...Was it ${T}?? 😤`, `Okay, WHO said that? I bet it was ${T}. ${T} can't keep ANYTHING secret! 🙄`]),
+          pickOne([`Okay FINE. I said you ${R.what}. But I said it in a NICE way! Like a cute way. 😳`, `I did say it... but I was joking! It came out wrong, I promise. 😣`]),
+          pickOne([`I'm sorry. That wasn't cool of me. Friends again? 🥺`, `I shouldn't talk behind your back. You're actually one of my favorite animals. 💕`])];
 }
 
 // ===== The real world, through your eyes: walk around, see everyone, go up and talk to them =====
@@ -2502,25 +2808,291 @@ function whoIsAt(k) {
 }
 function exitEyes() { S.guest = null; S.meetPlace = null; mapScreen(); }
 function visitRedraw() { return S.meetPlace ? renderMeet() : houseScreen(); }
+// ===== Little shops in the world: go inside and have a date (an animal runs each one) =====
+const SHOPS = {
+  cafe:     { name:"Acorn Cafe",            keeper:"Mrs. Bristle", art:"badger", kind:"badger", hi:"Welcome to the Acorn Cafe, dear! Table for two?" },
+  icecream: { name:"Scoops Ice Cream",      keeper:"Wendell",      art:"weasel", kind:"weasel", hi:"Welcome to Scoops! Any flavor you want. Even the weird ones." },
+  bakery:   { name:"Honey Bakery",          keeper:"Maggie",       art:"magpie", kind:"magpie", hi:"Fresh from the oven! Ooh, are you here on a DATE?" },
+  cinema:   { name:"Starlight Cinema",      keeper:"Hoot",         art:"owl",    kind:"owl",    hi:"Yes, I run the cinema too. Very busy owl. Two tickets?" },
+  flowers:  { name:"Petal's Flower Shop",   keeper:"Petal",        art:"otter",  kind:"otter",  hi:"Hi hi! Flowers for someone special? I knew it!" },
+  arcade:   { name:"Pinball Hollow Arcade", keeper:"Bolt",         art:"beaver", kind:"beaver", hi:"Arcade's open! Have fun. Don't chew the machines. That's MY job." }
+};
+const SHOP_AT = { village:[["cafe", .1, .55], ["bakery", .9, .6], ["arcade", .62, .97]], garden:[["flowers", .85, .55]], lake:[["icecream", .15, .55]], lanterns:[["cinema", .8, .6]], picnic:[["icecream", .88, .7]], treehouse:[["arcade", .12, .6]] };
+const inBg = (k, c1, c2) => `url(art/in_${k}.png) center/cover, linear-gradient(${c1},${c2})`;
+Object.assign(ACT_BG, { cafe:inBg("cafe", "#f6dcb8", "#8a5a3a"), icecream:inBg("icecream", "#ffe3ef", "#b7f0de"), bakery:inBg("bakery", "#ffd9a0", "#9a5b2c"),
+  cinema:inBg("cinema", "#3a1230", "#8a1b3a"), flowers:inBg("flowers", "#ffe0ef", "#c9f0a6"), arcade:inBg("arcade", "#2a1f5d", "#ff4fa0") });
+ACTS.push(
+  ["cafe", "Acorn Cafe", "cafe", ["shy", "baker"], "Mrs. Bristle the badger shows you and {N} to a cozy table by the window. \"Two hot cocoas coming up!\"",
+    [["What do you order?", [["Cocoa with marshmallows", "*gets a marshmallow mustache* ...Is it on my face? It's on my face, isn't it."], ["Acorn muffins", "These are SO good. Here, you take the bigger half."], ["Mint tea", "Ooh, fancy! *pinky up* Very classy."]]],
+     ["What do you talk about?", [["Your dreams", "I want to see the ocean one day. Maybe we could go together?"], ["Funny stories", "*laughs so hard cocoa almost comes out of their nose* DON'T LOOK!"], ["Favorite things", "Okay, my favorite color is... guess! Nope. Guess again!"]]]],
+    "Mrs. Bristle winks as you leave. \"Come back soon, you two!\"", "cafe"],
+  ["icecream", "Scoops Ice Cream", "icecream", ["funny", "adventure"], "Wendell the weasel spins around behind the counter. \"Welcome to Scoops!\"",
+    [["Pick a flavor", [["Strawberry", "Pink! Ooh, can I try a bite?"], ["Triple chocolate", "Whoa, that's taller than me!"], ["Rainbow sherbet", "It matches the Rainbow Glade! So pretty."]]],
+     ["Uh oh, it's melting!", [["Eat it fast!", "*brain freeze* AHHH! Worth it."], ["Share it", "*you both lean in and bump noses* ...Oops. Hehe."], ["Get a cup", "Smart! You're so good at this."]]]],
+    "You leave with sticky paws and big smiles.", "icecream"],
+  ["bakery", "Honey Bakery", "bakery", ["baker"], "Maggie the magpie flutters over. \"Fresh from the oven! Want to decorate your own cupcakes?\"",
+    [["What do you bake?", [["Cupcakes", "Let's put a little heart on yours. ...What? It's just frosting!"], ["Honey buns", "*licks honey off paw* Mmm, perfect."], ["Rainbow cookies", "Every color! These are going to be famous."]]],
+     ["Decorating time!", [["Write their name in frosting", "You spelled it right and everything! *smiles*"], ["Sprinkles EVERYWHERE", "*sneezes sprinkles* My fur is sparkly now. I love it."], ["Make a tiny animal", "Is that... me? It's adorable!"]]]],
+    "Maggie puts your treats in a box with a ribbon. \"Made with love!\"", "bakery"],
+  ["cinema", "Starlight Cinema", "cinema", ["shy", "funny"], "Hoot the owl hands you two tickets. \"Enjoy the movie! No hooting during the quiet parts.\"",
+    [["Which movie?", [["A scary one", "*hides behind you* I'm not scared. YOU'RE scared."], ["A funny one", "*laughs so loud everyone turns around* Sorry! Sorry!"], ["A love story", "*sniffles* That was beautiful. Don't look at me."]]],
+     ["Popcorn time!", [["Share one big bucket", "*your paws touch in the popcorn* ...Oh. Hi."], ["Toss popcorn into their mouth", "*catches it* YES! Ten points!"], ["Extra butter", "Butter paws! Worth it."]]]],
+    "The lights come on. Best movie night ever.", "cinema"],
+  ["flowers", "Flower Shop", "flowers", ["shy"], "Petal the otter is arranging tulips. \"Ooh, a date? Let's make something pretty!\"",
+    [["Pick flowers", [["Red roses", "Roses? For me? *hides face in the petals*"], ["Sunflowers", "They're so happy! Like you."], ["A bit of everything", "A rainbow bouquet! It's perfect."]]],
+     ["What do you do with them?", [["Give them to {N}", "I'm going to keep them forever. Okay, until they wilt. Then I'll press them in a book."], ["Make flower crowns", "*puts one on your head* Now we're royalty."], ["Plant them together", "We'll come back and see them grow!"]]]],
+    "You walk out smelling like flowers.", "flowers"],
+  ["arcade", "Arcade", "arcade", ["adventure", "funny"], "Bolt the beaver tosses you a bag of tokens. \"Have fun, you two!\"",
+    [["What do you play first?", [["Claw machine", "*the claw grabs a plushie* YOU GOT IT! Is that for me?!"], ["Dance game", "*trips over own feet* ...That was a new move. On purpose."], ["Racing game", "Beep beep! Eat my dust! ...Okay, you won. Rematch!"]]],
+     ["You won tickets! What do you get?", [["Two matching bracelets", "Matching! Now everyone will know we're a team."], ["A giant lollipop", "We're sharing this. That's the rule."], ["A rubber duck", "I'm naming him Sir Quackers."]]]],
+    "You leave with pockets full of tickets and big grins.", "arcade"]
+);
+function shopScreen(k) {
+  const s = SHOPS[k]; S.shopAt = k;
+  const close = friends().slice().sort((a, b) => S.hearts[b.name] - S.hearts[a.name]);
+  stageScreen("in_" + k, s.name, [[{ name: s.keeper, art: s.art }, 50, 40]], `<b>${s.keeper}:</b> "${s.hi}"`,
+    `<h2>Who's your date?</h2><div class="walk-grid">${close.map(f => `<button class="act-btn date-pick" onclick="shopDate('${k}', ${friends().indexOf(f)})"><img src="art/${ART[f.emo]}.png" alt=""><span>${f.name}</span></button>`).join("")}</div>
+     <div style="margin-top:8px"><button class="soft" onclick="eyesScreen()">Go back outside</button></div>`);
+}
+function shopDate(k, i) {
+  S.act = { i, from: "shop" };
+  const f = friends()[i];
+  if (Math.random() < 0.5) { const spy = pickOne(friends().filter(x => x.name !== f.name));
+    setTimeout(() => textFrom(spy.name, pickOne([`Um. Did I just see you at ${SHOPS[k].name} with ${f.name}?? 👀`, `${SHOPS[k].name}? With ${f.name}?? I'm not jealous. I'm NOT. 😤`, `Everyone's talking about you and ${f.name} at ${SHOPS[k].name}. Spill. ☕`])), 9000); }
+  activity(k, 0);
+}
+
+// ===== Day and night (1 real second = 1 game minute) and making plans =====
+const fmtTime = m => { m = ((m % 1440) + 1440) % 1440; const h = Math.floor(m / 60), mm = m % 60; return `${(h + 11) % 12 + 1}:${String(mm).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };
+const nowAbs = () => (S.tday || 1) * 1440 + (S.clock ?? 480);
+const isNight = () => { const h = (S.clock ?? 480) / 60; return h >= 20.5 || h < 6; };
+function skyLook() {
+  const h = (S.clock ?? 480) / 60;
+  // [hour, color, strength]
+  const K = [[0, [40, 50, 120], .72], [5, [40, 50, 120], .72], [6.5, [255, 160, 150], .35], [8, [255, 255, 255], 0], [17, [255, 255, 255], 0], [19, [255, 150, 110], .4], [20.5, [80, 70, 150], .62], [22, [40, 50, 120], .72], [24, [40, 50, 120], .72]];
+  let i = 0; while (K[i + 1][0] <= h) i++;
+  const [h0, c0, a0] = K[i], [h1, c1, a1] = K[i + 1], t = (h - h0) / (h1 - h0 || 1);
+  return { c: c0.map((v, n) => Math.round(v + (c1[n] - v) * t)), a: a0 + (a1 - a0) * t };
+}
+function updateSky() {
+  if (!S || !S.profileDone) return;
+  S.clock = S.clock ?? 480; S.tday = S.tday || 1;
+  let sky = document.getElementById("sky"), clk = document.getElementById("clock");
+  if (!sky) { document.body.insertAdjacentHTML("beforeend", `<div id="sky"><div class="stars-lay"></div></div><button id="clock" onclick="clockPanel()"><i></i><b></b></button>`); sky = document.getElementById("sky"); clk = document.getElementById("clock"); }
+  const { c, a } = skyLook(), night = isNight();
+  sky.style.setProperty("--sky", `rgb(${c.join(",")})`); sky.style.setProperty("--a", a.toFixed(3));
+  sky.classList.toggle("night", night);
+  clk.classList.toggle("night", night); clk.querySelector("b").textContent = fmtTime(S.clock);
+}
+function clockTick() {
+  if (!S || !S.profileDone || document.hidden) return;
+  S.clock = (S.clock ?? 480) + 1;
+  if (S.clock >= 1440) { S.clock -= 1440; S.tday = (S.tday || 1) + 1; }
+  updateSky(); checkPlans();
+}
+setInterval(clockTick, 1000);
+function skipTime(mins) {
+  S.clock = (S.clock ?? 480) + mins;
+  while (S.clock >= 1440) { S.clock -= 1440; S.tday = (S.tday || 1) + 1; }
+  updateSky(); closeClock(); checkPlans();
+  if (WALK) eyesScreen(WALK.k);
+}
+function closeClock() { const p = document.getElementById("clockPanel"); if (p) p.remove(); }
+function clockPanel() {
+  if (document.getElementById("clockPanel")) return closeClock();
+  const plans = (S.plans || []).filter(p => !p.done).sort((a, b) => a.at - b.at);
+  const next = plans[0];
+  document.body.insertAdjacentHTML("beforeend", `<div id="clockPanel"><h2>${fmtTime(S.clock)}${isNight() ? " - night time" : ""}</h2>
+    ${plans.length ? plans.map(p => `<p>${fmtTime(p.at)}${Math.floor(p.at / 1440) > S.tday ? " tomorrow" : ""}: ${PLAN_WHAT[p.what][1]} with <b>${p.who}</b></p>`).join("") : `<p>No plans yet. Text someone and tap "Make plans"!</p>`}
+    ${next ? `<button class="rainbow" onclick="skipTime(${Math.max(1, next.at - nowAbs())})">Skip to ${fmtTime(next.at)}</button>` : ""}
+    <button class="soft" onclick="skipTime(60)">Wait 1 hour</button>
+    ${isNight() ? `<button class="soft" onclick="skipTime(${((7 * 60 - S.clock) + 1440) % 1440})">Sleep until morning</button>` : ""}
+    <button class="soft" onclick="closeClock()">Close</button></div>`);
+  noEmoji(document.getElementById("clockPanel"));
+}
+// --- Plans: ask someone to do something at a time, and they show up then ---
+const PLAN_WHAT = {
+  house:["house", "Come over to my house"], sleepover:["sleepover", "Sleepover at my house"], cafe:["cafe", "Date at the Acorn Cafe"], icecream:["icecream", "Ice cream at Scoops"],
+  cinema:["cinema", "Movie at Starlight Cinema"], arcade:["arcade", "Games at the Arcade"], bakery:["bakery", "Baking at Honey Bakery"], flowers:["flowers", "Flower Shop date"],
+  stargaze:["stargaze", "Stargazing on Starry Hill"], picnic:["picnic", "Picnic in the meadow"], campfire:["campfire", "Campfire and s'mores"]
+};
+function planScreen(name, what) {
+  const f = fName(name); if (!f) return;
+  try { closePhone(); } catch (e) {}
+  if (!what) return show(`<h1 style="font-size:34px">Make plans with ${f.name}</h1>
+    <p class="sub">What do you want to do together?</p>
+    <div class="box center">${Object.keys(PLAN_WHAT).map(k => `<button class="soft" onclick="planScreen('${name}', '${k}')">${PLAN_WHAT[k][1]}</button>`).join("")}</div>
+    <div class="center"><button class="soft" onclick="openPhone('${name}')">Back</button></div>`);
+  const now = S.clock ?? 480, opts = [now + 10];
+  for (let h = Math.floor(now / 60) + 1; h <= 23 && opts.length < 8; h++) opts.push(h * 60);
+  opts.push(1440 + 9 * 60, 1440 + 17 * 60);
+  show(`<h1 style="font-size:34px">What time?</h1><p class="sub">${PLAN_WHAT[what][1]} with ${f.name}. It's ${fmtTime(now)} now.</p>
+    <div class="box center">${opts.map(m => `<button class="soft" onclick="makePlan('${name}', '${what}', ${m})">${m === now + 10 ? "In 10 minutes" : (m >= 1440 ? "Tomorrow " : "") + fmtTime(m)}</button>`).join("")}</div>
+    <div class="center"><button class="soft" onclick="planScreen('${name}')">Back</button></div>`);
+}
+function makePlan(name, what, m) {
+  const f = fName(name), st = stageOf(f), when = (m >= 1440 ? "tomorrow at " : "at ") + fmtTime(m);
+  S.plans = S.plans || [];
+  texts(name).push({ from: "me", t: `Want to do this: ${PLAN_WHAT[what][1]}, ${when}?`, read: true });
+  if (what === "sleepover" && S.hearts[name] < 3) {
+    texts(name).push({ from: "them", t: pickOne(["A sleepover? Um, maybe when we know each other better! Want to just hang out instead?", "Haha, slow down! Let's hang out first. 😅"]), read: true });
+    return openPhone(name);
+  }
+  if (S.plans.some(p => !p.done && p.who === name && Math.abs(p.at - ((S.tday || 1) * 1440 + m)) < 60)) {
+    texts(name).push({ from: "them", t: "Wait, we already have plans then! Did you forget?? 🙄", read: true }); return openPhone(name);
+  }
+  S.plans.push({ who: name, what, at: (S.tday || 1) * 1440 + m, done: false });
+  texts(name).push({ from: "them", read: true, t: (st === 0 ? pickOne([`Sure! ${when}. As FRIENDS. 🙄 See you then.`, `Okay, ${when} works! Don't be late.`, `Fine. ${when}. But I'm picking the snacks. 💅`])
+    : st === 1 ? pickOne([`Really?! Yes! ${when}! *tries to act calm* I mean... cool. 😳`, `${when}? I'll be there! I'm already choosing what to wear. 🙈`])
+    : pickOne([`It's a DATE! 😍 ${when}, I'll be there right on time!`, `YES. ${when}. I'm counting the minutes! 💕`, `${when}? I'd go ANYWHERE with you. 💖`])) + "  (Tap the clock to skip ahead.)" });
+  chime(); openPhone(name); updateSky();
+}
+let ARRIVING = null;
+function checkPlans() {
+  if (ARRIVING || RINGING || !S.plans) return;
+  const p = S.plans.find(p => !p.done && nowAbs() >= p.at); if (!p) return;
+  p.done = true;
+  if (nowAbs() - p.at > 180) { textFrom(p.who, pickOne(["I waited and waited... where were you? 🥺", "You stood me up?? Wow. 😭"])); return; }
+  const f = fName(p.who), home = p.what === "house" || p.what === "sleepover";
+  ARRIVING = p;
+  const el = document.getElementById("call");
+  el.innerHTML = `<div class="call-pic">${face(f)}</div><div class="call-txt"><b>${f.name}</b><br>${home ? "is knocking on your door! It's " + fmtTime(S.clock) + "." : "is here on time and waiting for you: " + PLAN_WHAT[p.what][1] + "!"}</div>
+    <button class="call-btn no" onclick="arriveNo()">Not now</button><button class="call-btn yes" onclick="arriveYes()">${home ? "Open the door" : "Go now"}</button>`;
+  el.style.display = "flex"; chime(true);
+  clearTimeout(checkPlans.t); checkPlans.t = setTimeout(() => { if (ARRIVING === p) arriveNo(true); }, 25000);
+}
+function arriveYes() {
+  const p = ARRIVING; ARRIVING = null; document.getElementById("call").style.display = "none"; if (!p) return;
+  try { closePhone(); } catch (e) {}
+  const f = fName(p.who), i = friends().indexOf(f);
+  if (p.what === "house") return inviteOver(p.who);
+  if (p.what === "sleepover") { S.guest = p.who; S.visitSaid = ""; return sleepover(); }
+  if (SHOPS[p.what]) return shopDate(p.what, i);
+  S.act = { i, from: "map" }; activity(p.what, 0);
+}
+function arriveNo(missed) {
+  const p = ARRIVING; ARRIVING = null; document.getElementById("call").style.display = "none"; if (!p) return;
+  if (missed) textFrom(p.who, pickOne(["I'm here... where are you? 🥺", "Hellooo? I'm waiting! ⏰"]));
+  else { addHearts(fName(p.who), -1); textFrom(p.who, pickOne(["You're not coming?? I got ready and EVERYTHING. 😭 (-1 heart)", "Wow. Okay. Cancelled. 😒 (-1 heart)"])); }
+}
+
+// ===== Walking around, through your eyes =====
+const WALK_ORDER = ["village", "picnic", "garden", "berries", "lake", "treehouse", "library", "rain", "pond", "campfire", "lanterns", "stars"];
+const WALK_LIGHT = { stars:"brightness(.55) saturate(.75) contrast(1.05)", campfire:"sepia(.25) saturate(1.15) brightness(.82)", lanterns:"sepia(.2) saturate(1.1) brightness(.8)", rain:"brightness(.85) saturate(.75)", pond:"brightness(1.04) saturate(.85)", library:"sepia(.15) brightness(.9)" };
+const WALK_HAZE = { stars:"rgba(40,50,110,.35)", campfire:"rgba(255,140,60,.22)", lanterns:"rgba(255,170,80,.22)", rain:"rgba(190,200,210,.4)", pond:"rgba(220,235,250,.4)", library:"rgba(255,210,150,.2)" };
+let WALK = null;
 function eyesScreen(k) {
   try { closePhone(); } catch (e) {}
   k = k || S.worldAt || "village"; S.worldAt = k; S.guest = null; S.meetPlace = null;
-  const here = whoIsAt(k), spots = [[18, 0, 50], [80, 2, 46], [40, 44, 22], [60, 50, 18]];
-  const people = here.map((f, n) => { const [x, y, h] = spots[n], a = ART[f.emo];
-    return `<button class="world-animal ${n >= 2 ? "far" : ""}" style="left:${x}%;bottom:${y}%;--y:${y}%;--h:${h}%;height:${h}%;z-index:${10 - n};animation-delay:${-n * 0.7}s" onclick="meetScreen('${f.name}')"><img class="${x > 50 ? "flip" : ""}" src="art/${a}.png" alt=""><span>${f.name}</span></button>`; }).join("");
+  const nightOut = ["stars", "campfire", "lanterns", "library"].includes(k), all = friends();
+  const here = isNight() && !nightOut ? whoIsAt(k).slice(0, 1) : whoIsAt(k);
+  const extras = all.filter(f => !here.includes(f)).sort((a, b) => hashStr(a.name + k + S.day) - hashStr(b.name + k + S.day)).slice(0, 2);
+  const spots = [[.43, .42], [.58, .56], [.5, .82], [.3, .7]];
+  const people = [...here.map((f, n) => ({ f, wx: spots[n][0] + (hashStr(f.name + S.day) % 7 - 3) / 100, wz: spots[n][1], wander: 0 })),
+                  ...(isNight() && !nightOut ? [] : extras).map((f, n) => ({ f, wx: n ? .9 : .08, wz: .95 - n * .05, wander: n ? -1 : 1 }))];
   const bye = S.worldBye || ""; S.worldBye = "";
   const fresh = S.povKey !== "world" + k; S.povKey = "world" + k;
+  const nextK = WALK_ORDER[(WALK_ORDER.indexOf(k) + 1) % WALK_ORDER.length] || "village";
   show(`<h1 style="font-size:34px">Through your eyes</h1>
-    <div class="scene pov" style="padding:var(--pad)"><div class="pov-stage" style="background:${worldBg(k)}">
-      ${fresh ? `<div class="lids"></div>` : ""}<div class="pov-label">${WORLD_NAMES[k] || k}</div><button class="pov-exit" onclick="exitEyes()">Exit</button>${people}
+    <div class="scene pov" style="padding:var(--pad)"><div class="pov-stage walk-stage" id="walkStage">
+      <div class="walk-cam" id="walkCam">
+        <div class="walk-bg" id="walkBg" style="background-image:url(art/walk_${k}.png), ${worldBg(k).split(" center/cover")[0]}"></div>
+        ${people.map((p, n) => `<button class="walker" data-n="${n}" onclick="meetScreen('${p.f.name}')"><img src="art/${ART[p.f.emo]}.png" alt=""><span>${p.f.name}</span></button>`).join("")}
+        ${(SHOP_AT[k] || []).map(([sk], n) => `<button class="walker shop" data-s="${n}" onclick="shopScreen('${sk}')"><img src="art/shop_${sk}.png" alt="" onerror="this.style.visibility='hidden'"><span>${SHOPS[sk].name}</span></button>`).join("")}
+        <div class="walk-haze" style="--haze:${WALK_HAZE[k] || "rgba(235,240,255,.28)"}"></div>
+      </div>
+      ${fresh ? `<div class="lids"></div>` : ""}<div class="pov-label">${WORLD_NAMES[k] || k}</div><button class="pov-exit" onclick="exitEyes()">Exit</button>
+      <button class="walk-near" id="walkNear"></button>
+      <div class="dpad">
+        <button class="dp up" data-key="up" aria-label="Walk forward"></button><button class="dp left" data-key="left" aria-label="Look left"></button>
+        <button class="dp right" data-key="right" aria-label="Look right"></button><button class="dp down" data-key="down" aria-label="Walk back"></button>
+      </div>
+      <div class="walk-hint" id="walkHint">Hold the arrows to walk. Swipe to look around.</div>
     </div>
-    ${bye ? `<div class="bubble">${bye}</div>` : `<p class="sub" style="margin:6px 0;color:var(--ink);text-shadow:none">Tap someone to walk up and say hi!</p>`}</div>
-    <div class="box center"><h2>Walk somewhere else</h2><div class="walk-grid">
-      ${Object.keys(WORLD_NAMES).filter(x => x !== k).map(x => `<button class="act-btn" style="background:${worldBg(x)}" onclick="eyesScreen('${x}')"><span>${WORLD_NAMES[x]}</span></button>`).join("")}
+    ${bye ? `<div class="bubble">${bye}</div>` : ""}</div>
+    <div class="box center walk-box"><div class="walk-grid">
+      ${WALK_ORDER.filter(x => x !== k).map(x => `<button class="act-btn" style="background:${worldBg(x)}" onclick="eyesScreen('${x}')"><span>${WORLD_NAMES[x]}</span></button>`).join("")}
     </div>
-    <div style="margin-top:10px"><button class="green" onclick="houseScreen()">Go home</button><button class="soft" onclick="mapScreen()">Village map</button></div></div>`);
+    <div class="walk-btns"><button class="green" onclick="houseScreen()">Home</button><button class="soft" onclick="mapScreen()">Map</button><button class="rainbow" onclick="gameShows()">Game Shows</button></div></div>`);
   app.classList.remove("enter");
-  document.body.classList.add("immersive", "world"); scrollTo(0, 0);
+  document.body.classList.add("immersive", "world", "walking"); scrollTo(0, 0);
+  WALK = { k, nextK, people, cam: .5, z: 0, keys: {}, t: 0, last: performance.now(), stepT: 0, endT: 0, moved: false };
+  walkWire(); requestAnimationFrame(walkTick);
+}
+function walkWire() {
+  const st = document.getElementById("walkStage");
+  document.querySelectorAll(".dp").forEach(b => {
+    const on = e => { e.preventDefault(); WALK && (WALK.keys[b.dataset.key] = true); try { b.setPointerCapture(e.pointerId); } catch (x) {} };
+    const off = () => { WALK && (WALK.keys[b.dataset.key] = false); };
+    b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointercancel", off); b.addEventListener("lostpointercapture", off);
+    b.addEventListener("contextmenu", e => e.preventDefault());
+  });
+  let drag = null;
+  st.addEventListener("pointerdown", e => { if (e.target.closest("button")) return; drag = { x: e.clientX, y: e.clientY, cam: WALK.cam, z: WALK.z }; });
+  st.addEventListener("pointermove", e => { if (!drag || !WALK) return; const W = st.clientWidth;
+    WALK.cam = Math.max(0, Math.min(1, drag.cam - (e.clientX - drag.x) / (W * 1.6)));
+    WALK.z = Math.max(0, Math.min(.9, drag.z + (drag.y - e.clientY) / (st.clientHeight * 1.8))); WALK.moved = true; });
+  const end = () => drag = null; st.addEventListener("pointerup", end); st.addEventListener("pointercancel", end); st.addEventListener("pointerleave", end);
+}
+const WALK_KEYS = { ArrowUp:"up", w:"up", W:"up", ArrowDown:"down", s:"down", S:"down", ArrowLeft:"left", a:"left", A:"left", ArrowRight:"right", d:"right", D:"right" };
+addEventListener("keydown", e => { if (WALK && WALK_KEYS[e.key] && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { WALK.keys[WALK_KEYS[e.key]] = true; e.preventDefault(); } });
+addEventListener("keyup", e => { if (WALK && WALK_KEYS[e.key]) WALK.keys[WALK_KEYS[e.key]] = false; });
+function footstep() {
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const n = actx.createBufferSource(), b = actx.createBuffer(1, actx.sampleRate * .09, actx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+    const f = actx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = WALK && /pond/.test(WALK.k) ? 2600 : 700;
+    const g = actx.createGain(); g.gain.value = .18; n.buffer = b; n.connect(f); f.connect(g); g.connect(actx.destination); n.start();
+  } catch (e) {}
+}
+function walkTick(now) {
+  const st = document.getElementById("walkStage");
+  if (!st || !WALK) { WALK = null; return; }
+  const W = WALK, dt = Math.min(.05, (now - W.last) / 1000); W.last = now; W.t += dt;
+  const fwd = (W.keys.up ? 1 : 0) - (W.keys.down ? 1 : 0), turn = (W.keys.right ? 1 : 0) - (W.keys.left ? 1 : 0);
+  W.z = Math.max(0, Math.min(.9, W.z + fwd * .16 * dt)); W.cam = Math.max(0, Math.min(1, W.cam + turn * .32 * dt));
+  const walking = fwd !== 0 && W.z > 0 && W.z < .9;
+  if (fwd || turn) { W.moved = true; const h = document.getElementById("walkHint"); if (h) h.style.opacity = 0; }
+  if (walking) { W.stepT += dt; if (W.stepT > .42) { W.stepT = 0; footstep(); } }
+  const SW = st.clientWidth, SH = st.clientHeight;
+  const boxEl = document.querySelector(".walk-box"), visH = SH - (boxEl ? boxEl.offsetHeight : 0), hz = visH * .5;
+  const bgW = Math.max(SW * 1.45, SH * 1.8), bgH = bgW / 1.5, top = hz - bgH * .45, left = -W.cam * (bgW - SW);
+  const zoom = 1 + W.z * .7, ox = W.cam * (bgW - SW) + SW / 2, oy = bgH * .45;
+  const bg = document.getElementById("walkBg");
+  bg.style.cssText += `;width:${bgW}px;height:${bgH}px;top:${top}px;left:${left}px;transform-origin:${ox}px ${oy}px;transform:scale(${zoom})`;
+  const bob = walking ? Math.sin(W.t * 15) * 5 : Math.sin(W.t * 1.3) * 1.5, tilt = walking ? Math.sin(W.t * 7.5) * .5 : 0;
+  document.getElementById("walkCam").style.transform = `translateY(${bob}px) rotate(${tilt}deg)`;
+  const light = WALK_LIGHT[W.k] || "";
+  let near = null;
+  const shopsHere = SHOP_AT[W.k] || [];
+  document.querySelectorAll(".walker.shop").forEach(el => {
+    const [sk, wx, wz] = shopsHere[+el.dataset.s], D = wz - W.z;
+    if (D < .08) { el.style.display = "none"; return; }
+    const h = Math.min(SH * 1.4, visH * .2 / D), sx = left + ox + (wx * bgW - ox) * zoom, feet = hz + visH * .1 / D;
+    el.style.cssText = `display:flex;left:${sx}px;top:${feet - h}px;height:${h}px;z-index:${Math.round(990 - D * 900)};filter:${WALK_LIGHT[W.k] || ""} blur(${Math.max(0, (D - .5) * 2.4).toFixed(2)}px)`;
+    if (D < .32 && Math.abs(sx - SW / 2) < SW * .45 && (!near || D < near.D)) near = { D, shop: sk };
+  });
+  document.querySelectorAll(".walker:not(.shop)").forEach(el => {
+    const p = W.people[+el.dataset.n];
+    if (p.wander) { p.wx += p.wander * .012 * dt; if (p.wx > .95 || p.wx < .05) p.wander *= -1; }
+    else p.wx += Math.sin(W.t * .4 + +el.dataset.n) * .0015 * dt;
+    const D = p.wz - W.z;
+    if (D < .06) { el.style.display = "none"; return; }
+    el.style.display = "";
+    const h = Math.min(SH * 1.15, visH * .09 / D);
+    const sx = left + ox + (p.wx * bgW - ox) * zoom;
+    const feet = hz + visH * .1 / D;
+    el.style.cssText = `display:flex;left:${sx}px;top:${feet - h}px;height:${h}px;z-index:${Math.round(1000 - D * 900)};filter:${light} blur(${Math.max(0, (D - .5) * 2.4).toFixed(2)}px) saturate(${(1.05 - D * .25).toFixed(2)})`;
+    el.querySelector("img").classList.toggle("flip", p.wander ? p.wander < 0 : sx > SW / 2);
+    el.classList.toggle("walking", !!p.wander);
+    if (D < .26 && Math.abs(sx - SW / 2) < SW * .35 && (!near || D < near.D)) near = { D, f: p.f };
+  });
+  const nb = document.getElementById("walkNear");
+  if (near) { nb.style.display = "block"; nb.textContent = near.shop ? `Go inside ${SHOPS[near.shop].name}` : `Talk to ${near.f.name}`; nb.onclick = near.shop ? () => shopScreen(near.shop) : () => meetScreen(near.f.name); }
+  else if (W.z >= .89) { nb.style.display = "block"; nb.textContent = `Keep walking to ${WORLD_NAMES[W.nextK]}`; nb.onclick = () => eyesScreen(W.nextK);
+    if (W.keys.up) { W.endT += dt; if (W.endT > .8) { W.endT = 0; return eyesScreen(W.nextK); } } }
+  else { nb.style.display = "none"; W.endT = 0; }
+  requestAnimationFrame(walkTick);
 }
 const MEET_HELLO = {
   0: ["Oh, hi! I didn't see you there. What's up?", "Hey! Fancy meeting you here!", "Hi! Nice to see you. What are you up to?"],
@@ -2555,6 +3127,7 @@ function renderMeet() {
         <button class="soft" onclick="visitDo('snack')">Share a snack</button>
         <button class="rainbow" onclick="activityMenu(${i},'meet')">Play together</button>
         <button class="rainbow" onclick="S.meetPlace=null; inviteOver('${f.name}')">Come to my house</button>
+        <button class="soft" onclick="planScreen('${f.name}')">Make plans for later</button>
         <button class="soft" onclick="visitDo('bye')">Say goodbye</button>
       </div>
       <p class="sub" style="margin:4px 0 0">${heartBar(S.hearts[f.name])}</p>
@@ -2704,19 +3277,26 @@ function houseScreen() {
     <h1 style="font-size:40px">${esc(S.name)}'s House</h1>
     <p class="sub"><b>Everything is free!</b> Tap something to add it, then drag it anywhere.</p>
     <div class="room" id="room">
+      ${S.povKey !== "house" + (S.guest || "") ? `<div class="lids"></div>` : ""}
+      <div class="pov-label">${esc(S.name)}'s House</div>
+      <button class="pov-exit" onclick="SEL=-1;S.guest=null;mapScreen()">Exit</button>
       ${S.house.map(furnHTML).join("")}
-      <div class="me-in-room">${S.animal[0]}${partner ? partner.emo : ""}</div>
-      ${guest && guest !== partner ? `<div class="guest-in-room">${guest.emo}</div>` : ""}
+      ${guest ? faceImg(guest, S.visitMood || "happy").replace('class="pov-face', 'class="pov-face room-face') : partner ? faceImg(partner, "happy").replace('class="pov-face', 'class="pov-face room-face') : ""}
+      ${guest && ["blush", "close"].includes(S.visitMood) ? `<div class="pov-hearts"><span></span><span></span><span></span></div>` : ""}
     </div>
+    <div class="house-panel">
     ${visitBox(guest, partner)}
     <div class="box center">
       ${SEL >= 0 ? `<div style="margin-bottom:8px"><button class="soft" onclick="furnSize(1.2)">Bigger</button><button class="soft" onclick="furnSize(0.83)">Smaller</button><button onclick="furnRemove()">Take away</button></div>` : ""}
       <div class="grid">${FURN.map(([k, n]) => `<button class="soft furn-pick" onclick="furnAdd('${k}')">${k === "flag" ? `<i class="flag" style="width:60px;height:40px"></i>` : `<img class="itm" src="art/${k}.png" alt="" onerror="this.style.display='none'">`}<span class="lbl">${n}</span></button>`).join("")}</div>
     </div>
-    <div class="center"><button class="rainbow big-btn" onclick="SEL=-1;S.guest=null;mapScreen()">Back to the village</button></div>
+    <div class="center"><button class="rainbow" onclick="SEL=-1;S.guest=null;mapScreen()">Back to the village</button></div>
+    </div>
   `);
   app.classList.remove("enter");
-  const hs = document.getElementById("houseSay"); if (hs && S.visitSaid) hs.scrollIntoView({ block:"center" });
+  S.povKey = "house" + (S.guest || "");
+  document.body.classList.add("immersive", "house"); scrollTo(0, 0);
+  const hs = document.getElementById("houseSay"); if (hs && S.visitSaid) hs.focus({ preventScroll:true });
   const room = document.getElementById("room");
   room.querySelectorAll(".furn").forEach(el => {
     el.addEventListener("pointerdown", ev => {
