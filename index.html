@@ -553,6 +553,9 @@
     body:not(.immersive) #app { padding-top:58px; padding-bottom:30px; }
   }
   body.xmas .cover { background:linear-gradient(rgba(255,250,245,.5), rgba(255,250,245,.78)), url(art/xmas_village.png) center/cover !important; }
+  body.look-game .has-sheet img, body.look-game .has-sheet .t-body img { visibility:visible !important; } body.look-game .has-sheet .sheet, body.look-game .has-sheet .t-sheet { display:none !important; }
+  .job-chip { display:inline-block; background:#ffe3a8; color:#8a5200; font-size:12px; font-weight:700; padding:2px 9px; border-radius:10px; vertical-align:middle; margin-left:4px; }
+  .job-list { display:grid; gap:8px; margin-top:10px; } .job-pick { text-align:left; width:100%; margin:0; } .job-pick.on { outline:3px solid #e8962e; }
   #snow { position:fixed; inset:0; pointer-events:none; z-index:900; }
   #xlights { position:fixed; left:0; right:0; top:0; height:16px; display:flex; justify-content:space-around; pointer-events:none; z-index:901; border-top:2px solid #2d4a2d; }
   #xlights i { width:9px; height:13px; border-radius:50% 50% 50% 50% / 40% 40% 60% 60%; margin-top:1px; animation:twinkle 1.4s var(--d) infinite alternate; }
@@ -984,7 +987,7 @@ function titleScreen() {
         <div><span class="bob two">🐻</span><span class="beat">💛</span><span class="bob">🐻</span></div>
       </div>
       <div class="center" style="margin-top:22px"><button class="rainbow big-btn" onclick="MODE=1;newGame();createScreen()">▶ 1 Player</button>
-        <button class="rainbow big-btn" onclick="MODE=2;newGame();createScreen()">▶▶ 2 Players</button><br><button class="soft" style="margin-top:10px" onclick="xmasToggle()">Christmas: ${XMAS() ? "ON" : "OFF"}</button>
+        <button class="rainbow big-btn" onclick="MODE=2;newGame();createScreen()">▶▶ 2 Players</button><br><button class="soft" style="margin-top:10px" onclick="xmasToggle()">Christmas: ${XMAS() ? "ON" : "OFF"}</button><button class="soft" style="margin-top:10px" onclick="lookToggle()">Look: ${LOOK_GAME() ? "3D game" : "Real photos"}</button>
         <p style="font-size:16px">Two players take turns on the same computer. No chatting, nothing online. 💕</p></div>
     </div>
   `);
@@ -1330,7 +1333,7 @@ function mapScreen() {
             <div class="name">${f.name} the ${f.kind} ${S.profile ? `<span class="match">${matchPct(f)}% match</span>` : ""}</div>
             <div class="likes">Loves: ${likesOf(f).join(", ")}</div>
             <div>${f.about}</div>
-            <div class="hearts">${heartBar(S.hearts[f.name])}</div><div class="rel-chip">${relLabel(f)}</div>
+            <div class="hearts">${heartBar(S.hearts[f.name])}</div><div class="rel-chip">${relLabel(f)}</div><div class="job-chip">${jobTitle(f)}</div>
           </div>
           <button onclick="placeScreen(${i})">Hang out</button>
           <button class="soft" onclick="activityMenu(${i},'map')">Activity</button>
@@ -1701,8 +1704,9 @@ function listen(f, raw) {
   }
   if ((m = text.match(/\bmy (\w+(?: \w+)?) (?:is|was|are|were) (.+)/i))) return `Your ${m[1]} ${/ (was|were) /.test(t) ? (/ were /.test(t) ? "were" : "was") : (/ are /.test(t) ? "are" : "is")} ${reflect(clip(m[2]))}? ${pickOne(["Ooh, tell me more!", "No way! I love that.", "Haha, that's so you.", "Wait, really? That's so cool!"])}`;
   if ((m = text.match(/^(?:he'?s|she'?s|it'?s|they'?re) (?:a |an |so |really )?(.+)/i)) && text.split(/\s+/).length <= 6) return pickOne([`${capW(reflect(clip(m[1])))}? Aww, I love that!`, `Aww, ${reflect(clip(m[1]))}! That's so cute.`, `Ooh, ${reflect(clip(m[1]))}! I want to meet them!`]);
-  if ((m = text.match(/\bdid you (.+?)\??$/i))) return pickOne([`Did I ${reflect(clip(m[1]))}? Haha, maybe! Did you?`, `Hmm, I might have ${reflect(clip(m[1]))}... why do you ask?`]);
-  if ((m = text.match(/\bare you (.+?)\??$/i))) return `Am I ${reflect(clip(m[1]))}? ${pickOne(["Hmm, maybe a little!", "When I'm with you, definitely!", "What makes you think that?"])}`;
+  if (/\bwhat did (you|u) do (today|yesterday|this weekend|last night)|\bhow was (your|ur) day\b/.test(text)) return pickOne(["Honestly? Not much. Hung out by the pond and ate way too many berries. 😂 You?", "Ugh, chores ALL morning. Then I napped. A very productive day. 💅 What about you?", "I went to the cafe and someone took my favorite seat. RUDE. 😤 What did you do?", "Ran around the meadow, got rained on, came home. Iconic. 😂 You?"]);
+  if ((m = text.match(/\bdid you (.+?)\??$/i))) return pickOne(["Hmm, nope! Why? 👀", "Maybe... why do you ask? 😏", "lol why, did YOU? 👀", "Yeah, kind of! Why?"]);
+  if ((m = text.match(/\bare you (.+?)\??$/i))) return pickOne(["Me? Maybe. 😏 Why?", "lol why do you ask? 👀", "Hmm, a little bit. Don't tell anyone. 🤫", "Obviously. 💅"]);
   if ((m = text.match(/^why (.+?)\??$/i))) return pickOne(["Hmm, good question. I think it's because some things just feel right.", `Why ${reflect(clip(m[1]))}? I'm not totally sure. What do you think?`]);
   if (/^(where|when)\b/.test(t)) return pickOne(["How about the Picnic Meadow, tomorrow morning?", "Anywhere, as long as it's with you.", "Starry Hill at sunset. It's perfect."]);
   if ((m = text.match(/\bwould you rather (.+?) or (.+?)\??$/i)) || (m = text.match(/^(?:do you like |is it |which is better,? )?([\w\s']{1,30}?) or ([\w\s']{1,30}?)\??$/i))) { const pickIt = Math.random() < .5 ? m[1] : m[2]; return `Ooh, tough one... ${clip(pickIt)}! Definitely ${clip(pickIt)}. What would you pick?`; }
@@ -2113,9 +2117,11 @@ function safety(f, t) {
   return null;
 }
 function chatReply0(f, raw) {
-  const text = normalize(raw), t = " " + text + " ";
+  const text = normalize(raw), t = " " + text + " "; let m0;
   const safe = safety(f, t);
   if (safe) return safe;
+  const real = realTalk(f, raw, text, t); if (real) return real;
+  if (JOB_ASK.test(text)) { const J = JOBS[jobOf(f)]; return { pts:1, mood:"nod", say: atWork(f) ? pickOne([`I'm literally at work right now! I'm a ${J.title.toLowerCase()} at ${J.place}. Come visit! 😊`, `At work! ${J.place}. ${pickOne(J.say)}`]) : pickOne([`I'm a ${J.title.toLowerCase()} at ${J.place}! ${pickOne(J.say)}`, `${J.title} at ${J.place}. It's honestly kind of fun. Don't tell my boss I said that. 😂`]) }; }
   if (XMAS() && XMAS_TALK.test(text) && !(S.fightOpen && S.fightOpen[f.name]) && Math.random() < .8) return { pts:1, mood:"happy", say: pickOne(XMAS_REPLY) };
   if (!(S.fightOpen && S.fightOpen[f.name])) { const g = gossipReply(f, raw); if (g) return { pts:0, mood:"happy", say: g.slice(0, 3).join(" ") }; }
   const armed = S.lastAsk && S.lastAsk[f.name];
@@ -2160,7 +2166,8 @@ function chatReply0(f, raw) {
   if (S.lastAsk && S.lastAsk[f.name] && t.trim().split(/\s+/).length <= 6) { const c0 = context(f, text); if (c0) { S.lastAsk[f.name] = null; return { pts:1, say:c0, mood:/Yay|happy dance|SO exciting|cutest/.test(c0) ? "happy" : "nod" }; } }
   const kid = kidTalk(f, t);
   if (kid) return kid;
-  if (has(t, ["cute","adorable","pretty","beautiful","handsome","gorgeous","sweet","lovely"])) return { pts:2, say: byType(SAY.cute, f), mood:"blush" };
+  if (has(t, ["cute","adorable","pretty","beautiful","handsome","gorgeous","sweet","lovely"]) && !/\b(my|his|her|their|the|this|that|it|its|it'?s|he|she|they|is|was|are|were)\b/.test(text.replace(/\b(you|u) (are|r|look|looked)\b/, ""))) return { pts:2, say: byType(SAY.cute, f), mood:"blush" };
+  if ((m0 = text.match(/\bmy (\w+) (is|was|looks) (so |really |super )?(cute|adorable|pretty|beautiful|sweet|lovely)/))) return { pts:1, mood:"happy", say: pickOne([`Okay but I NEED a picture of your ${m0[1]}. Immediately. 😍`, `Your ${m0[1]}?? Stop, that's so cute. 🥹`, `Cuter than me? I'll allow it. 💅 What's its name?`]) };
   if (/do you (like|love) me|do you have a crush/.test(t)) return { pts:2, say: byType(SAY.likeMe, f), mood:"blush" };
   if (has(t, WORDS.love) || has(t, ["cute","kiss","date"])) maybeCaught(f.name, 0.3);
   if (has(t, WORDS.love))  return { pts:2, say: byType(SAY.love, f), mood:"blush" };
@@ -2182,10 +2189,10 @@ function chatReply0(f, raw) {
   if (has(t, WORDS.hello) && t.trim().split(/\s+/).length <= 4) return { pts:1, say: helloFor(f), mood:"nod" };
   if (t.includes("?")) return { pts:1, mood:"nod", say: pickOne(["Hmm, good question! I'm not totally sure. What do you think?", "Ooh, that's a tricky one. What would you say?", "Hmm... I'd have to think about that one! What's your answer?", "You ask the best questions. Honestly? I don't know! Do you?"]) };
   const bit = clip(text), nw = text.split(/\s+/).length;
-  if (nw <= 2) return { pts:1, mood:"nod", say: pickOne([`${capW(bit)}? Ooh! What about it?`, `${capW(bit)}! Hmm, tell me more?`, `Ooh, ${bit}! Why ${bit}? Haha.`]) };
+  if (nw <= 2) return { pts:1, mood:"nod", say: pickOne(["lol what 😂", "okay?? and? 💅", "wait, what do you mean? 😂", "hm. Explain. 👀", "that's random but okay 😂", "?? Context, please. 😂"]) };
   if (/!/.test(raw) || /\b(omg|guess what|so excited|can'?t wait)\b/.test(t)) return { pts:1, mood:"happy", say: pickOne(["Whoa! No way! Then what happened?", "Wait, WHAT? That's amazing! Tell me everything!", "Ooh! That sounds like a big deal! And then?"]) };
   if (/\b(i|we|my|he|she|they|me and)\b/.test(t) && /\b(\w+ed|went|got|saw|ate|made|had|found|did|said|told|came|ran|fell|took|gave|won|lost|caught|built|threw|broke)\b/.test(t)) return { pts:1, mood:"nod", say: pickOne(["No way! And then what happened?", "Wait, really? What happened next?", "Haha, I wish I'd been there! Then what?", "Ooh, that's such a good story. Then what?"]) };
-  return { pts:1, mood:"nod", say: pickOne(["Ooh, I like how your brain works. Tell me more?", "Haha, you're so interesting. What else?", "Hmm! I never thought about it like that. Keep going!", byType(SAY.other, f)]) };
+  return { pts:1, mood:"nod", say: pickOne(["lol okay 😂 and then?", "wait, for real? 👀", "hmm okay, tell me more.", "that's so random. I love it 😂", "okay but WHY 😂", byType(SAY.other, f)]) };
 }
 function giftBox(i, place, f) {
   return `<div class="box center">
@@ -2474,12 +2481,12 @@ const SOAP = {
 const KID_HURTING = /\b(sad|upset|lonely|scared|afraid|worried|nervous|cry|crying|cried|died|dead|passed away|funeral|miss my|hurt|hurts|sick|hospital|bully|bullied|bullies|mean to me|bad day|not good|depressed|anxious|stressed|grounded|lost my|ran away|terrible|awful|worst|hate my life|nobody|no one)\b/;
 function calmFor(f, said, r, o = {}) {
   const n = normalize(said);
-  return !r.safe && !r.fixed && !r.deflect && !r.fight && r.pts >= 0 && !o.wasFight && !o.fightNow && !["close", "confused"].includes(r.mood)
+  return !r.safe && !r.fixed && !r.deflect && !r.fight && !r.gib && !r.chilly && !(S.chilly && S.chilly[f.name] > 0) && r.pts >= 0 && !o.wasFight && !o.fightNow && !["close", "confused"].includes(r.mood)
     && !KID_HURTING.test(n) && !/[😢😭😔🥲💔😞😟😿]/u.test(said) && !SAFE.bully.test(n) && !SAFE.sick.test(n) && !SAFE.worry.test(n) && !SAFE.family.test(n)
     && !["sad", "worry", "cheer", "private", "real"].includes(o.prevAsk);
 }
 function soapLines(f, said, r, o = {}) {
-  if (!calmFor(f, said, r, o) || Math.random() < 0.3) return [];
+  if (!calmFor(f, said, r, o) || Math.random() < 0.72) return [];
   const others = friends().filter(x => x.name !== f.name).sort(() => Math.random() - .5);
   const fill = x => x.replaceAll("{O}", others[0].name).replaceAll("{O2}", others[1].name);
   const st = stageOf(f), ok = e => !e.some(x => loveyFor(st, x));
@@ -2487,13 +2494,13 @@ function soapLines(f, said, r, o = {}) {
   const follow = [...FOLLOW0[f.type], ...FOLLOW[f.type]].filter(e => ok(e) && !RECENT.includes(e.join("|")));
   if (follow.length && Math.random() < 0.45) return pickOne(follow).map(fill);
   const out = [fill(pickOne(XMAS() && Math.random() < .45 ? XMAS_TEXT : r.mood === "happy" ? [...SOAP.gossip, ...SOAP.drama] : [...SOAP.gossip, ...SOAP.sass, ...SOAP.drama]))];
-  if (Math.random() < 0.3) out.push(fill(pickOne(st === 0 ? SOAP.sweet0 : st === 1 ? SOAP.sweet1 : SOAP.sweet2)));
+  if (Math.random() < 0.12) out.push(fill(pickOne(st === 0 ? SOAP.sweet0 : st === 1 ? SOAP.sweet1 : SOAP.sweet2)));
   return out;
 }
 function soapFirst(f, said, r, o = {}) {
   const n = normalize(said);
   if (r.safe || r.deflect || r.fight || ["close", "confused"].includes(r.mood) || o.fightNow || ["sad", "worry", "cheer", "how", "private", "real"].includes(o.prevAsk)) return null;
-  if (/^(ok|k|lol|same|idk|i don't know|hmm|cool|nice|fine|yeah|ya|sure|wow)$/.test(n) && Math.random() < 0.6) return pickOne(SOAP.short).replace("{X}", said.trim().slice(0, 12));
+  if (/^(ok|k|lol|same|idk|i don't know|hmm|cool|nice|fine|yeah|ya|sure|wow)$/.test(n) && Math.random() < 0.25) return pickOne(SOAP.short).replace("{X}", said.trim().slice(0, 12));
   return null;
 }
 // friendly follow-up texts for new friends (not lovey)
@@ -2579,10 +2586,11 @@ function ringLater() { setTimeout(tryRing, 90000 + Math.random() * 90000); }
 function tryRing() {
   const ok = S && S.hearts && Object.keys(S.hearts).length && S.profileDone && document.getElementById("phone").style.display === "none" && !RINGING;
   const quiet = n => S.byeAt && S.byeAt[n] && Date.now() - S.byeAt[n] < 240000;
-  const callers = ok ? friends().filter(x => !quiet(x.name)) : [];
+  const callers = ok ? friends().filter(x => !quiet(x.name) && !S.fightOpen?.[x.name] && !(S.chilly && S.chilly[x.name] > 0)) : [];
   if (callers.length) {
     const who = pickOne(callers);
-    if (Math.random() < 0.35 && dramaStory()) chime();
+    if (Math.random() < 0.12) { textFrom(who.name, soapFill(pickOne(JOB_TEXT), who.name)); chime(); }
+    else if (Math.random() < 0.35 && dramaStory()) chime();
     else if (Math.random() < 0.2 && !S.rumor) { sendRumor(who); chime(); }
     else if (Math.random() < 0.45) { const others = friends().filter(x => x.name !== who.name).sort(() => Math.random() - .5);
       textFrom(who.name, pickOne([...SOAP.gossip, ...SOAP.drama]).replaceAll("{O}", others[0].name).replaceAll("{O2}", others[1].name)); chime(); }
@@ -2653,7 +2661,7 @@ function sendText(fname) {
   S.convoAt[fname] = Date.now();
   // a random soap-opera fight: rare, never on the first text, a laugh, an emoji, or anything sad or serious
   const fightOk = !firstMsg && n.split(/\s+/).filter(w => /[a-z]/.test(w)).length >= 3 && !/\b(lol|haha|hehe|lmao)\b/.test(n) && !safety(f, " " + n + " ") && calmFor(f, said, { pts:0 }, {});
-  if (fightOk && !S.fightOpen?.[fname] && S.hearts[fname] >= 3 && S.textFight[fname] !== S.day && Math.random() < 0.07 && !has(" " + n + " ", APOLOGY)) {
+  if (fightOk && !S.fightOpen?.[fname] && S.hearts[fname] >= 3 && S.textFight[fname] !== S.day && Math.random() < 0.03 && !has(" " + n + " ", APOLOGY)) {
     S.textFight[fname] = S.day; S.fightOpen = S.fightOpen || {}; S.fightOpen[fname] = true;
     S.fightLost = S.fightLost || {}; S.fightLost[fname] = (S.fightLost[fname] || 0) + 1;
     addHearts(f, -1);
@@ -2685,12 +2693,12 @@ function sendText(fname) {
     const o = { prevAsk, wasFight, fightNow };
     const extra = bye ? [] : soapLines(f, said, r, o);
     const sass = bye ? null : soapFirst(f, said, r, o);
-    let main = /\p{Extended_Pictographic}\uFE0F?\s*$/u.test(r.say) ? r.say : r.say + " " + pickOne(em);
+    let main = r.chilly || r.gib || /\p{Extended_Pictographic}\uFE0F?\s*$/u.test(r.say) ? r.say : r.say + " " + pickOne(em);
     if (fightNow && !wasFight) main += " " + pickOne(ARGUE.hint);
-    const lines = [...(sass ? [sass] : []), main, ...extra];
+    const lines = sass ? [sass] : [main, ...extra];
     if (pts > 0) lines[lines.length - 1] += `  (+${pts} heart${pts > 1 ? "s" : ""})`;
     if (pts < 0) lines[lines.length - 1] += `  (${pts} heart${pts < -1 ? "s" : ""})`;
-    if (!bye && calmFor(f, said, r, o) && pts >= 0 && Math.random() < 0.18) lines.push(makePhoto(f));
+    if (!bye && calmFor(f, said, r, o) && pts >= 0 && Math.random() < 0.07) lines.push(makePhoto(f));
     deliver(fname, lines, 0, true);
   }, 1200);
 }
@@ -2949,16 +2957,16 @@ const SHOWS = [
   { k:"quiz",   name:"Acorn Quiz Showdown", bg:"tvstudio",    blurb:"Answer quick questions and beat your rival.", prize:"Golden Acorn" },
   { k:"talent", name:"Sparkle Stage",       bg:"talentstage", blurb:"Show your talent to three judges.",          prize:"Sparkle Star" },
   { k:"date",   name:"Mystery Date Doors",  bg:"tvstudio",    blurb:"Three doors, three secret animals. Pick one for a date!", prize:"Rose Ribbon" },
-  { k:"bake",   name:"Bake Battle",         bg:"kitchen",     blurb:"Out-bake your rival before the timer runs out.", prize:"Golden Whisk" }
+  { k:"bake",   name:"Bake Battle",         bg:"bakestage",     blurb:"Out-bake your rival before the timer runs out.", prize:"Golden Whisk" }
 ];
 const SHOW_BG = k => ({ tvstudio:"url(art/tvstudio.png) center/cover, radial-gradient(circle at 50% 30%, #ffd86b, #c2185b 45%, #2a0f45)",
-  talentstage:"url(art/talentstage.png) center/cover, radial-gradient(circle at 50% 40%, #fff3b0, #8e1b3a 50%, #1a0a24)", kitchen:ACT_BG.kitchen })[k] || ACT_BG[k.replace("in_", "")] || `url(art/${k}.png) center/cover, #3a2a20`;
+  talentstage:"url(art/talentstage.png) center/cover, radial-gradient(circle at 50% 40%, #fff3b0, #8e1b3a 50%, #1a0a24)", kitchen:ACT_BG.kitchen, bakestage: LOOK_GAME() && G_HAVE.has("bakestage") ? "url(art/bakestage.png) center/cover, linear-gradient(#ffe2b8,#d9a066)" : ACT_BG.kitchen })[k] || ACT_BG[k.replace("in_", "")] || `url(art/${k}.png) center/cover, #3a2a20`;
 const HOST = "Hoot";
 const showOf = k => SHOWS.find(s => s.k === k);
 const fName = n => friends().find(x => x.name === n);
 function stageScreen(bg, label, people, bubble, panel) {
   // people: [[friend or "host", x%, size%, mood]]
-  const art = p => p === "host" ? "owl" : p.art || ART[p.emo];
+  const art = p => p === "host" ? (LOOK_GAME() && G_HAVE.has("owlhost") ? "owlhost" : "owl") : p.art || ART[p.emo];
   const who = people.map(([p, x, h, hidden], n) => `<div class="world-animal show-animal ${hidden ? "hidden-door" : ""}" style="left:${x}%;bottom:${n % 2 ? 4 : 0}%;--y:${n % 2 ? 4 : 0}%;--h:${h}%;height:${h}%;z-index:${10 - n};animation-delay:${-n * 0.6}s">
       ${hidden ? `<div class="door">${hidden}</div>` : `<img class="${x > 50 ? "flip" : ""}" src="art/${art(p)}.png" alt="">`}<span>${hidden ? "Door " + hidden : p === "host" ? HOST + " (host)" : p.name}</span></div>`).join("");
   show(`<h1 style="font-size:34px">${label}</h1>
@@ -3089,7 +3097,7 @@ function bakeShow(pick) {
     return showEnd(win, say + `<br><b>${j1.name}:</b> "${pickOne(["*takes a bite* ...OH. Oh wow.", "Mmm! Can I have seconds?"])}" <b>${j2.name}:</b> "${pickOne(["Honestly? Yours is better than " + r.name + "'s. Don't tell them. 🤫", "Ooh, that's a tough one. They're both yummy!"])}"<br><b>${HOST}:</b> "${win ? "The Golden Whisk goes to... YOU!" : r.name + " wins by one crumb!"}"`, "");
   }
   const [q, opts] = BAKE_STEPS[g.step];
-  stageScreen("kitchen", "Bake Battle", [["host", 50, 30], [r, 82, 40]], say, `<h2>${q}</h2>${opts.map((o, n) => `<button class="soft" onclick="bakeShow(${n})">${o}</button>`).join("")}`);
+  stageScreen("bakestage", "Bake Battle", [["host", 50, 30], [r, 82, 40]], say, `<h2>${q}</h2>${opts.map((o, n) => `<button class="soft" onclick="bakeShow(${n})">${o}</button>`).join("")}`);
 }
 function showEnd(win, say, score, dateF, dateI) {
   const g = S.gs, s = showOf(g.k); S.trophies = S.trophies || {}; S.showDay = S.showDay || {};
@@ -3150,6 +3158,7 @@ function dramaStory() {
   if (!S.feud || S.feud.step > 4) { if (S.feud && S.feud.day === S.tday) return false;
     const [a, b] = fr.slice().sort(() => Math.random() - .5); S.feud = { a: a.name, b: b.name, why: pickOne(FEUD_WHY), step: 0, day: S.tday }; }
   const F = S.feud, A = F.a, B = F.b;
+  if (S.fightOpen?.[A] || S.fightOpen?.[B]) return false;
   if (F.step === 0) { textFrom(A, pickOne([`Okay. I need to tell you something. ${B} ${F.why}. 😤`, `${B} ${F.why}. In front of EVERYONE. 😱`, `I can't even. ${B} ${F.why}!! 😤`]));
     setTimeout(() => textFrom(A, pickOne([`So. We are DONE. Done done. Whose side are you on?? 👀`, `I'm never speaking to ${B} again. Ever. Well, maybe Tuesday. But NOT before. 😤`])), 2500); }
   if (F.step === 1) { textFrom(B, pickOne([`Okay, before ${A} tells you their side... I said it was UNIQUE. That's a compliment!! 😭`, `Has ${A} been texting you about me?? Because that is NOT what happened. 😤`]));
@@ -3161,6 +3170,107 @@ function dramaStory() {
   if (F.step === 4) { textFrom(A, pickOne([`Okay so... ${B} and I made up. We hugged it out. It was very emotional. 😭💕`, `Plot twist: ${B} said sorry and I said sorry and now we're besties again. 💅 ...But I'm watching them.`]));
     postFeed(B, pickOne([`Me and ${A}: friends again!! 💕 The drama is OVER. (For now.)`, `Besties forever. Ignore everything from this week. 🙈💕`])); }
   F.step++; return true;
+}
+// ===== Real-life texting: keyboard smash gets called out, mean texts start a real fight, sorry is grudging at first =====
+const KB_ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
+const TEXT_ABBR = new Set("hmm hmmm hmmmm brr shh shhh pfft psst grr grrr smh tbh brb ngl thx pls plz bc rn nvm dm gm gn ty np idk ikr jk lmk wyd hbu wbu omg btw fr frfr tmrw tmr ppl srsly sry k kk mhm hm ugh xd".split(" "));
+function gibWord(w) {
+  if (w.length < 3 || TEXT_ABBR.has(w) || !/^[a-z]+$/.test(w)) return false;
+  const v = (w.match(/[aeiouy]/g) || []).length, run = Math.max(0, ...(w.match(/[^aeiouy]+/g) || [""]).map(x => x.length));
+  if (!v && w.length >= 4) return true;
+  if (run >= 5) return true;
+  for (const r of KB_ROWS) for (const q of [r, [...r].reverse().join("")]) for (let i = 0; i + 4 <= q.length; i++) if (w.includes(q.slice(i, i + 4))) return true;
+  if (/(..)\1\1/.test(w) && !/(ha|he|hi|ho|lo|la|na|ya|ah|eh|oh)\1\1/.test(w)) return true;
+  return false;
+}
+function isGibberish(raw) {
+  const t = normalize(raw).replace(/[^a-z\s]/g, "").trim(); if (!t) return false;
+  const ws = t.split(/\s+/); return ws.every(w => gibWord(w) || w.length < 3) && ws.some(gibWord);
+}
+const GIB_SAY = ["um... those aren't words 😂", "did you just smash your keyboard?? 😂", "?? that's literally not a word", "okay that's gibberish. try again, but in English 💅", "I don't speak keyboard smash, sorry 😂", "what. 😂 is your cat typing?", "bestie, that's not words 💀"];
+const GIB_AGAIN = ["okay stop 😂 say something real", "you're doing it on purpose now 🙄", "I'm not answering gibberish. Use your words. 💅", "...I'm just gonna wait till you type actual words. 😐"];
+const MEAN_PHRASE = /\b(you|u|ur|youre|you're|you are|your) (suck|stink|smell|are the worst|r the worst|the worst|so (annoying|ugly|stupid|dumb|boring|weird|gross|lame|cringe|mean)|(annoying|ugly|stupid|dumb|boring|gross|lame|cringe|trash|a loser|a baby|an idiot))\b|\bi (dont|don't|do not) (like|want to talk to|care about) (you|u)\b|\bi hate (you|u)\b|\bnobody likes (you|u)\b|^(\w+ )?(shut up|go away|leave me alone|get lost|be quiet|stop texting me)( \w+)?$|\b(youre|you're|you are|ur|u r) not even (cute|funny|cool|nice|pretty)\b|\bl \+ ?ratio\b|\bratio\b|\b(youre|you're|you are|ur) not my friend\b|\bnot your friend\b/;
+const GRUDGE = ["...fine. Apology accepted. But that really hurt. 😒", "Okay. Thanks for saying sorry. I'm still a little mad though.", "Hmph. I forgive you. ...Mostly. Give me a minute. 🙄", "Fine. But don't do it again. I mean it. 😤"];
+const CHILLY = ["k.", "mhm.", "cool. 🙄", "okay.", "I'm still kinda mad, just so you know. 😒", "whatever. ...okay fine, hi.", "sure."];
+function realTalk(f, raw, text, t) {
+  S.chilly = S.chilly || {}; S.gibN = S.gibN || {}; S.fightOpen = S.fightOpen || {}; S.fightLost = S.fightLost || {};
+  if (isGibberish(raw)) { S.gibN[f.name] = (S.gibN[f.name] || 0) + 1; return { pts:0, mood:"confused", gib:true, say: pickOne(S.gibN[f.name] >= 3 ? GIB_AGAIN : GIB_SAY) }; }
+  S.gibN[f.name] = 0;
+  if (MEAN_PHRASE.test(t.trim()) && /\b(jk|just kidding|joking|kidding)\b/.test(t) && !S.fightOpen[f.name]) return { pts:0, mood:"confused", chilly:true, say: pickOne(["Hmm. 'jk.' Sure. 😒", "Wow. Even as a joke, that was kinda rude. 🙄", "Haha. Very funny. ...Not. 😒"]) };
+  if (MEAN_PHRASE.test(t.trim()) && !/\b(my|his|her) (brother|sister|mom|dad|cousin)\b/.test(t)) { const again = S.fightOpen[f.name]; S.fightOpen[f.name] = true; S.fightLost[f.name] = (S.fightLost[f.name] || 0) + 1; S.chilly[f.name] = 0;
+    return { pts:-1, fight:true, mood:"confused", say: again ? pickOne(["Wow. You're making it WORSE. 😤", "Okay, now I'm REALLY not talking to you.", "Keep going. I'm taking screenshots. 📸😒"]) : pickOne(ARGUE.back) }; }
+  if (S.fightOpen[f.name] && has(t, APOLOGY)) { const back = Math.min(2, S.fightLost[f.name] || 0); S.fightOpen[f.name] = false; S.fightLost[f.name] = 0; S.madeUp = S.madeUp || {}; S.madeUp[f.name] = Date.now(); S.chilly[f.name] = 3;
+    return { pts:back, fixed:true, mood:"nod", chilly:true, say: pickOne(GRUDGE) }; }
+  if (S.chilly[f.name] > 0 && !S.fightOpen[f.name]) { S.chilly[f.name]--;
+    if (has(t, APOLOGY) || has(t, ["love you","like you","miss you"])) return { pts:0, mood:"nod", chilly:true, say: pickOne(["I know. I'm getting there. 😒", "Okay okay. I heard you the first time. 🙄", "...that's a little bit sweet. Still mad though."]) };
+    if (Math.random() < .6) return { pts:0, mood:"nod", chilly:true, say: pickOne(CHILLY) };
+  }
+  return null;
+}
+NEW_FRIEND.hello.push("Oh hey. Took you long enough. 💅", "Look who finally texted. 👀", "Hiii. What do you want? 😏 Jk, hi.", "Oh. It's you. ...Kidding! Hi. 😂");
+// ===== Jobs: everyone works somewhere (weekdays 9-12 and 2-5), and you can get a job too =====
+const JOBS = {
+  cafe:    { title:"Barista", place:"Acorn Cafe", spot:[760, 860], bg:"in_cafe", menu:["hot cocoa", "acorn latte", "berry smoothie", "honey toast"],
+             say:["One acorn latte, coming up!", "Ugh, someone ordered a 'medium-large.' That's not a size. 😤", "*steams milk dramatically*"] },
+  bakery:  { title:"Baker", place:"Honey Bakery", spot:[1240, 860], bg:"in_bakery", menu:["honey cake", "berry muffin", "cinnamon bun", "chocolate chip cookie"],
+             say:["Fresh muffins! Get them while they're hot!", "I have flour EVERYWHERE. Even my ears. 😂", "Don't touch the cake. It's for a VERY important customer."] },
+  icecream:{ title:"Ice cream scooper", place:"Scoops Ice Cream", spot:[1250, 1170], bg:"in_icecream", menu:["strawberry scoop", "chocolate scoop", "mint scoop", "rainbow sprinkle cone"],
+             say:["Two scoops or THREE scoops? Three. The answer is three.", "My arm hurts from scooping. Worth it. 🍦", "No, you can't have a free sample. ...Okay, ONE."] },
+  flowers: { title:"Florist", place:"Flower Shop", spot:[750, 1170], bg:"in_flowers", menu:["red roses", "sunflowers", "daisies", "tulips"],
+             say:["Roses for your crush? 👀 I won't tell. ...I'll tell.", "These tulips are DRAMATIC today.", "Smell this one! Isn't it lovely?"] },
+  cinema:  { title:"Movie usher", place:"Starlight Cinema", spot:[1500, 880], bg:"in_cinema", menu:["popcorn", "nachos", "a ticket to the cartoon", "a ticket to the scary movie"],
+             say:["Shhh! The movie is starting!", "Somebody spilled popcorn. AGAIN. 🙄", "No phones in the theater! ...Except mine."] },
+  arcade:  { title:"Arcade helper", place:"Arcade", spot:[520, 860], bg:"in_arcade", menu:["10 tokens", "the giant teddy prize", "a bouncy ball prize", "a sticker pack"],
+             say:["The claw machine is NOT rigged. ...Probably.", "New high score! Oh wait, that was mine.", "Who put gum on the pinball? WHO?"] },
+  library: { title:"Librarian", place:"Tree Library", spot:[620, 640], menu:[], say:["Shhh. 🤫", "This book is overdue by 3 YEARS. 😱", "Have you read this one? It's SO good."] },
+  lake:    { title:"Lifeguard", place:"The Lake", spot:[1000, 1400], menu:[], say:["No running by the water!", "*blows whistle* WALK, please!", "Sunscreen check! 🧴"] },
+  mail:    { title:"Mail carrier", place:"Town Square", spot:[1000, 1060], menu:[], say:["Letter for you! ...Wait, no, it's for me.", "So many letters today. Someone has a SECRET ADMIRER. 👀", "Rain or shine, the mail gets delivered!"] }
+};
+const JOB_KEYS = Object.keys(JOBS);
+const jobOf = f => { if (f.type === "baker") return hashStr(f.name) % 2 ? "bakery" : "cafe"; return JOB_KEYS[hashStr(f.name + "job") % JOB_KEYS.length]; };
+const jobTitle = f => JOBS[jobOf(f)].title;
+const isWorkday = () => ![6, 0].includes((S.tday || 1) % 7);
+const atWork = f => isWorkday() && [1, 3].includes(lifeSlot());
+const JOB_TEXT = ["Work was SO busy today. My paws are tired. 😩", "A customer was SO rude today. I smiled anyway. Iconic. 💅", "Guess who came into work today? {O}. And they ordered the WEIRDEST thing. 😂",
+  "My boss said I'm the best worker ever. Okay, I said it. But still. 💅", "Ugh, I have work tomorrow. Save me. 😭", "I got a tip today! I'm basically rich now. 💰"];
+const JOB_ASK = /\b(what('?s| is) (your|ur) job|where do (you|u) work|do (you|u) (have a|work)|what do (you|u) do for work|wyd for work|are (you|u) at work)\b/;
+// your own job
+function jobsApp() {
+  S.acorns = S.acorns || 0;
+  const mine = S.myJob && JOBS[S.myJob];
+  const ph = document.getElementById("phone");
+  ph.innerHTML = `<div class="ph-screen"><div class="ph-status"><button class="ph-x" onclick="phoneHome()">Back</button><b>Jobs</b><button class="ph-x" onclick="closePhone()">Close</button></div>
+    <div class="ph-body" style="padding:12px;overflow-y:auto">
+      <h2 style="margin:4px 0">You have ${S.acorns} acorns</h2>
+      ${mine ? `<p>You work at <b>${mine.place}</b> as a <b>${mine.title}</b>.</p><button class="rainbow" onclick="closePhone(); workShift()">Go to work</button><button class="soft" onclick="S.myJob=null; jobsApp()">Quit my job</button>` : `<p>Pick a job! You'll serve customers and earn acorns.</p>`}
+      <div class="job-list">${JOB_KEYS.filter(k => JOBS[k].menu.length).map(k => { const coworkers = friends().filter(f => jobOf(f) === k).map(f => f.name);
+        return `<button class="soft job-pick ${S.myJob === k ? "on" : ""}" onclick="S.myJob='${k}'; chime(); jobsApp()"><b>${JOBS[k].title}</b><br><small>${JOBS[k].place}${coworkers.length ? " · works with " + coworkers.join(", ") : ""}</small></button>`; }).join("")}</div>
+    </div></div>`;
+}
+let SHIFT = null;
+function workShift(pick) {
+  const J = JOBS[S.myJob]; if (!J) return;
+  if (pick === undefined) { SHIFT = { n: 0, good: 0, tips: 0, cust: null, want: null, line: "" }; }
+  else {
+    const right = J.menu[pick] === SHIFT.want, c = SHIFT.cust;
+    if (right) { SHIFT.good++; const tip = 1 + Math.floor(Math.random() * 3); SHIFT.tips += tip;
+      SHIFT.line = `<b>${c.name}:</b> "${pickOne(["Perfect! Thank you! 😊", "Yesss, exactly what I wanted!", "You're the BEST worker here. Don't tell your boss. 💅", "Ooh, fancy. Here's a tip!"])}" <small>(+${tip} acorn tip)</small>`; }
+    else SHIFT.line = `<b>${c.name}:</b> "${pickOne([`Um... I asked for ${SHIFT.want}. 🙄`, `That's NOT what I ordered. Are you even listening? 😤`, `${J.menu[pick]}?? Do I LOOK like I want ${J.menu[pick]}? 💅`, "Wow. Okay. I'll just eat this, I guess. 😒"])}"`;
+    SHIFT.n++;
+  }
+  if (SHIFT.n >= 5) {
+    const pay = 5 + SHIFT.good * 2 + SHIFT.tips; S.acorns = (S.acorns || 0) + pay; chime(); floatHearts(3, "⭐");
+    const co = friends().find(f => jobOf(f) === S.myJob);
+    if (co) setTimeout(() => textFrom(co.name, SHIFT.good >= 4 ? pickOne(["Okay you were SO good at work today. Employee of the month?? 👀", "Best shift EVER with you. 💅"]) : pickOne(["Work was chaos today. 😂 You gave someone the wrong order like 3 times.", "Rough shift, huh? It's okay. Tomorrow will be better. 😅"])), 4000);
+    try { postFeed(pickOne(friends()).name, `Just saw ${S.name} working at ${J.place}. 👀 Get that money! 💰`); } catch (e) {}
+    return stageScreen(J.bg, J.place, co ? [[co, 25, 40]] : [], SHIFT.line + `<br><b>Shift over!</b> You got ${SHIFT.good} of 5 orders right.`,
+      `<h2>You earned ${pay} acorns!</h2><p>You have ${S.acorns} acorns.</p><button class="rainbow" onclick="workShift()">Work another shift</button><button class="soft" onclick="goOutside()">Leave work</button>`);
+  }
+  const custs = friends().filter(f => jobOf(f) !== S.myJob); const c = SHIFT.cust = pickOne(custs); SHIFT.want = pickOne(J.menu);
+  const co = friends().find(f => jobOf(f) === S.myJob);
+  const order = pickOne([`Hi! Can I get ${SHIFT.want}, please?`, `${SHIFT.want}. And make it snappy. 💅`, `Ummm... I'll have... ${SHIFT.want}! No wait. Yes. ${SHIFT.want}.`, `One ${SHIFT.want.replace(/^(a|an|the|10) /, "")}, please! 😊`]);
+  stageScreen(J.bg, `${J.title} at ${J.place}`, [...(co ? [[co, 18, 36]] : []), [c, 75, 44]], (SHIFT.line ? SHIFT.line + "<br>" : "") + `<b>${c.name}:</b> "${order}"`,
+    `<h2>Customer ${SHIFT.n + 1} of 5</h2>${J.menu.map((m, i) => `<button class="soft" onclick="workShift(${i})">${m}</button>`).join("")}`);
 }
 // ===== Gossip behind your back =====
 const RUMORS = ["snore like a leaf blower", "dance like a flapping penguin", "sing in the bath SUPER loud", "ate ALL the cookies at the party", "text like a grandma", "have a secret crush on somebody", "tripped in front of everyone and pretended it was a dance move", "think you're the best at everything", "still sleep with a teddy bear", "talk to your plants"];
@@ -3382,6 +3492,7 @@ function placesScreen() {
 }
 // ===== Phone apps: home screen, Burrowbook (pretend animal social page), Photos, Camera, Calendar =====
 const APP_ICON = {
+  jobs:`<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="2" fill="#fff"/><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="#fff" stroke-width="2" fill="none"/><rect x="3" y="12" width="18" height="2" fill="#e8962e"/></svg>`,
   msgs:`<svg viewBox="0 0 24 24"><path d="M4 5h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-9l-5 4v-4H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" fill="#fff"/></svg>`,
   book:`<svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3" fill="#fff"/><circle cx="16" cy="9" r="3" fill="#fff"/><path d="M3 19c.6-3.4 2.6-5 5-5s4.4 1.6 5 5Zm8 0c.6-3.4 2.6-5 5-5s4.4 1.6 5 5Z" fill="#fff"/></svg>`,
   photos:`<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="#fff"/><path d="m5 17 4-5 3 3 2-2 5 4Z" fill="#5fb3ff"/><circle cx="16" cy="9" r="1.6" fill="#ffc83d"/></svg>`,
@@ -3402,6 +3513,7 @@ function phoneHome() {
       ${app("book", "Burrowbook", "linear-gradient(#7aa7ff,#3a5bd9)", "bookApp()", newPosts)}
       ${app("photos", "Photos", "linear-gradient(#fff,#e9e3f5)", "photosApp()")}
       ${app("camera", "Camera", "linear-gradient(#777,#333)", "cameraApp()")}
+      ${app("jobs", "Jobs", "linear-gradient(#ffd36b,#e8962e)", "jobsApp()")}
       ${app("cal", "Calendar", "linear-gradient(#fff,#f3e9ee)", "calendarApp()")}
       ${app("map", "Map", "linear-gradient(#a8ec9f,#3fae5a)", "closePhone(); placesScreen()")}
       ${app("clock", "Clock", "linear-gradient(#444,#111)", "closePhone(); clockPanel()")}
@@ -3540,6 +3652,7 @@ function calendarApp() {
 const TW = 2000, TH = 1800;
 const TOWN_SPOT = { village:[1000, 960], forest:[640, 260], pines:[1420, 250], creek:[260, 520], garden:[360, 960], berries:[420, 1330], picnic:[1630, 960],
   lake:[1000, 1560], pond:[1600, 1520], treehouse:[1720, 560], birch:[1760, 1260], library:[620, 620], rain:[1340, 600], campfire:[1330, 1290], lanterns:[690, 1280], stars:[1000, 170] };
+JOB_KEYS.forEach(k => { if (!TOWN_SPOT["job_" + k]) TOWN_SPOT["job_" + k] = JOBS[k].spot; WORLD_NAMES["job_" + k] = JOBS[k].place; });
 const TOWN_BLD = [ // [sprite, x, y, width, what happens when you tap it, label]
   ["t_myhouse", 1000, 1300, 230, "home", "My House"], ["t_cafe", 760, 800, 210, "shop:cafe", "Acorn Cafe"], ["t_bakery", 1240, 800, 210, "shop:bakery", "Honey Bakery"],
   ["t_icecream", 1250, 1110, 200, "shop:icecream", "Scoops Ice Cream"], ["t_flowers", 750, 1110, 200, "shop:flowers", "Flower Shop"], ["t_cinema", 1500, 820, 220, "shop:cinema", "Starlight Cinema"],
@@ -3672,7 +3785,7 @@ function townTalkOpen(i) {
   const isAdm = S.admirer === f.name && !S.admirerGone && !S.admirerOk;
   townSay(p, isAdm ? pickOne(["Oh! Um. I wasn't following you! I was just... walking. The same way. 😳", "*freezes* ...You saw me? I mean, hi! Random! 😅"]) : pickOne(MEET_HELLO[st]), 5);
   const box = document.getElementById("townTalk");
-  box.innerHTML = `<div class="tt-head"><img src="${toonImg(ART[f.emo])}" alt=""><b>${f.name}</b><span class="rel-chip">${relLabel(f)}</span><small>${heartBar(S.hearts[f.name])}</small><button class="ph-x" onclick="townTalkClose()">Bye</button></div>
+  box.innerHTML = `<div class="tt-head"><img src="${toonImg(ART[f.emo])}" alt=""><b>${f.name}</b><span class="rel-chip">${relLabel(f)}</span><span class="job-chip">${jobTitle(f)}</span><small>${heartBar(S.hearts[f.name])}</small><button class="ph-x" onclick="townTalkClose()">Bye</button></div>
     <div class="tt-type"><input id="ttIn" maxlength="120" placeholder="Say something to ${f.name}..." onkeydown="if(event.key==='Enter')townSayTo()"><button onclick="townSayTo()">Say it</button></div>
     ${isAdm ? `<div class="tt-acts" style="margin-bottom:6px"><button class="soft" onclick="admirerSpace()">Please stop following me</button><button class="soft" onclick="admirerOkay()">Aww, you can walk with me</button></div>` : ""}
     <div class="tt-acts"><button class="soft" onclick="townHug()">Hug</button><button class="rainbow" onclick="townSave(); activityMenu(${i}, 'town')">Play together</button>
@@ -3732,6 +3845,8 @@ function townStep(now) {
     const nf = S.npcFollow && T.people.find(p => p.f.name === S.npcFollow[0]), tgt = S.npcFollow && T.people.find(p => p.f.name === S.npcFollow[1]);
     if (nf && tgt && !nf.asleep && !tgt.asleep && T.chatWith !== nf.i) { nf.follow = true; if (Math.hypot(nf.x - tgt.x, nf.y - tgt.y) > 150) { nf.tx = tgt.x - 110; nf.ty = tgt.y - 30; nf.travel = true; }
       if (Math.random() < .06) townSay(tgt, pickOne([`${nf.f.name}, why are you following me?! 😤`, "Is someone behind me?? 👀", `${nf.f.name}! I can SEE you!`]), 3); }
+    // workers chat about work
+    if (Math.random() < .02) { const wk = T.people.filter(p => !p.asleep && atWork(p.f) && T.chatWith !== p.i && T.t > p.talkUntil + 3); if (wk.length) { const p = pickOne(wk); townSay(p, pickOne(JOBS[jobOf(p.f)].say), 3); } }
     // feuding friends make a scene when they get close
     if (S.feud && S.feud.step >= 1 && S.feud.step <= 4) { const fa = T.people.find(p => p.f.name === S.feud.a), fb = T.people.find(p => p.f.name === S.feud.b);
       if (fa && fb && !fa.asleep && !fb.asleep && Math.hypot(fa.x - fb.x, fa.y - fb.y) < 200 && T.t > fa.talkUntil + 3 && Math.random() < .2) {
@@ -3801,6 +3916,26 @@ function sendPicT(name, t) {
   if (S.picDay[name] !== S.tday) { S.picDay[name] = S.tday; addHearts(f, 1); tag = "  (+1 heart)"; }
   const back = Math.random() < .5 ? [makePhoto(f, "selfie"), pickOne(["Here's one of me back!", "Okay, my turn! 📸", "Fair trade. 😏"])] : [];
   setTimeout(() => deliver(name, [line + tag, ...back]), 1300);
+}
+// ===== 3D game look: cartoonish 3D game art (g_*.png) swaps in for the photos wherever it exists =====
+const LOOK_GAME = () => { try { return localStorage.getItem("gaosLook") !== "real"; } catch (e) { return true; } };
+function lookToggle() { try { localStorage.setItem("gaosLook", LOOK_GAME() ? "real" : "game"); } catch (e) {} location.reload(); }
+const G_NAMES = ["owlhost", "bakestage", "tvstudio", "talentstage", "fox", "bunny", "raccoon", "bear", "deer", "hedgehog", "squirrel", "owl", "wolf", "mouse", "badger", "weasel", "magpie", "otter", "beaver"];
+const G_HAVE = new Set();
+const gName = n => LOOK_GAME() && G_HAVE.has(n) ? "g_" + n : n;
+const gFix = str => str.replace(/art\/([a-z0-9_]+)\.png/g, (a, n) => G_HAVE.has(n) ? `art/g_${n}.png` : a);
+function gSwap(root) {
+  if (!LOOK_GAME() || !G_HAVE.size || !root || !root.querySelectorAll) return;
+  const fix = el => { if (el.tagName === "IMG") { const v = el.getAttribute("src"); if (v && v.includes("art/")) { const w = gFix(v); if (w !== v) el.setAttribute("src", w); } }
+    const st = el.getAttribute && el.getAttribute("style"); if (st && st.includes("art/")) { const w = gFix(st); if (w !== st) el.setAttribute("style", w); } };
+  fix(root); if (!gSwap.one) root.querySelectorAll('img[src*="art/"], [style*="art/"]').forEach(fix);
+}
+function gFixOne(el) { gSwap.one = true; try { gSwap(el); } finally { gSwap.one = false; } }
+if (LOOK_GAME()) {
+  document.body.classList.add("look-game");
+  G_NAMES.forEach(n => { const im = new Image(); im.onload = () => { G_HAVE.add(n); gSwap(document.body); }; im.src = `art/g_${n}.png`; });
+  if (typeof MutationObserver !== "undefined") new MutationObserver(ms => ms.forEach(m => { if (m.type === "attributes") { const v = m.target.getAttribute(m.attributeName); if (v && v.includes("art/")) gFixOne(m.target); } else m.addedNodes.forEach(n => n.nodeType === 1 && gSwap(n)); }))
+    .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["src", "style"] });
 }
 // ===== Christmas time! (switch it off on the title screen) =====
 const XMAS = () => { try { return localStorage.getItem("gaosXmas") !== "0"; } catch (e) { return true; } };
@@ -4052,10 +4187,11 @@ const ROUTINE = {
 function lifeSlot() { const h = (S.clock ?? 480) / 60; return h < 6 || h >= 22.5 ? -1 : h < 9 ? 0 : h < 12 ? 1 : h < 14 ? 2 : h < 17 ? 3 : h < 20 ? 4 : 5; }
 function whereNow(f) {
   const sl = lifeSlot(); if (sl < 0) return null;
+  if (typeof JOBS !== "undefined" && atWork(f)) { const j = jobOf(f); return j === "library" || j === "lake" ? j : "job_" + j; }
   const opts = (ROUTINE[f.type] || ROUTINE.shy)[sl];
   return opts[hashStr(f.name + (S.tday || 1) + sl) % opts.length];
 }
-const whereWord = f => { const w = whereNow(f); return w ? "At " + (WORLD_NAMES[w] || w) : "Asleep"; };
+const whereWord = f => { const w = whereNow(f); return !w ? "Asleep" : atWork(f) ? `At work (${JOBS[jobOf(f)].place})` : "At " + (WORLD_NAMES[w] || w); };
 const CHITCHAT = [["Did you see {ME}'s post?", "Obviously. 👀"], ["I'm SO hungry.", "Cafe? Cafe."], ["Race you to the lake!", "You're ON!"], ["Is it true about {O}??", "I can't say... 😶"], ["Nice scarf!", "Thanks, I made it! 💕"],
   ["Have you seen {ME} today?", "Shh, they're right there! 😳"], ["Ugh, {O} is SO annoying.", "Right?! ...Wait, don't tell them I said that."], ["Want ice cream later?", "Only if it's strawberry! 🍓"], ["Did you hear thunder?", "That was my tummy. 😂"],
   ["{ME} is so cool.", "I know, right? 🥰"], ["Where are you going?", "Secret mission. 🤫"], ["I saw {O} and {O2} holding paws!", "NO WAY. 😱"], ["Your fur looks nice today.", "Aww, stop it! 😊"], ["I'm going to win the quiz show.", "In your dreams. 💅"]];
