@@ -487,6 +487,44 @@
   .ph-contact .where { color:#8a7a9a; font-size:12px; }
   .walker { pointer-events:auto; } .walker img, .walker .sheet { filter:contrast(1.04) saturate(.95); }
   .walk-cam::after { content:""; position:absolute; inset:0; z-index:1060; pointer-events:none; opacity:.07; background-image:repeating-radial-gradient(circle at 17% 32%, #fff 0 .5px, transparent 1px 3px), repeating-radial-gradient(circle at 73% 61%, #000 0 .5px, transparent 1px 4px); mix-blend-mode:overlay; }
+  .town { position:fixed; inset:0; overflow:hidden; background:#7cc35a url(art/t_grass.png); background-size:220px; touch-action:none; user-select:none; -webkit-user-select:none; z-index:5; }
+  .town-world { position:absolute; left:0; top:0; transform-origin:0 0; background:url(art/t_grass.png) #86cf5f; background-size:260px; will-change:transform; }
+  .town-ground { position:absolute; left:0; top:0; pointer-events:none; }
+  .t-spr { position:absolute; transform:translate(-50%, -88%); pointer-events:none; filter:drop-shadow(0 10px 6px rgba(30,60,10,.28)); }
+  .t-spr.tap { pointer-events:auto; cursor:pointer; } .t-spr.tap:active { filter:drop-shadow(0 0 12px #fff) brightness(1.1); }
+  .t-spr.missing { visibility:hidden; }
+  .t-ani { position:absolute; transform:translate(-50%, -100%); display:flex; flex-direction:column; align-items:center; cursor:pointer; }
+  .t-ani img { filter:drop-shadow(0 6px 4px rgba(30,60,10,.35)); transform-origin:50% 100%; }
+  .t-ani img.flip { transform:scaleX(-1); }
+  .t-ani.moving img { animation:toonWalk .34s ease-in-out infinite; } .t-ani.moving img.flip { animation-name:toonWalkF; }
+  @keyframes toonWalk { 0%,100% { transform:translateY(0) rotate(-4deg) } 50% { transform:translateY(-10%) rotate(4deg) } }
+  @keyframes toonWalkF { 0%,100% { transform:scaleX(-1) translateY(0) rotate(-4deg) } 50% { transform:scaleX(-1) translateY(-10%) rotate(4deg) } }
+  .t-ani::after { content:""; position:absolute; bottom:18px; width:60%; height:12px; border-radius:50%; background:rgba(30,60,10,.3); z-index:-1; }
+  .t-ani span { margin-top:-2px; background:rgba(255,255,255,.9); color:#4a2f5a; font-size:15px; font-weight:700; padding:2px 10px; border-radius:12px; box-shadow:0 2px 4px #0002; white-space:nowrap; }
+  .t-me span { background:#ff6fae; color:#fff; }
+  .t-ani .say { display:none; position:absolute; bottom:calc(100% + 6px); width:max-content; max-width:230px; background:#fff; color:#2b2233; font:600 16px/1.3 inherit; font-style:normal; padding:8px 12px; border-radius:16px; box-shadow:0 3px 10px #0003; text-align:center; animation:pop .25s; }
+  .t-ani .say::after { content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:8px solid transparent; border-top-color:#fff; }
+  .town-sign { position:absolute; transform:translate(-50%, 0); background:#8a5a32; color:#fff6e0; font-size:17px; font-weight:700; padding:3px 12px; border-radius:8px; border:3px solid #6b4224; white-space:nowrap; pointer-events:none; z-index:1; box-shadow:0 3px 0 #4a2c14; }
+  .town-sign.bld { background:#fff; color:#6b4224; border-color:#e6cfa8; box-shadow:0 2px 0 #d8b98a; font-size:15px; }
+  .t-target { display:none; position:absolute; width:46px; height:22px; margin:-11px 0 0 -23px; border:4px solid #fff; border-radius:50%; z-index:3; animation:pop .3s; pointer-events:none; }
+  .town .pov-label { position:absolute; top:14px; left:12px; z-index:30; }
+  .town .pov-exit { display:block; position:absolute; top:12px; right:12px; z-index:40; width:54px; height:46px; padding:0; border-radius:14px; background:rgba(20,12,30,.55); color:#fff; font-size:15px; box-shadow:none; }
+  .town-zoom { position:absolute; right:12px; top:120px; z-index:30; display:flex; flex-direction:column; gap:8px; }
+  .town-zoom button { width:46px; height:46px; margin:0; padding:0; border-radius:14px; font-size:26px; background:rgba(255,255,255,.85); color:#4a2f5a; }
+  .town-bar { position:absolute; left:0; right:0; bottom:0; z-index:30; display:flex; gap:8px; justify-content:center; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(transparent, rgba(20,12,30,.35)); }
+  .town-bar button { margin:0; padding:11px 16px; font-size:16px; }
+  .town-hint { bottom:80px !important; left:12px; right:12px; text-align:center; }
+  .town-talk { display:none; position:absolute; left:10px; right:10px; bottom:74px; z-index:35; background:rgba(255,255,255,.95); border-radius:22px; padding:10px 12px; box-shadow:0 8px 24px #0004; }
+  .tt-head { display:flex; align-items:center; gap:8px; } .tt-head img { height:48px; } .tt-head small { font-size:11px; letter-spacing:-1px; } .tt-head .ph-x { margin-left:auto; }
+  .tt-type { display:flex; gap:6px; margin:8px 0; } .tt-type input { flex:1; min-width:0; font-size:16px; padding:9px 12px; border-radius:20px; border:2px solid #f0d0e0; } .tt-type button { margin:0; padding:9px 14px; }
+  .tt-acts { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; } .tt-acts button { margin:0; padding:8px 12px; font-size:15px; }
+  body.townmode #sky { opacity:calc(var(--a) * .8); }
+  body.townmode #sky.night ~ * .t-lamp { filter:drop-shadow(0 0 18px #ffd86b) drop-shadow(0 0 30px #ffb347); }
+  .ph-type .ph-picbtn { padding:0 10px; background:linear-gradient(135deg,#9775fa,#ff6fae); }
+  .ph-msg.me.ph-pic { background:#ff6fae; }
+  #picPick { position:absolute; inset:0; z-index:5; background:#fff; display:flex; flex-direction:column; gap:8px; padding:10px; overflow-y:auto; border-radius:28px; }
+  #picPick .pp-top { display:flex; align-items:center; justify-content:space-between; font-size:18px; } #picPick .pgrid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  .ph-screen { position:relative; }
   body.immersive { overflow:hidden; }
   body.immersive #app { width:100%; padding:0; }
   body.immersive #app > h1, body.immersive .bgl, body.immersive .srv-btn, body.immersive .eyes-btn, body.immersive .scr-btn, body.immersive .scroll-btns, body.immersive .side-go { display:none !important; }
@@ -843,7 +881,7 @@ window.addEventListener("scroll", scrollButtons, { passive:true });
 window.addEventListener("resize", scrollButtons);
 setInterval(scrollButtons, 700);
 function show(html) {
-  document.body.classList.remove("immersive", "world", "meet", "house", "gshow", "walking"); WALK = null;
+  document.body.classList.remove("immersive", "world", "meet", "house", "gshow", "walking", "townmode"); WALK = null; TOWN = null;
   app.innerHTML = html;
   app.classList.remove("enter"); void app.offsetWidth; app.classList.add("enter");
   const m = html.match(/url\(art\/(\w+)\.png\)/); if (m) setBg(m[1]);
@@ -863,7 +901,7 @@ function show(html) {
 const SAVE_KEY = "gaosSave1";
 function saveGame() {
   try { if (!S || !S.profileDone || !PLAYERS.length) return;
-    S.wasWalking = !!WALK;
+    S.wasWalking = !!WALK; townSave();
     localStorage.setItem(SAVE_KEY, JSON.stringify({ v:1, MODE, TURN, PLAYERS, at: Date.now() })); } catch (e) {}
 }
 function loadSave() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); return d && d.PLAYERS && d.PLAYERS.length ? d : null; } catch (e) { return null; } }
@@ -872,7 +910,7 @@ function continueGame() {
   MODE = d.MODE; TURN = d.TURN || 0; PLAYERS = d.PLAYERS; S = PLAYERS[TURN];
   S.guest = null; S.meetPlace = null; S.gs = null;
   updateSky(); phoneButton();
-  if (S.wasWalking) eyesScreen(S.worldAt); else mapScreen();
+  if (S.outside === "town") townScreen(); else if (S.wasWalking) eyesScreen(S.worldAt); else mapScreen();
 }
 setInterval(saveGame, 4000);
 addEventListener("pagehide", saveGame);
@@ -1228,7 +1266,7 @@ function mapScreen() {
   show(`
     <div class="center"><span class="day">☀️ Day ${S.day} of ${DAYS}</span></div>
     <div class="banner"><h1 style="font-size:44px;margin:0">${VILLAGE}</h1></div>
-    <div class="center"><button class="green" onclick="houseScreen()">My House</button><button class="green" onclick="profileScreen()">My Dating Profile</button><button class="rainbow" onclick="swipeScreen()">Paw Match</button><button class="rainbow" onclick="eyesScreen()">Look through my eyes</button><button class="rainbow" onclick="gameShows()">Game Shows</button></div>
+    <div class="center"><button class="green" onclick="houseScreen()">My House</button><button class="green" onclick="profileScreen()">My Dating Profile</button><button class="rainbow" onclick="swipeScreen()">Paw Match</button><button class="rainbow" onclick="townScreen()">Walk around town</button><button class="rainbow" onclick="eyesScreen()">Look through my eyes</button><button class="rainbow" onclick="gameShows()">Game Shows</button></div>
     ${MODE === 2 ? `<p class="sub"><b>${S.animal[0]} ${esc(S.name)}'s turn 🎮</b></p>` : ""}
     <p class="sub">Who do you want to hang out with today?</p>
     <div class="box">
@@ -2313,7 +2351,7 @@ function makePhoto(f, kind) {
 function msgHTML(m) {
   if (typeof m.t === "string" && m.t.startsWith("PIC|")) {
     const [, kind, place, who, item, cap] = m.t.split("|");
-    return `<div class="ph-msg them ph-pic" onclick="this.classList.toggle('big')"><div class="photo ${kind}" style="background-image:url(art/${place}.png)">${who && HAVE.has(who) ? `<img class="sel" src="art/${who}.png" alt="">` : ""}${item && HAVE.has(item) ? `<img class="pitem" src="art/${item}.png" alt="">` : ""}</div><div class="cap">${esc(cap)}</div></div>`;
+    return `<div class="ph-msg ${m.from === "me" ? "me" : "them"} ph-pic" onclick="this.classList.toggle('big')"><div class="photo ${kind}" style="background-image:url(art/${place}.png)">${who && HAVE.has(who) ? `<img class="sel" src="art/${who}.png" alt="">` : ""}${item && HAVE.has(item) ? `<img class="pitem" src="art/${item}.png" alt="">` : ""}</div><div class="cap">${esc(cap)}</div></div>`;
   }
   return `<div class="ph-msg ${m.from}">${esc(m.t)}</div>`;
 }
@@ -2342,7 +2380,7 @@ function openPhone(thread) {
       <button class="ph-meet ph-plan" onclick="planScreen('${f.name}')">Make plans with ${f.name}</button>
       <div class="ph-msgs" id="phMsgs">${texts(thread).map(msgHTML).join("")}</div>
       <div class="emoji-bar">${TEXT_EMOJI.map(e => `<button class="emo-btn" onclick="addEmoji('${e}')">${e}</button>`).join("")}</div>
-      <div class="ph-type"><input id="phIn" maxlength="140" autocomplete="off" placeholder="Text ${f.name}..." onkeydown="if(event.key==='Enter')sendText('${f.name}')"><button onclick="sendText('${f.name}')">Send</button></div>
+      <div class="ph-type"><input id="phIn" maxlength="140" autocomplete="off" placeholder="Text ${f.name}..." onkeydown="if(event.key==='Enter')sendText('${f.name}')"><button onclick="sendText('${f.name}')">Send</button><button class="ph-picbtn" aria-label="Send a picture" onclick="picPicker('${f.name}')"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" fill="#fff"/><circle cx="12" cy="13" r="3.6" fill="#ff6fae"/></svg></button></div>
     </div>`;
     const box = document.getElementById("phMsgs"); box.scrollTop = box.scrollHeight;
     document.getElementById("phIn").focus();
@@ -2804,7 +2842,8 @@ function actBack() {
   const a = S.act || {}; const f = friends()[a.i];
   if (a.from === "house") return houseScreen();
   if (a.from === "meet") return renderMeet();
-  if (a.from === "shop") return eyesScreen();
+  if (a.from === "shop") return goOutside();
+  if (a.from === "town") return townScreen();
   if (a.from === "date") { S.lastHang = f.name; return endDay(); }
   return mapScreen();
 }
@@ -3035,7 +3074,7 @@ function whoIsAt(k) {
   if (here.length < 2) here = [...here, ...all.filter(f => !here.includes(f)).sort((a, b) => hashStr(a.name + k) - hashStr(b.name + k))].slice(0, 2);
   return here.slice(0, 4);
 }
-function exitEyes() { S.guest = null; S.meetPlace = null; mapScreen(); }
+function exitEyes() { S.guest = null; S.meetPlace = null; if (S.outside === "town") return townScreen(); mapScreen(); }
 function visitRedraw() { return S.meetPlace ? renderMeet() : houseScreen(); }
 // ===== Little shops in the world: go inside and have a date (an animal runs each one) =====
 const SHOPS = {
@@ -3081,7 +3120,7 @@ function shopScreen(k) {
   const close = friends().slice().sort((a, b) => S.hearts[b.name] - S.hearts[a.name]);
   stageScreen("in_" + k, s.name, [[{ name: s.keeper, art: s.art }, 50, 40]], `<b>${s.keeper}:</b> "${s.hi}"`,
     `<h2>Who's your date?</h2><div class="walk-grid">${close.map(f => `<button class="act-btn date-pick" onclick="shopDate('${k}', ${friends().indexOf(f)})"><img src="art/${ART[f.emo]}.png" alt=""><span>${f.name}</span></button>`).join("")}</div>
-     <div style="margin-top:8px"><button class="soft" onclick="eyesScreen()">Go back outside</button></div>`);
+     <div style="margin-top:8px"><button class="soft" onclick="goOutside()">Go back outside</button></div>`);
 }
 function shopDate(k, i) {
   S.act = { i, from: "shop" };
@@ -3210,7 +3249,8 @@ function placesScreen() {
   try { closePhone(); } catch (e) {} closeClock();
   const shopPlace = sk => Object.keys(SHOP_AT).find(k => SHOP_AT[k].some(x => x[0] === sk));
   show(`<h1 style="font-size:36px">Where do you want to go?</h1>
-    <div class="box"><h2>Walk around</h2><div class="places-grid">
+    <div class="center"><button class="rainbow big-btn" onclick="townScreen()">Walk around town</button></div>
+    <div class="box"><h2>Look through your eyes</h2><div class="places-grid">
       ${WALK_ORDER.map(x => { const who = friends().filter(f => whereNow(f) === x).map(f => f.name); return `<button class="act-btn" style="background:${tileBg(x)}" onclick="eyesScreen('${x}')"><span>${WORLD_NAMES[x]}${who.length ? `<br><small>${who.slice(0, 3).join(", ")}${who.length > 3 ? " +" + (who.length - 3) : ""}</small>` : ""}</span></button>`; }).join("")}
     </div></div>
     <div class="box"><h2>Shops</h2><div class="places-grid">
@@ -3370,6 +3410,227 @@ function calendarApp() {
     ${friends().map(f => `<div class="ph-contact" onclick="planScreen('${f.name}')">${face(f)}<div><b>${f.name}</b></div></div>`).join("")}
   </div></div>`;
 }
+// ===== The cartoon town: see the whole town, everyone living their life, tap to walk, tap someone to talk =====
+const TW = 2000, TH = 1800;
+const TOWN_SPOT = { village:[1000, 960], forest:[640, 260], pines:[1420, 250], creek:[260, 520], garden:[360, 960], berries:[420, 1330], picnic:[1630, 960],
+  lake:[1000, 1560], pond:[1600, 1520], treehouse:[1720, 560], birch:[1760, 1260], library:[620, 620], rain:[1340, 600], campfire:[1330, 1290], lanterns:[690, 1280], stars:[1000, 170] };
+const TOWN_BLD = [ // [sprite, x, y, width, what happens when you tap it, label]
+  ["t_myhouse", 1000, 1300, 230, "home", "My House"], ["t_cafe", 760, 800, 210, "shop:cafe", "Acorn Cafe"], ["t_bakery", 1240, 800, 210, "shop:bakery", "Honey Bakery"],
+  ["t_icecream", 1250, 1110, 200, "shop:icecream", "Scoops Ice Cream"], ["t_flowers", 750, 1110, 200, "shop:flowers", "Flower Shop"], ["t_cinema", 1500, 820, 220, "shop:cinema", "Starlight Cinema"],
+  ["t_arcade", 520, 800, 200, "shop:arcade", "Arcade"], ["t_studio", 1170, 560, 250, "shows", "Game Show Studio"], ["t_library", 620, 580, 230, "eyes:library", "Tree Library"],
+  ["t_treehouse", 1720, 520, 260, "eyes:treehouse", "Treehouse"], ["t_campfire", 1330, 1300, 170, "eyes:campfire", "Campfire"], ["t_fountain", 1000, 990, 190, "eyes:village", "Town Square"],
+  ["t_house1", 400, 1100, 170, "", ""], ["t_house2", 1620, 1100, 170, "", ""], ["t_house3", 1560, 640, 170, "", ""], ["t_house1", 860, 1440, 150, "", ""], ["t_house2", 1150, 1440, 150, "", ""]
+];
+const ANIMAL_HOME = i => [[400, 1130], [1620, 1130], [1560, 670], [860, 1465], [1150, 1465]][i % 5];
+let TOWN = null;
+const spotFor = (i, w) => { const c = TOWN_SPOT[w] || TOWN_SPOT.village, a = i * 2.4 + 0.6, r = 95 + (i % 3) * 38; return [c[0] + Math.cos(a) * r * 1.35, c[1] + Math.sin(a) * r * .7]; };
+function townDecor() {
+  // trees and little things, the same every time (seeded), kept off the paths and buildings
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const out = [], busy = (x, y) => TOWN_BLD.some(b => Math.abs(b[1] - x) < b[3] * .55 && y < b[2] + 40 && y > b[2] - b[3] * .9) || Math.abs(x - 1000) < 70 || Math.abs(y - 960) < 60 || Math.hypot((x - 1000) / 330, (y - 1560) / 170) < 1.1 || Math.hypot((x - 1600) / 150, (y - 1520) / 90) < 1.15;
+  const zones = [["t_oak", 640, 260, 300, 26], ["t_pine", 1420, 250, 280, 26], ["t_birch", 1760, 1260, 170, 12], ["t_oak", 100, 1000, 120, 10], ["t_pine", 1920, 900, 110, 10], ["t_oak", 1000, 1760, 600, 14], ["t_oak", 200, 200, 160, 10], ["t_pine", 1850, 180, 150, 10]];
+  zones.forEach(([sp, cx, cy, r, n]) => { for (let i = 0; i < n * 3 && out.filter(o => o.z === cx).length < n; i++) { const a = rnd() * 6.28, d = Math.sqrt(rnd()) * r, x = cx + Math.cos(a) * d * 1.3, y = cy + Math.sin(a) * d * .8;
+    if (!busy(x, y) && x > 30 && x < TW - 30 && y > 60 && y < TH - 10) out.push({ sp: rnd() < .2 && sp === "t_oak" ? "t_pine" : sp, x, y, w: 110 + rnd() * 70, z: cx }); } });
+  [[360, 900], [300, 1000], [430, 1010], [330, 1050]].forEach(([x, y]) => out.push({ sp: "t_flowerbed", x, y, w: 90 }));
+  [[380, 1300], [460, 1350], [420, 1400], [340, 1360]].forEach(([x, y]) => out.push({ sp: "t_berrybush", x, y, w: 90 }));
+  [[640, 1240], [740, 1250], [690, 1330], [600, 1320], [780, 1330], [900, 960], [1100, 960], [1000, 860]].forEach(([x, y]) => out.push({ sp: "t_lantern", x, y, w: 60, glow: true }));
+  [[1080, 1080], [920, 1080], [1560, 1000], [1700, 1000]].forEach(([x, y]) => out.push({ sp: "t_bench", x, y, w: 80 }));
+  [[300, 560], [220, 480], [1480, 1480], [1240, 1640], [760, 1640]].forEach(([x, y]) => out.push({ sp: "t_rock", x, y, w: 70 }));
+  return out;
+}
+const TOWN_DECOR = townDecor();
+function townGround() {
+  const P = (a, b) => `M${a[0]} ${a[1]} L${b[0]} ${b[1]}`, S0 = TOWN_SPOT;
+  const roads = [P([1000, 960], [1000, 170]), P([1000, 960], [1000, 1480]), P([1000, 960], [1630, 960]), P([1000, 960], [360, 960]), P([360, 960], [420, 1330]), P([1000, 1240], [690, 1280]),
+    P([1000, 1240], [1330, 1290]), P([1630, 960], [1760, 1260]), P([1630, 960], [1720, 560]), P([1000, 560], [620, 620]), P([620, 620], [260, 520]), P([1000, 400], [640, 300]), P([1000, 400], [1420, 300]), P([1330, 1290], [1600, 1480])].join(" ");
+  return `<svg class="town-ground" viewBox="0 0 ${TW} ${TH}" width="${TW}" height="${TH}">
+    <defs><radialGradient id="tw" cx="50%" cy="40%"><stop offset="0" stop-color="#7fd3ff"/><stop offset=".75" stop-color="#3aa0e0"/><stop offset="1" stop-color="#2a7fc0"/></radialGradient>
+      <radialGradient id="ti" cx="50%" cy="40%"><stop offset="0" stop-color="#f4fbff"/><stop offset="1" stop-color="#b9def5"/></radialGradient>
+      <radialGradient id="th" cx="50%" cy="50%"><stop offset="0" stop-color="#b6ec8a"/><stop offset="1" stop-color="#b6ec8a00"/></radialGradient></defs>
+    <ellipse cx="1000" cy="170" rx="300" ry="150" fill="url(#th)"/><ellipse cx="1630" cy="960" rx="170" ry="110" fill="#c9f29a" opacity=".6"/>
+    <path d="M-20 430 C 150 470, 220 600, 380 620 S 600 760, 700 700" stroke="#2f86c9" stroke-width="58" fill="none" stroke-linecap="round" opacity=".9"/>
+    <path d="M-20 430 C 150 470, 220 600, 380 620 S 600 760, 700 700" stroke="#7fd3ff" stroke-width="38" fill="none" stroke-linecap="round"/>
+    <path d="${roads}" stroke="#b98d55" stroke-width="82" stroke-linecap="round" fill="none"/>
+    <path d="${roads}" stroke="#ecd29b" stroke-width="66" stroke-linecap="round" fill="none"/>
+    <circle cx="1000" cy="960" r="170" fill="#b98d55"/><circle cx="1000" cy="960" r="160" fill="#efd8a8"/><circle cx="1000" cy="960" r="120" fill="none" stroke="#e2c48a" stroke-width="6" stroke-dasharray="14 10"/>
+    <ellipse cx="1000" cy="1560" rx="330" ry="170" fill="#c2a46e"/><ellipse cx="1000" cy="1556" rx="316" ry="158" fill="url(#tw)"/><ellipse cx="930" cy="1510" rx="120" ry="30" fill="#fff" opacity=".25"/>
+    <ellipse cx="1600" cy="1520" rx="150" ry="90" fill="#9cc8e2"/><ellipse cx="1600" cy="1516" rx="140" ry="82" fill="url(#ti)"/>
+    <rect x="1580" y="930" width="110" height="80" rx="10" fill="#ff6fae" opacity=".85"/><path d="M1580 950h110M1580 970h110M1580 990h110M1600 930v80M1625 930v80M1650 930v80M1675 930v80" stroke="#fff" stroke-width="6" opacity=".6"/>
+  </svg>`;
+}
+const toonImg = n => `art/toon_${n}.png`;
+const TOON_H = n => 70 + 40 * Math.min(1.3, (REAL_SIZE[n] || 1));
+function townScreen() {
+  try { closePhone(); } catch (e) {} closeClock();
+  S.outside = "town"; S.guest = null; S.meetPlace = null;
+  const me = ART[S.animal[0]], all = friends();
+  const pos = S.townPos || [1000, 1340];
+  show(`<div class="town" id="town"><div class="town-world" id="townWorld" style="width:${TW}px;height:${TH}px">
+      ${townGround()}
+      ${Object.keys(TOWN_SPOT).filter(k => !["village"].includes(k)).map(k => `<div class="town-sign" style="left:${TOWN_SPOT[k][0]}px;top:${TOWN_SPOT[k][1] + 46}px">${WORLD_NAMES[k] || k}</div>`).join("")}
+      ${TOWN_DECOR.map(d => `<img class="t-spr ${d.glow ? "t-lamp" : ""}" src="art/${d.sp}.png" alt="" style="left:${d.x}px;top:${d.y}px;width:${d.w}px;z-index:${Math.round(d.y)}" onerror="this.remove()">`).join("")}
+      ${TOWN_BLD.map((b, n) => `<img class="t-spr t-bld ${b[4] ? "tap" : ""}" data-b="${n}" src="art/${b[0]}.png" alt="${b[5]}" style="left:${b[1]}px;top:${b[2]}px;width:${b[3]}px;z-index:${b[2]}" ${b[4] ? `onclick="townTapBld(${n}, event)"` : ""} onerror="this.classList.add('missing')">${b[5] ? `<div class="town-sign bld" style="left:${b[1]}px;top:${b[2] + 8}px;z-index:${b[2] + 1}">${b[5]}</div>` : ""}`).join("")}
+      ${all.map((f, i) => `<div class="t-ani" id="ta${i}" onclick="townTapAnimal(${i}, event)"><em class="say"></em><img src="${toonImg(ART[f.emo])}" alt="" style="height:${TOON_H(ART[f.emo])}px"><span>${f.name}</span></div>`).join("")}
+      <div class="t-ani t-me" id="taMe"><em class="say"></em><img src="${toonImg(me)}" alt="" style="height:${TOON_H(me) + 6}px"><span>${esc(S.name)}</span></div>
+      <div class="t-target" id="tTarget"></div>
+    </div>
+    <div class="pov-label">${VILLAGE}</div><button class="pov-exit" onclick="townExit()">Exit</button>
+    <div class="town-zoom"><button onclick="townZoom(1)" aria-label="Zoom in">+</button><button onclick="townZoom(-1)" aria-label="Zoom out">-</button></div>
+    <div class="walk-hint town-hint" id="townHint">Tap anywhere to walk. Tap someone to go talk to them.</div>
+    <div class="town-talk" id="townTalk"></div>
+    <div class="town-bar"><button class="rainbow" onclick="townEyes()">Look through my eyes</button><button class="green" onclick="townGoHome()">Go home</button></div>
+  </div>`);
+  app.classList.remove("enter");
+  document.body.classList.add("immersive", "townmode"); scrollTo(0, 0);
+  const people = all.map((f, i) => { const w = whereNow(f), sp = w ? spotFor(i, w) : ANIMAL_HOME(i), h = hashStr(f.name);
+    return { f, i, x: sp[0], y: sp[1], tx: null, ty: null, wait: 1 + (h % 5), asleep: !w, line: "", talkUntil: 0, dir: 1 }; });
+  TOWN = { people, me: { x: pos[0], y: pos[1], tx: null, ty: null, dir: 1, line: "", talkUntil: 0 }, zoom: S.townZoom || (innerWidth < 600 ? .6 : .8), camX: pos[0], camY: pos[1], free: false, t: 0, last: performance.now(), lifeT: 0, after: null, chatWith: null };
+  townWire(); requestAnimationFrame(townTick);
+}
+function townWire() {
+  const el = document.getElementById("town"); let drag = null, pinch = null; const pts = new Map();
+  el.addEventListener("pointerdown", e => { if (e.target.closest("button, .t-ani, .t-bld.tap, .town-talk")) return; pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: TOWN.zoom }; drag = null; }
+    else drag = { x: e.clientX, y: e.clientY, cx: TOWN.camX, cy: TOWN.camY, moved: false }; });
+  el.addEventListener("pointermove", e => { if (!pts.has(e.pointerId) || !TOWN) return; pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pinch && pts.size === 2) { const [a, b] = [...pts.values()]; TOWN.zoom = Math.max(.35, Math.min(1.3, pinch.z * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d)); return; }
+    if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.hypot(dx, dy) > 10) drag.moved = true;
+      if (drag.moved) { TOWN.free = true; TOWN.camX = drag.cx - dx / TOWN.zoom; TOWN.camY = drag.cy - dy / TOWN.zoom; } } });
+  const up = e => { if (!pts.has(e.pointerId)) return; pts.delete(e.pointerId);
+    if (drag && !drag.moved && !pinch && TOWN) { const p = townPoint(e.clientX, e.clientY); townWalkTo(p[0], p[1], null); }
+    if (pts.size < 2) pinch = null; if (!pts.size) drag = null; };
+  el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+  el.addEventListener("wheel", e => { e.preventDefault(); if (TOWN) TOWN.zoom = Math.max(.35, Math.min(1.3, TOWN.zoom * (e.deltaY < 0 ? 1.1 : .9))); }, { passive: false });
+}
+function townPoint(cx, cy) { const el = document.getElementById("town"), r = el.getBoundingClientRect(); return [TOWN.camX + (cx - r.left - r.width / 2) / TOWN.zoom, TOWN.camY + (cy - r.top - r.height * .45) / TOWN.zoom]; }
+function townZoom(d) { if (TOWN) { TOWN.zoom = Math.max(.35, Math.min(1.3, TOWN.zoom * (d > 0 ? 1.25 : .8))); S.townZoom = TOWN.zoom; } }
+function townWalkTo(x, y, after) {
+  const T = TOWN; T.me.tx = Math.max(30, Math.min(TW - 30, x)); T.me.ty = Math.max(60, Math.min(TH - 20, y)); T.after = after; T.free = false; townTalkClose();
+  const tg = document.getElementById("tTarget"); tg.style.cssText = `display:block;left:${T.me.tx}px;top:${T.me.ty}px`; S.walkedOnce = true; const h = document.getElementById("townHint"); if (h) h.style.opacity = 0;
+}
+function townTapAnimal(i, e) { e.stopPropagation(); const p = TOWN.people[i]; if (p.asleep) return; townWalkTo(p.x + (TOWN.me.x < p.x ? -70 : 70), p.y + 6, () => townTalkOpen(i)); }
+function townTapBld(n, e) { e.stopPropagation(); const b = TOWN_BLD[n]; townWalkTo(b[1], b[2] + 30, () => townEnter(b[4])); }
+function townEnter(what) {
+  townSave();
+  const [kind, arg] = what.split(":");
+  if (kind === "home") return houseScreen();
+  if (kind === "shop") return shopScreen(arg);
+  if (kind === "shows") return gameShows();
+  if (kind === "eyes") return eyesScreen(arg);
+}
+function townNearestPlace() { const m = TOWN.me; let best = "village", bd = 1e9; Object.entries(TOWN_SPOT).forEach(([k, [x, y]]) => { const d = Math.hypot(x - m.x, y - m.y); if (d < bd) { bd = d; best = k; } }); return best; }
+function townEyes() { townSave(); eyesScreen(townNearestPlace()); }
+function townGoHome() { townWalkTo(1000, 1330, () => townEnter("home")); }
+function townSave() { if (TOWN) S.townPos = [Math.round(TOWN.me.x), Math.round(TOWN.me.y)]; }
+function townExit() { townSave(); S.outside = ""; mapScreen(); }
+function goOutside() { return S.outside === "town" ? townScreen() : eyesScreen(); }
+// --- talking right there in the town ---
+function townTalkOpen(i) {
+  const T = TOWN, p = T.people[i], f = p.f, st = stageOf(f);
+  T.chatWith = i; p.tx = null; p.wait = 999; const hint = document.getElementById("townHint"); if (hint) hint.style.opacity = 0; p.dir = T.me.x < p.x ? -1 : 1; T.me.dir = -p.dir;
+  townSay(p, pickOne(MEET_HELLO[st]), 5);
+  const box = document.getElementById("townTalk");
+  box.innerHTML = `<div class="tt-head"><img src="${toonImg(ART[f.emo])}" alt=""><b>${f.name}</b><small>${heartBar(S.hearts[f.name])}</small><button class="ph-x" onclick="townTalkClose()">Bye</button></div>
+    <div class="tt-type"><input id="ttIn" maxlength="120" placeholder="Say something to ${f.name}..." onkeydown="if(event.key==='Enter')townSayTo()"><button onclick="townSayTo()">Say it</button></div>
+    <div class="tt-acts"><button class="soft" onclick="townHug()">Hug</button><button class="rainbow" onclick="townSave(); activityMenu(${i}, 'town')">Play together</button>
+      <button class="soft" onclick="townSave(); planScreen('${f.name}')">Make plans</button><button class="green" onclick="townSave(); inviteOver('${f.name}')">Come to my house</button></div>`;
+  box.style.display = "block"; noEmoji(box);
+}
+function townTalkClose() { const T = TOWN; if (!T) return; const box = document.getElementById("townTalk"); if (box) box.style.display = "none";
+  if (T.chatWith !== null) { const p = T.people[T.chatWith]; p.wait = 2; townSay(p, pickOne(["See you later!", "Bye bye!", "Okay, bye! 👋"]), 2.5); } T.chatWith = null; }
+function townSay(p, txt, secs) { p.line = txt; p.talkUntil = TOWN.t + secs; }
+function townSayTo() {
+  const T = TOWN, inp = document.getElementById("ttIn"), said = (inp.value || "").trim(); if (!said || T.chatWith === null) return;
+  const p = T.people[T.chatWith], f = p.f; inp.value = "";
+  townSay(T.me, said, 3);
+  const r = chatReply(f, said); addHearts(f, Math.max(-1, Math.min(r.pts, S.townTalkDay?.[f.name] === S.tday ? 0 : 1)));
+  if (r.pts > 0) { S.townTalkDay = S.townTalkDay || {}; S.townTalkDay[f.name] = S.tday; }
+  setTimeout(() => { if (TOWN === T) { townSay(p, r.say, 6); const hb = document.querySelector(".tt-head small"); if (hb) hb.textContent = heartBar(S.hearts[f.name]); } }, 900);
+}
+function townHug() {
+  const T = TOWN, p = T.people[T.chatWith], f = p.f, st = stageOf(f);
+  S.townHugDay = S.townHugDay || {}; if (S.townHugDay[f.name] !== S.tday) { S.townHugDay[f.name] = S.tday; addHearts(f, 1); chime(); floatHearts(1); }
+  townSay(p, st === 0 ? pickOne(["Oh! A hug! Okay, hi! Haha.", "*awkward pat pat* Hehe."]) : st === 1 ? pickOne(["*hugs back, a little shy* Hi...", "Aww. *blushes*"]) : pickOne(["*squeezes you tight* Best hug EVER.", "*doesn't let go* Five more seconds."]), 4);
+}
+// --- the little world ticking along ---
+function townTick(now) { if (townStep(now)) requestAnimationFrame(townTick); }
+function townStep(now) {
+  const T = TOWN, el = document.getElementById("town");
+  if (!T || !el) { TOWN = null; return false; }
+  const dt = Math.min(.05, (now - T.last) / 1000); T.last = now; T.t += dt;
+  const W = el.clientWidth, H = el.clientHeight;
+  // me
+  const m = T.me; let meMoving = false;
+  if (m.tx !== null) { const dx = m.tx - m.x, dy = m.ty - m.y, d = Math.hypot(dx, dy), sp = 190 * dt;
+    if (d <= sp) { m.x = m.tx; m.y = m.ty; m.tx = null; document.getElementById("tTarget").style.display = "none"; const a = T.after; T.after = null; if (a) a(); if (!TOWN || TOWN !== T) return false; }
+    else { m.x += dx / d * sp; m.y += dy / d * sp; if (Math.abs(dx) > 1) m.dir = Math.sign(dx); meMoving = true; if ((T.stepT = (T.stepT || 0) + dt) > .32) { T.stepT = 0; footstep(); } } }
+  // camera follows me
+  if (!T.free) { T.camX += (m.x - T.camX) * Math.min(1, dt * 4); T.camY += (m.y - T.camY) * Math.min(1, dt * 4); }
+  T.camX = Math.max(W / 2 / T.zoom - 100, Math.min(TW - W / 2 / T.zoom + 100, T.camX)); T.camY = Math.max(H * .45 / T.zoom - 100, Math.min(TH - H * .55 / T.zoom + 100, T.camY));
+  document.getElementById("townWorld").style.transform = `translate(${W / 2 - T.camX * T.zoom}px, ${H * .45 - T.camY * T.zoom}px) scale(${T.zoom})`;
+  // everyone else lives their day
+  T.lifeT += dt;
+  if (T.lifeT > 1.5) { T.lifeT = 0;
+    T.people.forEach(p => { if (T.chatWith === p.i) return; const w = whereNow(p.f), home = ANIMAL_HOME(p.i), sp = w ? spotFor(p.i, w) : home;
+      p.asleep = !w && Math.hypot(p.x - home[0], p.y - home[1]) < 20;
+      if (Math.hypot(p.x - sp[0], p.y - sp[1]) > 160 && p.tx === null) { p.tx = sp[0]; p.ty = sp[1]; p.travel = true; }
+      if (!w && p.tx === null && !p.asleep) { p.tx = home[0]; p.ty = home[1]; p.travel = true; } });
+    // two friends standing close chat
+    const idle = T.people.filter(p => p.tx === null && !p.asleep && T.chatWith !== p.i && T.t > p.talkUntil + 4);
+    for (let a = 0; a < idle.length; a++) for (let b = a + 1; b < idle.length; b++) { const A = idle[a], B = idle[b];
+      if (Math.hypot(A.x - B.x, A.y - B.y) < 120 && Math.random() < .25) { const [l1, l2] = pickOne(CHITCHAT).map(x => soapFill(x, A.f.name));
+        A.dir = B.x > A.x ? 1 : -1; B.dir = -A.dir; A.wait = B.wait = 8; townSay(A, l1, 3); setTimeout(() => TOWN && townSay(B, l2, 3), 2800); a = idle.length; break; } }
+  }
+  T.people.forEach(p => {
+    const node = document.getElementById("ta" + p.i); if (!node) return;
+    let moving = false;
+    if (p.tx === null && T.chatWith !== p.i && !p.asleep) { p.wait -= dt; if (p.wait <= 0) { const w = whereNow(p.f); if (w) { const sp = spotFor(p.i, w); p.tx = sp[0] + (Math.random() - .5) * 90; p.ty = sp[1] + (Math.random() - .5) * 50; } p.wait = 3 + Math.random() * 6; } }
+    if (p.tx !== null) { const dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy), sp = (p.travel ? 95 : 55) * dt;
+      if (d <= sp) { p.x = p.tx; p.y = p.ty; p.tx = null; p.travel = false; } else { p.x += dx / d * sp; p.y += dy / d * sp; if (Math.abs(dx) > .5) p.dir = Math.sign(dx); moving = true; } }
+    townDraw(node, p, moving);
+  });
+  townDraw(document.getElementById("taMe"), m, meMoving);
+  return true;
+}
+function townDraw(node, p, moving) {
+  node.style.cssText = `left:${p.x}px;top:${p.y}px;z-index:${Math.round(p.y) + 2};${p.asleep ? "display:none" : ""}`;
+  node.classList.toggle("moving", moving);
+  node.querySelector("img").classList.toggle("flip", p.dir < 0);
+  const say = node.querySelector(".say"), txt = TOWN.t < p.talkUntil ? p.line : "";
+  if (say.dataset.t !== txt) { say.dataset.t = txt; say.textContent = txt; say.style.display = txt ? "block" : "none"; }
+}
+setInterval(() => { if (TOWN && performance.now() - TOWN.last > 150) townStep(performance.now()); }, 60);
+
+// --- Sending pictures from the game (only game pictures, never real photos) ---
+function picPicker(name) {
+  const ph = document.getElementById("phone"); if (document.getElementById("picPick")) return document.getElementById("picPick").remove();
+  const pics = allPhotos().slice(0, 30);
+  ph.querySelector(".ph-screen").insertAdjacentHTML("beforeend", `<div id="picPick"><div class="pp-top"><b>Send a picture</b><button class="ph-x" onclick="document.getElementById('picPick').remove()">Close</button></div>
+    <button class="rainbow" onclick="sendPic('${name}', 'new')">Take a selfie and send it</button>
+    <div class="pgrid">${pics.map((t, n) => { const [, kind, place, who] = t.split("|"); return `<div class="pthumb" style="background-image:url(art/${place}.png)" onclick="sendPic('${name}', ${n})">${who && HAVE.has(who) ? `<img src="art/${who}.png" alt="">` : ""}</div>`; }).join("")}</div></div>`);
+}
+const PIC_BACK = {
+  me: [["Haha, nice pic!", "Cool selfie! Where's that?", "Ooh, look at you!"], ["Aww, you look really cute in that. 😳", "Okay, that's a good picture of you. 🙈", "*saves it* ...What? It's a nice picture."], ["Okay you're SO cute. That's my new wallpaper. 😍", "STOP. You look amazing. 💖", "I'm putting this in a frame. Seriously. 💕"]],
+  them: ["Wait, that's ME! 😂 Why do you have that?", "Haha, I look so silly in that one. 🙈", "Ooh, are you saving my pictures? 👀"],
+  view: ["Ooh, that's so pretty! Take me there sometime?", "Wow, beautiful! You have good taste.", "That place looks amazing!"]
+};
+function sendPic(name, which) {
+  const f = fName(name), me = ART[S.animal[0]];
+  let t;
+  if (which === "new") { const place = HAVE.has(S.worldAt) ? S.worldAt : pickOne(Object.keys(PHOTO_PLACES).filter(p => HAVE.has(p)));
+    t = `PIC|selfie|${place}|${me}||${pickOne(["Me!", "Hi from me!", "Selfie for you!"])}`; S.myPics = S.myPics || []; S.myPics.push(t); }
+  else t = allPhotos()[which];
+  const pp = document.getElementById("picPick"); if (pp) pp.remove();
+  if (!t) return;
+  const mine = { from: "me", t, read: true }; texts(name).push(mine);
+  const box = document.getElementById("phMsgs"); if (box) { box.insertAdjacentHTML("beforeend", msgHTML(mine)); box.scrollTop = box.scrollHeight; }
+  const who = t.split("|")[3], st = stageOf(f);
+  const line = who === me ? pickOne(PIC_BACK.me[st]) : who === ART[f.emo] ? pickOne(PIC_BACK.them) : pickOne(PIC_BACK.view);
+  S.picDay = S.picDay || {}; let tag = "";
+  if (S.picDay[name] !== S.tday) { S.picDay[name] = S.tday; addHearts(f, 1); tag = "  (+1 heart)"; }
+  const back = Math.random() < .5 ? [makePhoto(f, "selfie"), pickOne(["Here's one of me back!", "Okay, my turn! 📸", "Fair trade. 😏"])] : [];
+  setTimeout(() => deliver(name, [line + tag, ...back]), 1300);
+}
 // ===== Walking around, through your eyes =====
 Object.assign(WORLD_NAMES, { forest:"Whispering Forest", pines:"Pine Woods", creek:"Mossy Creek", birch:"Golden Birch Wood" });
 const WALK_ORDER = ["forest", "village", "picnic", "creek", "garden", "berries", "pines", "lake", "treehouse", "birch", "library", "rain", "pond", "campfire", "lanterns", "stars"];
@@ -3431,7 +3692,7 @@ function eyesScreen(k, cont) {
     <div class="box center walk-box"><div class="walk-grid">
       ${WALK_ORDER.filter(x => x !== k).map(x => `<button class="act-btn" style="background:${tileBg(x)}" onclick="eyesScreen('${x}')"><span>${WORLD_NAMES[x]}</span></button>`).join("")}
     </div>
-    <div class="walk-btns"><button class="green" onclick="houseScreen()">Home</button><button class="soft" onclick="mapScreen()">Map</button><button class="rainbow" onclick="gameShows()">Game Shows</button></div></div>`);
+    <div class="walk-btns"><button class="green" onclick="townScreen()">Town</button><button class="soft" onclick="mapScreen()">Map</button><button class="rainbow" onclick="gameShows()">Game Shows</button></div></div>`);
   app.classList.remove("enter");
   document.body.classList.add("immersive", "world", "walking"); scrollTo(0, 0);
   WALK = { k, nextK, people, cam: cont && old ? old.cam : .5, z: 0, dist: old ? old.dist : 0, keys: cont && old ? old.keys : {}, hold: cont && old ? old.hold : null, t: 0, last: performance.now(), stepT: 0, endT: 0 };
