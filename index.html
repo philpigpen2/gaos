@@ -3839,7 +3839,7 @@ const TOWN_BLD = [ // [sprite, x, y, width, what happens when you tap it, label]
   ["t_icecream", 1250, 1110, 200, "shop:icecream", "Scoops Ice Cream"], ["t_flowers", 750, 1110, 200, "shop:flowers", "Flower Shop"], ["t_cinema", 1500, 820, 220, "shop:cinema", "Starlight Cinema"],
   ["t_arcade", 520, 800, 200, "shop:arcade", "Arcade"], ["t_studio", 1170, 560, 250, "shows", "Game Show Studio"], ["t_library", 620, 580, 230, "eyes:library", "Tree Library"],
   ["t_treehouse", 1720, 520, 260, "eyes:treehouse", "Treehouse"], ["t_campfire", 1330, 1300, 170, "eyes:campfire", "Campfire"], ["t_fountain", 1000, 990, 190, "eyes:village", "Town Square"],
-  ["t_house1", 400, 1100, 170, "", ""], ["t_house2", 1620, 1100, 170, "", ""], ["t_house3", 1560, 640, 170, "", ""], ["t_house1", 860, 1440, 150, "", ""], ["t_house2", 1150, 1440, 150, "", ""]
+  ["t_house1", 400, 1100, 170, "", ""], ["t_house2", 1620, 1100, 170, "", ""], ["t_house3", 1560, 640, 170, "", ""], ["t_house1", 860, 1440, 150, "", ""], ["t_house2", 1150, 1440, 150, "", ""], ["t_house3", 300, 640, 250, "hospital", "Hospital"]
 ];
 const LOTS = [[860, 290], [1140, 290], [1800, 880]];
 LOTS.forEach(([x, y], i) => TOWN_BLD.push(["t_lot", x, y, 190, "lot:" + i, "For sale"]));
@@ -4325,7 +4325,7 @@ function w3Start(start) {
   inst(new THREE.IcosahedronGeometry(1.3, 0), birchM, trees.birch, (o, t) => at(o, t, 3.6, 1.3));
   // buildings
   const blds = [];
-  TOWN_BLD.forEach((b, n) => { const [sp, px, py, pw, what, label] = b, kind = what.startsWith("shop:") ? what.slice(5) : what === "home" ? "home" : what === "shows" ? "shows" : what === "eyes:library" ? "library" : what ? "" : "house";
+  TOWN_BLD.forEach((b, n) => { const [sp, px, py, pw, what, label] = b, kind = what.startsWith("shop:") ? what.slice(5) : what === "home" ? "home" : what === "shows" ? "shows" : what === "eyes:library" ? "library" : what === "hospital" ? "hospital" : what ? "" : "house";
     const x = px / 20, z = py / 20;
     if (what === "eyes:village") { // fountain
       const st = new THREE.MeshStandardMaterial({ color: 0xbdb6ab, roughness: .8 });
@@ -4353,12 +4353,13 @@ function w3Start(start) {
     const mineT = what.startsWith("shop:my") && SHOPS[what.slice(5)] ? LOT_TYPES[SHOPS[what.slice(5)].mine] : null;
     const [wallC, roofC] = mineT ? [mineT.wall, mineT.roof] : W3_COL[kind] || W3_COL.house;
     const w = pw * .036, d = w * .8, h = w * (kind === "shows" ? .75 : .62), cz = z - d / 2;
-    const style = mineT ? mineT.style : { home:"siding", cafe:"brick", bakery:"plaster", icecream:"siding", flowers:"plaster", cinema:"brick", arcade:"plaster", shows:"plaster", library:"stone" }[kind] || (n % 2 ? "brick" : "siding");
-    const shop = what.startsWith("shop:") || kind === "shows" || kind === "library";
+    const style = mineT ? mineT.style : { home:"siding", cafe:"brick", bakery:"plaster", icecream:"siding", flowers:"plaster", cinema:"brick", arcade:"plaster", shows:"plaster", library:"stone", hospital:"plaster" }[kind] || (n % 2 ? "brick" : "siding");
+    const shop = what.startsWith("shop:") || kind === "shows" || kind === "library" || kind === "hospital";
     const g = w3Building({ w, d, h, wall: wallC, roof: roofC, style, shop, xmas, chimney: !shop || kind === "bakery", door: kind === "home" ? 0x3a7bd5 : mineT ? mineT.awn : null,
       awning: shop && !["cinema", "arcade", "shows", "library"].includes(kind) ? (mineT ? mineT.awn : roofC) : null, sign: shop || kind === "home" ? label : null });
     g.position.set(x, 0, cz); sc.add(g);
     if (kind === "shows" || kind === "cinema") { for (let k = 0; k < 14; k++) { const bulb = new THREE.Mesh(w3Geo("bulb", () => new THREE.SphereGeometry(.12, 8, 8)), new THREE.MeshBasicMaterial({ color: [0xff5a8a, 0xffd23b, 0x45d0ff][k % 3] })); bulb.position.set(x - w * .42 + k * w * .84 / 13, .45 + h * .93, z + .08); sc.add(bulb); } }
+    if (kind === "hospital") { const crM = new THREE.MeshBasicMaterial({ color: 0xe02a2a }); [[1.6, .45], [.45, 1.6]].forEach(([cw, ch]) => { const cr = new THREE.Mesh(new THREE.BoxGeometry(cw, ch, .12), crM); cr.position.set(x + w * .3, .45 + h * .7, z + .08); sc.add(cr); }); }
     if (kind === "arcade") { const neon = new THREE.Mesh(new THREE.BoxGeometry(w * .8, .1, .1), new THREE.MeshBasicMaterial({ color: 0x45d0ff })); neon.position.set(x, .45 + 3.05, z + .1); sc.add(neon); }
     const labY = .45 + h + d * .42 + 1.5; let lab = null;
     if (label) { lab = w3Label(label); lab.position.set(x, labY, cz); sc.add(lab); }
@@ -4530,11 +4531,15 @@ function w3Animal(kind, look, xmas) {
   const owlish = kind === "owl";
   if (owlish) add(head, SPH, belly, 0, -.01, .14, .25, .22, .16);
   const eyes = new THREE.Group(); eyes.userData.gloss = true; head.add(eyes); if (owlish) eyes.position.z = .045; const er = (owlish ? .1 : .082) * (quad ? 1.22 : 1.1), irisC = W3_EYE[kind] || 0x5a3a2a;
-  if (quad) [-1, 1].forEach(s => { const ex = s * .135, ez = .205;
-    add(eyes, SPH, darker(fur, .45), ex, .055, ez - .004, .062, .056, .045);
-    add(eyes, SPH, irisC, ex * 1.01, .055, ez + .012, .05, .046, .036);
-    add(eyes, SPH, 0x0c0a0c, ex * 1.02, .055, ez + .03, .03, .034, .022);
-    add(eyes, SPH, 0xffffff, ex - s * .012 + .006, .07, ez + .046, .011, .011, .006); });
+  if (quad) [-1, 1].forEach(s => { const ex = s * .138, ez = .215;
+    // big, round, shiny eyeballs: a soft dark rim, a thin white edge, a coloured iris, a big pupil and two sparkles
+    add(eyes, SPH, darker(fur, .5), ex, .06, ez - .004, .09, .084, .05);
+    add(eyes, SPH, 0xf6f0ea, ex * 1.01, .06, ez + .01, .08, .076, .046);
+    add(eyes, SPH, irisC, ex * 1.02, .058, ez + .028, .068, .066, .036);
+    add(eyes, SPH, darker(irisC, .45), ex * 1.025, .057, ez + .034, .052, .05, .03);
+    add(eyes, SPH, 0x0a0809, ex * 1.03, .056, ez + .044, .038, .042, .024);
+    add(eyes, SPH, 0xffffff, ex - .02, .086, ez + .068, .021, .021, .008);
+    add(eyes, SPH, 0xffffff, ex + .018, .036, ez + .066, .009, .009, .005); });
   else [-1, 1].forEach(s => { add(eyes, SPH, 0xffffff, s * .11, .04, .235, er, er * 1.15, er * .65);
     add(eyes, SPH, irisC, s * .108, .036, .235 + er * .42, er * .7, er * .8, er * .32);
     add(eyes, SPH, 0x120e16, s * .108, .034, .235 + er * .6, er * .4, er * .48, er * .2);
@@ -6075,7 +6080,7 @@ function homeBox(guest) {
   const chores = sp ? CHORES.concat(kids.length ? KID_CHORES : []).map(([k, n]) => `<button class="soft ${S.choreDay[k] === S.day ? "picked" : ""}" onclick="doChore('${k}')">${n}</button>`).join("") : "";
   return `<div class="box center"><h2>Home life</h2><div class="life-fam">${fam}</div>
     ${chores ? `<div style="margin-top:6px">${chores}</div>` : ""}
-    <div style="margin-top:8px">${sp && kids.length < 4 ? `<button class="rainbow" onclick="babyScreen()">${kids.length ? "Have another baby" : "Start a family"} 🍼</button>` : ""}
+    <div style="margin-top:8px">${S.preg ? `<p class="story"><b>A baby is on the way! 🤰</b> ${pregDaysLeft() ? `About ${pregDaysLeft()} day${pregDaysLeft() === 1 ? "" : "s"} to go.` : "It's time!"}</p><button class="rainbow" onclick="hospitalVisit()">Go to the Hospital 🏥</button>` : sp && kids.length < 4 ? `<button class="rainbow" onclick="pregTogether()">Have a baby together 🍼</button> <button class="soft" onclick="babyScreen()">Adopt from Stella the Stork</button>` : ""}
     ${sp ? `<button class="soft" onclick="courtScreen(0)">File for divorce ⚖️</button>` : ""}</div></div>`;
 }
 function lifeTalk(who, x) {
@@ -6632,6 +6637,149 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 .deco-grid .furn-pick{margin:0;padding:4px;background:#fff;border:2px solid #f0dbe8;border-radius:14px;display:flex;flex-direction:column;align-items:center;color:#3a2a4a}
 .deco-grid .furn-pick img{width:72px;height:72px;object-fit:contain}.deco-grid .furn-pick span{font-size:12px;font-weight:700}
 .deco-sw{grid-column:1/-1;text-align:left}.deco-sw div{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}.deco-sw button{width:42px;height:42px;border-radius:50%;margin:0;border:3px solid #fff;box-shadow:0 0 0 2px #ddd}.deco-sw button.on{box-shadow:0 0 0 3px #ff5aa8}
+</style>`);
+
+// ===== Hospital: a surprise baby on the way, check-ups, and the big day at Animal Burrow Hospital =====
+const PREG_DAYS = 2;
+const HOSP = { doc: ["owl", "Dr. Wisewing"], nurse: ["bunny", "Nurse Poppy"] };
+function pregDaysLeft() { return S.preg ? Math.max(0, S.preg.start + PREG_DAYS - S.day) : 0; }
+function pregNewDay() {
+  const sp = spouse(); if (!sp) return;
+  if (S.preg) {
+    if (pregDaysLeft() <= 0) setTimeout(() => { try { pregTime(); } catch (e) {} }, 1400);
+    else setTimeout(() => { try { textFrom(sp.name, pickOne(S.preg.who === "sp" ? [`The baby just KICKED!! Come home and feel it!! 👶`, `I want pickles dipped in ice cream. Don't judge me. 🥒🍦`, `Can you rub my feet later? They're SO puffy. 🦶💕`] : [`How are you feeling today? Can I get you anything? Pickles? Ice cream? Pickles AND ice cream? 🥒🍦`, `I painted the baby's room today! It's yellow. Like sunshine. ☀️`, `I keep talking to your tummy. I think the baby likes my jokes. 🤭`])); } catch (e) {} }, 2600);
+    return;
+  }
+  if ((S.kids || []).length >= 4 || S.day - (S.lastBaby ?? -9) < 3) return;
+  if (Math.random() < .35) { S.preg = { start: S.day, by: sp.name }; setTimeout(() => { try { pregNews(); } catch (e) {} }, 1400); }
+}
+function pregTogether() {
+  const sp = spouse(); if (!sp || S.preg) return;
+  S.preg = { start: S.day, by: sp.name, who: "sp" }; addHearts(sp, 2); chime(); floatHearts(6); try { confetti(); } catch (e) {}
+  try { postFeed(sp.name, `WE'RE HAVING A BABY!!! 🍼🍼🍼 I can't stop smiling. My face hurts. Worth it.`); } catch (e) {}
+  popup(`<h2>Big news! 🤰</h2><div class="life-row">${lifeImg(myKind())}<span class="life-ring">💕</span>${lifeImg(ART[sp.emo])}</div>
+    <p>You and ${sp.name} decide you want a baby. A few days later, ${sp.name} comes running home from the hospital...</p>
+    <div class="bubble"><b>${sp.name}:</b> "${voiceLine(sp, "I'M PREGNANT!!! We're having a BABY!! OH MY GOSH! We have to get ready RIGHT NOW! The crib! The tiny socks! *happy dances around the kitchen*")}"</div>
+    <button class="rainbow" onclick="pregFriends()">Tell your friends! 📣</button>`);
+}
+function pregNews() {
+  const sp = spouse(); if (!sp) return; chime();
+  popup(`<h2>Big news! 🤰</h2><div class="life-row">${lifeImg(myKind())}</div>
+    <p>You've been feeling a funny little flutter in your tummy all morning... so you go and see ${HOSP.doc[1]} at the hospital.</p>
+    <div class="bubble"><b>${HOSP.doc[1]}:</b> "Hoo hoo! Congratulations! You're going to have a <b>baby</b>! It'll be here in about ${PREG_DAYS} days."</div>
+    <button class="rainbow" onclick="closePopup(); pregTell()">Tell ${sp.name}!</button>`);
+}
+function pregTell() {
+  const sp = spouse(); if (!sp) return; addHearts(sp, 2); chime(); floatHearts(5); try { confetti(); } catch (e) {}
+  try { postFeed(sp.name, `WE'RE HAVING A BABY!!! 🍼🍼🍼 I can't stop smiling. My face hurts. Worth it.`); } catch (e) {}
+  popup(`<div class="life-row">${lifeImg(myKind())}<span class="life-ring">💕</span>${lifeImg(ART[sp.emo])}</div><h2>${sp.name} finds out</h2>
+    <div class="bubble"><b>${sp.name}:</b> "${voiceLine(sp, "Wait. WAIT. You're PREGNANT?!?! OH MY GOSH! OH MY GOSH! We have to get ready RIGHT NOW! The crib! The tiny socks! *runs in a circle* *spins you around* This is the best day of my whole life!!")}"</div>
+    <button class="rainbow" onclick="pregFriends()">Tell your friends! 📣</button>`);
+}
+const PREG_WOW = [
+  "WHAT?!?! You're PREGNANT?!? OH MY GOSH!! *screams* We have to get the baby stuff RIGHT NOW!! Where's the crib?! WHERE'S THE CRIB?!",
+  "OMG OMG OMG!!! A BABY?!?! *faints* ...*wakes up* ...A BABY?!?! *faints again*",
+  "You're having a BABY?!? Okay nobody panic. I'M panicking. Somebody call the hospital! Is it coming NOW?! Is it coming RIGHT NOW?!",
+  "NO WAY!!! I'm going to be the best auntie EVER! I'm knitting tiny socks RIGHT NOW. *knits so fast the needles smoke*",
+  "OH MY GOSH!!! Can I pick the name?? Please please PLEASE?! I have a list. It's 400 names long."];
+function pregFriends() {
+  const sp = spouse(), them = S.preg && S.preg.who === "sp" && sp, fr = friends().filter(x => !sp || x.name !== sp.name).slice(0, 3); chime(); floatHearts(6);
+  const lines = PREG_WOW.slice().sort(() => Math.random() - .5).map(l => them ? l.replace("You're PREGNANT", sp.name + " is PREGNANT").replace("You're having a BABY", "You're having a BABY").replace("A BABY?!?!", "A BABY?!?! " + sp.name + " is having a BABY?!") : l);
+  fr.forEach((f, n) => setTimeout(() => { try { textFrom(f.name, lines[n].split("!! ")[0] + "!! 🍼😱"); } catch (e) {} }, 3000 + n * 2200));
+  popup(`<h2>You tell everyone! 📣</h2><div class="life-row">${fr.map(f => lifeImg(ART[f.emo])).join("")}</div>
+    ${fr.map((f, n) => `<div class="bubble"><b>${f.name}:</b> "${voiceLine(f, lines[n])}"</div>`).join("")}
+    <p>Your baby will be born in about <b>${pregDaysLeft()} days</b>. Visit the Hospital for a check-up any time!</p>
+    <button class="rainbow" onclick="closePopup()">Yay!</button>`);
+}
+function pregTime() {
+  const sp = spouse(); chime();
+  popup(`<h2>It's time!! 🚨</h2><div class="life-row">${lifeImg(myKind())}${sp ? lifeImg(ART[sp.emo]) : ""}</div>
+    <p>Ooh! Ooh! The baby is coming! ${sp ? `${sp.name} grabs the bag and the car keys.` : ""}</p>
+    ${sp ? `<div class="bubble"><b>${sp.name}:</b> "${voiceLine(sp, "Don't panic! I'm not panicking! WHO'S PANICKING? To the hospital!!")}"</div>` : ""}
+    <button class="rainbow" onclick="closePopup(); hospitalScreen('birth', 0)">Rush to the Hospital! 🏥</button>`);
+}
+function hospScene(title, body, extra = "") {
+  setBg("glade");
+  show(`<div class="scene hosp-scene"><div class="place-name">${title}</div>${body}</div><div class="box center">${extra}</div>`);
+}
+function hospitalVisit() {
+  if (S.preg && pregDaysLeft() <= 0) return hospitalScreen("birth", 0);
+  if (S.preg) return hospitalScreen("checkup", 0);
+  hospScene("Animal Burrow Hospital", `<div class="life-row">${lifeImg(HOSP.nurse[0])}${lifeImg(myKind())}</div>
+    <div class="bubble"><b>${HOSP.nurse[1]}:</b> "Welcome to the hospital! Are you here for a check-up?"</div>`,
+    `<button class="rainbow" onclick="hospitalScreen('checkup', 0)">Get a check-up 🩺</button> <button class="soft" onclick="townScreen()">Go back outside</button>`);
+}
+function hospitalScreen(kind, step) {
+  const sp = spouse(), mine = !(S.preg && S.preg.who === "sp" && sp), me = lifeImg(myKind()), dr = lifeImg(HOSP.doc[0]), nu = lifeImg(HOSP.nurse[0]), spI = sp ? lifeImg(ART[sp.emo]) : "";
+  const out = `<button class="soft" onclick="townScreen()">Go back outside</button>`;
+  if (kind === "checkup") {
+    if (!S.preg) {
+      const line = pickOne(["Say 'ahhh'! ...Perfect. Healthy as a horse! And you're not even a horse!", "Your heart goes ba-bump, ba-bump. Very strong! Here's a sticker.", "Let me check your ears... yep, still two of them. Excellent!"]);
+      chime(); return hospScene("Check-up Room", `<div class="life-row">${dr}${me}</div><div class="bubble"><b>${HOSP.doc[1]}:</b> "${line}"</div>
+        <p class="story center">${HOSP.nurse[1]} gives you a lollipop and a gold star sticker. ⭐🍭</p>`, out);
+    }
+    chime(); floatHearts(3);
+    return hospScene("Check-up Room", `<div class="life-row">${dr}${me}${spI}</div>
+      <p class="story center">${HOSP.doc[1]} puts some cold jelly on ${mine ? "your" : sp.name + "'s"} tummy and turns on the baby screen...</p>
+      <div class="hosp-scan"><div class="hosp-blob"></div><div class="hosp-beat">♥</div></div>
+      <div class="bubble"><b>${HOSP.doc[1]}:</b> "Look! There's your baby, wiggling around! Strong little heartbeat. Ba-bump, ba-bump! The baby will be here in about <b>${pregDaysLeft() || "less than one"} day${pregDaysLeft() === 1 ? "" : "s"}</b>."</div>
+      ${sp ? `<div class="bubble"><b>${sp.name}:</b> "${voiceLine(sp, "It waved at me! It totally waved at me. I'm crying. Are you crying? I'm crying.")}"</div>` : ""}`, out);
+  }
+  // the big day
+  const steps = [
+    () => hospScene("Animal Burrow Hospital", `<div class="life-row">${nu}${me}${spI}</div>
+      <p class="story center">You burst through the hospital doors! ${HOSP.nurse[1]} zooms over with a wheelchair.</p>
+      <div class="bubble"><b>${HOSP.nurse[1]}:</b> "A baby on the way? Hop in! Room 3, right this way. Beep beep!"</div>`,
+      `<button class="rainbow" onclick="hospitalScreen('birth', 1)">Go to Room 3</button>`),
+    () => hospScene("Room 3", `<div class="life-row">${me}${spI}</div>
+      <p class="story center">${mine ? `You're tucked into a comfy hospital bed. ${sp ? `${sp.name} pulls up a chair right next to you and holds your paw.` : ""}` : `${sp.name} is tucked into a comfy hospital bed. You pull up a chair right next to them and hold their paw.`}</p>
+      ${sp ? `<div class="bubble"><b>${sp.name}:</b> "${voiceLine(sp, mine ? "You're doing AMAZING. I'm right here. I'm not going anywhere." : "Don't leave me! Hold my paw! ...OW, okay, not THAT tight. Actually yes that tight.")}"</div>` : ""}
+      <h2>What do you do?</h2>`,
+      `<div class="life-fam">${(mine ? [["Breathe in... breathe out...", ""], [`Squeeze ${sp ? sp.name : "the bed"}'s paw`, ""], ["Ask for ice chips", ""]] : [[`Help ${sp.name} breathe in and out`, ""], [`Let ${sp.name} squeeze your paw`, ""], [`Get ${sp.name} some ice chips`, ""]])
+        .map(([a, r], n) => `<button class="soft" onclick="S.hospSay=${n}; hospitalScreen('birth', 2)">${a}</button>`).join("")}</div>`),
+    () => { S.push = 0; const said = (mine ? ["Breathe in... breathe out... Ooh, that's better.", sp ? `${sp.name}: "OW. That's fine! I'm fine! Squeeze harder if you need to!"` : "*squeeeeeze*", "Crunch crunch. Ice chips are the best."]
+        : [`In... and out... ${sp.name} calms right down. "You're the best."`, `*squeeeeeze* OW! That's fine. You're fine. Totally fine.`, `${sp.name} crunches the ice chips. "Mmm. Best. Ice. EVER."`])[S.hospSay || 0];
+      return hospScene("Room 3", `<div class="life-row">${dr}${me}${spI}</div><p class="story center">${said}</p>
+        <div class="bubble"><b>${HOSP.doc[1]}:</b> "Hoo hoo! The baby is almost here! When I say so, ${mine ? "give me" : "cheer " + sp.name + " on for"} some BIG pushes. Ready?"</div>
+        <div class="hosp-bar"><i id="pushBar" style="width:0%"></i></div>`,
+        `<button class="rainbow hosp-push" onclick="hospPush()">PUSH! 💪</button>`); },
+    () => { chime(); try { confetti(); } catch (e) {} floatHearts(8);
+      return hospScene("Room 3", `<div class="life-row">${dr}<span class="life-ring">🍼</span>${nu}</div>
+        <h2 class="center" style="color:#fff">WAAAAH! 👶</h2>
+        <p class="story center">The baby is here! ${HOSP.nurse[1]} wraps your baby up in a soft blanket and puts the baby in your arms. ${sp ? `${sp.name} has happy tears running down their face.` : ""}</p>
+        <div class="bubble"><b>${HOSP.doc[1]}:</b> "Congratulations! A perfect, healthy baby. Ten little toes!"</div>`,
+        `<h2>Who does the baby look like?</h2>
+        <div class="life-fam">${[myKind(), sp ? ART[sp.emo] : myKind()].map((k, n) => `<button class="soft guest-pick" onclick="S.hospPick=${n}; hospitalScreen('birth', 4)">${lifeImg(k, "")}<span>${n ? `Like ${sp ? sp.name : "you"}` : "Like you"}</span></button>`).join("")}</div>`); },
+    () => hospScene("Room 3", `<div class="life-row">${me}${lifeImg([myKind(), sp ? ART[sp.emo] : myKind()][S.hospPick || 0], "life-pic kid-Baby")}${spI}</div>
+      <p class="story center">Your baby yawns a tiny yawn and holds onto your finger.</p>`,
+      `<p class="story">What will you name your baby?</p><input id="babyNm" maxlength="14" placeholder="Baby's name"><div><button class="rainbow" onclick="hospHome()">Take the baby home 🏡</button></div>`)
+  ];
+  return steps[Math.max(0, Math.min(steps.length - 1, step))]();
+}
+function hospPush() {
+  S.push = (S.push || 0) + 1; chime();
+  const bar = document.getElementById("pushBar"); if (bar) bar.style.width = Math.min(100, S.push * 34) + "%";
+  const b = document.querySelector(".hosp-push"); if (b) b.textContent = ["PUSH! 💪", "Keep going! PUSH! 💪", "One more BIG push!! 💪", ""][Math.min(3, S.push)];
+  if (S.push >= 3) setTimeout(() => hospitalScreen("birth", 3), 600);
+}
+function hospHome() {
+  if (!spouse()) { const nm = document.getElementById("babyNm"); S.kids = S.kids || []; S.kids.push({ name: (nm && nm.value.replace(/[<>]/g, "").trim()) || "Bean", kind: myKind(), born: S.day, stage: "Baby" }); S.preg = null; S.lastBaby = S.day; return houseScreen(); }
+  S.preg = null; S.lastBaby = S.day; babyHome(S.hospPick || 0);
+}
+// a new day can bring baby news
+const _lifeNewDayH = lifeNewDay;
+lifeNewDay = function () { _lifeNewDayH(); try { pregNewDay(); } catch (e) {} };
+// the Hospital in town
+W3_COL.hospital = [0xf4f6fa, 0xd64545];
+const _townEnterH = townEnter;
+townEnter = function (what) { if (what === "hospital") { townSave(); return hospitalVisit(); } return _townEnterH(what); };
+document.head.insertAdjacentHTML("beforeend", `<style>
+.hosp-scene{background:linear-gradient(#e8f6ff,#bfe3f7);padding-bottom:14px}
+.hosp-scan{margin:8px auto;width:200px;height:130px;border-radius:14px;background:radial-gradient(#3a3a3a,#0d0d0d);position:relative;overflow:hidden;border:4px solid #9fb5c4}
+.hosp-blob{position:absolute;left:62px;top:34px;width:76px;height:60px;border-radius:50% 55% 45% 50%;background:radial-gradient(#e8e8e8,#888 70%,transparent 72%);animation:hospWig 2.4s ease-in-out infinite}
+.hosp-beat{position:absolute;right:12px;bottom:6px;color:#ff5a8a;font-size:22px;animation:hospBeat .8s infinite}
+@keyframes hospWig{50%{transform:translate(4px,-3px) rotate(6deg)}}@keyframes hospBeat{50%{transform:scale(1.35)}}
+.hosp-bar{height:16px;border-radius:10px;background:#ffffff88;margin:8px 30px;overflow:hidden}.hosp-bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd23b,#ff5a8a);transition:width .3s}
 </style>`);
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
