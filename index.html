@@ -525,6 +525,33 @@
   #picPick { position:absolute; inset:0; z-index:5; background:#fff; display:flex; flex-direction:column; gap:8px; padding:10px; overflow-y:auto; border-radius:28px; }
   #picPick .pp-top { display:flex; align-items:center; justify-content:space-between; font-size:18px; } #picPick .pgrid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
   .ph-screen { position:relative; }
+  .t-body { position:relative; display:flex; justify-content:center; }
+  .t-sheet { display:none; position:absolute; left:50%; bottom:0; background-size:400% 100%; background-repeat:no-repeat; transform:translateX(-50%); }
+  .t-ani.has-sheet .t-body img { visibility:hidden; animation:none; } .t-ani.has-sheet .t-sheet { display:block; }
+  .town.real .t-ani.moving:not(.has-sheet) img { animation:trot .4s ease-in-out infinite; } .town.real .t-ani.moving:not(.has-sheet) img.flip { animation-name:trotF; }
+  .town.real .town-world { background:url(art/r_grass.png), url(art/t_grass.png) #5f9a45; background-size:300px; }
+  .town.real .t-spr { filter:drop-shadow(14px 16px 10px rgba(20,35,10,.45)) saturate(.95); }
+  .town.real .t-ani img { filter:drop-shadow(10px 10px 6px rgba(20,35,10,.45)); }
+  .town.real .t-ani::after { background:rgba(20,35,10,.35); filter:blur(3px); }
+  .town.real .town-sign { background:rgba(40,28,16,.72); border:none; box-shadow:none; color:#fff3dc; font-size:15px; backdrop-filter:blur(3px); }
+  .town.real .town-sign.bld { background:rgba(255,255,255,.75); color:#4a3220; }
+  .town.real .t-ani span { background:rgba(255,255,255,.78); font-size:14px; }
+  .town.real::after { content:""; position:absolute; inset:0; pointer-events:none; z-index:20; background:radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(10,8,4,.35)), linear-gradient(rgba(255,220,160,.10), rgba(255,200,140,.06)); mix-blend-mode:multiply; }
+  .tilt { position:absolute; inset:0; z-index:19; pointer-events:none; display:none; backdrop-filter:blur(3.5px); -webkit-backdrop-filter:blur(3.5px);
+    mask-image:linear-gradient(#000 0, transparent 26%, transparent 70%, #000 100%); -webkit-mask-image:linear-gradient(#000 0, transparent 26%, transparent 70%, #000 100%); }
+  .town.real .tilt { display:block; }
+  .clouds { position:absolute; inset:0; pointer-events:none; z-index:5000; overflow:hidden; display:none; }
+  .town.real .clouds { display:block; }
+  .clouds i { position:absolute; width:900px; height:520px; border-radius:50%; background:radial-gradient(closest-side, rgba(10,20,40,.28), transparent); filter:blur(30px); animation:cloud 70s linear infinite; }
+  .clouds i:nth-child(1) { top:200px; } .clouds i:nth-child(2) { top:900px; animation-delay:-30s; animation-duration:90s; } .clouds i:nth-child(3) { top:1400px; animation-delay:-55s; width:700px; }
+  @keyframes cloud { from { transform:translateX(-1000px) } to { transform:translateX(2200px) } }
+  .style-btn { font-size:13px !important; width:auto !important; padding:0 8px !important; }
+  @media (max-width:600px) {
+    body:not(.immersive) .phone-btn { top:8px; bottom:auto !important; left:auto; width:44px; height:44px; border-radius:13px; }
+    body:not(.immersive) #phoneBtn { right:8px; } body:not(.immersive) .eyes-btn { right:58px; } body:not(.immersive) .tree-btn { right:108px; } body:not(.immersive) .srv-btn { right:158px; }
+    body:not(.immersive) .phone-btn svg { width:26px; height:26px; }
+    body:not(.immersive) #app { padding-top:58px; padding-bottom:30px; }
+  }
   body.immersive { overflow:hidden; }
   body.immersive #app { width:100%; padding:0; }
   body.immersive #app > h1, body.immersive .bgl, body.immersive .srv-btn, body.immersive .eyes-btn, body.immersive .scr-btn, body.immersive .scroll-btns, body.immersive .side-go { display:none !important; }
@@ -3423,6 +3450,9 @@ const TOWN_BLD = [ // [sprite, x, y, width, what happens when you tap it, label]
 ];
 const ANIMAL_HOME = i => [[400, 1130], [1620, 1130], [1560, 670], [860, 1465], [1150, 1465]][i % 5];
 let TOWN = null;
+const townReal = () => (S.townStyle || "real") === "real";
+const tSpr = n => townReal() ? n.replace(/^t_/, "r_") : n;
+const SPR_FALLBACK = `onerror="if(this.src.includes('/r_')){this.src=this.src.replace('/r_','/t_')}else{this.style.visibility='hidden'}"`;
 const spotFor = (i, w) => { const c = TOWN_SPOT[w] || TOWN_SPOT.village, a = i * 2.4 + 0.6, r = 95 + (i % 3) * 38; return [c[0] + Math.cos(a) * r * 1.35, c[1] + Math.sin(a) * r * .7]; };
 function townDecor() {
   // trees and little things, the same every time (seeded), kept off the paths and buildings
@@ -3443,39 +3473,50 @@ function townGround() {
   const P = (a, b) => `M${a[0]} ${a[1]} L${b[0]} ${b[1]}`, S0 = TOWN_SPOT;
   const roads = [P([1000, 960], [1000, 170]), P([1000, 960], [1000, 1480]), P([1000, 960], [1630, 960]), P([1000, 960], [360, 960]), P([360, 960], [420, 1330]), P([1000, 1240], [690, 1280]),
     P([1000, 1240], [1330, 1290]), P([1630, 960], [1760, 1260]), P([1630, 960], [1720, 560]), P([1000, 560], [620, 620]), P([620, 620], [260, 520]), P([1000, 400], [640, 300]), P([1000, 400], [1420, 300]), P([1330, 1290], [1600, 1480])].join(" ");
+  const real = townReal();
+  const dirt = real ? "url(#pDirt)" : "#ecd29b", edge = real ? "#6b5434" : "#b98d55", water = real ? "url(#pWater)" : "url(#tw)";
   return `<svg class="town-ground" viewBox="0 0 ${TW} ${TH}" width="${TW}" height="${TH}">
-    <defs><radialGradient id="tw" cx="50%" cy="40%"><stop offset="0" stop-color="#7fd3ff"/><stop offset=".75" stop-color="#3aa0e0"/><stop offset="1" stop-color="#2a7fc0"/></radialGradient>
+    <defs><pattern id="pDirt" patternUnits="userSpaceOnUse" width="220" height="220"><image href="art/r_dirt.png" width="220" height="220"/></pattern>
+      <pattern id="pWater" patternUnits="userSpaceOnUse" width="260" height="260"><image href="art/r_water.png" width="260" height="260"/></pattern>
+      <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter><radialGradient id="tw" cx="50%" cy="40%"><stop offset="0" stop-color="#7fd3ff"/><stop offset=".75" stop-color="#3aa0e0"/><stop offset="1" stop-color="#2a7fc0"/></radialGradient>
       <radialGradient id="ti" cx="50%" cy="40%"><stop offset="0" stop-color="#f4fbff"/><stop offset="1" stop-color="#b9def5"/></radialGradient>
       <radialGradient id="th" cx="50%" cy="50%"><stop offset="0" stop-color="#b6ec8a"/><stop offset="1" stop-color="#b6ec8a00"/></radialGradient></defs>
     <ellipse cx="1000" cy="170" rx="300" ry="150" fill="url(#th)"/><ellipse cx="1630" cy="960" rx="170" ry="110" fill="#c9f29a" opacity=".6"/>
     <path d="M-20 430 C 150 470, 220 600, 380 620 S 600 760, 700 700" stroke="#2f86c9" stroke-width="58" fill="none" stroke-linecap="round" opacity=".9"/>
-    <path d="M-20 430 C 150 470, 220 600, 380 620 S 600 760, 700 700" stroke="#7fd3ff" stroke-width="38" fill="none" stroke-linecap="round"/>
-    <path d="${roads}" stroke="#b98d55" stroke-width="82" stroke-linecap="round" fill="none"/>
-    <path d="${roads}" stroke="#ecd29b" stroke-width="66" stroke-linecap="round" fill="none"/>
-    <circle cx="1000" cy="960" r="170" fill="#b98d55"/><circle cx="1000" cy="960" r="160" fill="#efd8a8"/><circle cx="1000" cy="960" r="120" fill="none" stroke="#e2c48a" stroke-width="6" stroke-dasharray="14 10"/>
-    <ellipse cx="1000" cy="1560" rx="330" ry="170" fill="#c2a46e"/><ellipse cx="1000" cy="1556" rx="316" ry="158" fill="url(#tw)"/><ellipse cx="930" cy="1510" rx="120" ry="30" fill="#fff" opacity=".25"/>
+    <path d="M-20 430 C 150 470, 220 600, 380 620 S 600 760, 700 700" stroke="${real ? "url(#pWater)" : "#7fd3ff"}" stroke-width="38" fill="none" stroke-linecap="round"/>
+    <path d="${roads}" stroke="${edge}" stroke-width="84" stroke-linecap="round" fill="none" ${real ? `filter="url(#soft)" opacity=".55"` : ""}/>
+    ${real ? `<path d="${roads}" stroke="#c4ab80" stroke-width="66" stroke-linecap="round" fill="none"/>` : ""}<path d="${roads}" stroke="${dirt}" stroke-width="66" stroke-linecap="round" fill="none"/>
+    <circle cx="1000" cy="960" r="172" fill="${edge}" ${real ? `filter="url(#soft)" opacity=".55"` : ""}/><circle cx="1000" cy="960" r="160" fill="${real ? dirt : "#efd8a8"}"/><circle cx="1000" cy="960" r="120" fill="none" stroke="#e2c48a" stroke-width="6" stroke-dasharray="14 10"/>
+    <ellipse cx="1000" cy="1560" rx="336" ry="176" fill="${real ? "#4a5a2a" : "#c2a46e"}" ${real ? `filter="url(#soft)"` : ""}/><ellipse cx="1000" cy="1556" rx="316" ry="158" fill="url(#tw)"/>${real ? `<ellipse cx="1000" cy="1556" rx="316" ry="158" fill="${water}"/>` : ""}${real ? `<ellipse cx="1000" cy="1556" rx="316" ry="158" fill="none" stroke="#1d3b2a" stroke-width="18" opacity=".35" filter="url(#soft)"/>` : ""}<ellipse cx="930" cy="1510" rx="120" ry="30" fill="#fff" opacity=".25"/>
     <ellipse cx="1600" cy="1520" rx="150" ry="90" fill="#9cc8e2"/><ellipse cx="1600" cy="1516" rx="140" ry="82" fill="url(#ti)"/>
     <rect x="1580" y="930" width="110" height="80" rx="10" fill="#ff6fae" opacity=".85"/><path d="M1580 950h110M1580 970h110M1580 990h110M1600 930v80M1625 930v80M1650 930v80M1675 930v80" stroke="#fff" stroke-width="6" opacity=".6"/>
   </svg>`;
 }
 const toonImg = n => `art/toon_${n}.png`;
 const TOON_H = n => 70 + 40 * Math.min(1.3, (REAL_SIZE[n] || 1));
+function townAnimalHTML(a, name, id, click, cls = "") {
+  const real = townReal(), h = real ? Math.round(TOON_H(a) * .95) : TOON_H(a) + (cls ? 6 : 0);
+  return `<div class="t-ani ${cls}" id="${id}" ${click}><em class="say"></em><div class="t-body" style="height:${h}px"><img src="${real ? `art/${a}.png` : toonImg(a)}" alt="" style="height:${h}px">${real && SHEETS.has(a) ? `<div class="t-sheet" data-a="${a}" style="background-image:url(art/sheet_${a}.png)"></div>` : ""}</div><span>${name}</span></div>`;
+}
+function townStyle() { townSave(); S.townStyle = townReal() ? "cartoon" : "real"; townScreen(); }
 function townScreen() {
   try { closePhone(); } catch (e) {} closeClock();
   S.outside = "town"; S.guest = null; S.meetPlace = null;
   const me = ART[S.animal[0]], all = friends();
   const pos = S.townPos || [1000, 1340];
-  show(`<div class="town" id="town"><div class="town-world" id="townWorld" style="width:${TW}px;height:${TH}px">
+  show(`<div class="town ${townReal() ? "real" : ""}" id="town"><div class="town-world" id="townWorld" style="width:${TW}px;height:${TH}px">
       ${townGround()}
       ${Object.keys(TOWN_SPOT).filter(k => !["village"].includes(k)).map(k => `<div class="town-sign" style="left:${TOWN_SPOT[k][0]}px;top:${TOWN_SPOT[k][1] + 46}px">${WORLD_NAMES[k] || k}</div>`).join("")}
-      ${TOWN_DECOR.map(d => `<img class="t-spr ${d.glow ? "t-lamp" : ""}" src="art/${d.sp}.png" alt="" style="left:${d.x}px;top:${d.y}px;width:${d.w}px;z-index:${Math.round(d.y)}" onerror="this.remove()">`).join("")}
-      ${TOWN_BLD.map((b, n) => `<img class="t-spr t-bld ${b[4] ? "tap" : ""}" data-b="${n}" src="art/${b[0]}.png" alt="${b[5]}" style="left:${b[1]}px;top:${b[2]}px;width:${b[3]}px;z-index:${b[2]}" ${b[4] ? `onclick="townTapBld(${n}, event)"` : ""} onerror="this.classList.add('missing')">${b[5] ? `<div class="town-sign bld" style="left:${b[1]}px;top:${b[2] + 8}px;z-index:${b[2] + 1}">${b[5]}</div>` : ""}`).join("")}
-      ${all.map((f, i) => `<div class="t-ani" id="ta${i}" onclick="townTapAnimal(${i}, event)"><em class="say"></em><img src="${toonImg(ART[f.emo])}" alt="" style="height:${TOON_H(ART[f.emo])}px"><span>${f.name}</span></div>`).join("")}
-      <div class="t-ani t-me" id="taMe"><em class="say"></em><img src="${toonImg(me)}" alt="" style="height:${TOON_H(me) + 6}px"><span>${esc(S.name)}</span></div>
+      ${TOWN_DECOR.map(d => `<img class="t-spr ${d.glow ? "t-lamp" : ""}" src="art/${tSpr(d.sp)}.png" alt="" style="left:${d.x}px;top:${d.y}px;width:${d.w}px;z-index:${Math.round(d.y)}" ${SPR_FALLBACK}>`).join("")}
+      ${TOWN_BLD.map((b, n) => `<img class="t-spr t-bld ${b[4] ? "tap" : ""}" data-b="${n}" src="art/${tSpr(b[0])}.png" alt="${b[5]}" style="left:${b[1]}px;top:${b[2]}px;width:${b[3]}px;z-index:${b[2]}" ${b[4] ? `onclick="townTapBld(${n}, event)"` : ""} ${SPR_FALLBACK}>${b[5] ? `<div class="town-sign bld" style="left:${b[1]}px;top:${b[2] + 8}px;z-index:${b[2] + 1}">${b[5]}</div>` : ""}`).join("")}
+      ${all.map((f, i) => townAnimalHTML(ART[f.emo], f.name, `ta${i}`, `onclick="townTapAnimal(${i}, event)"`)).join("")}
+      ${townAnimalHTML(me, esc(S.name), "taMe", "", "t-me")}
+      <div class="clouds"><i></i><i></i><i></i></div>
       <div class="t-target" id="tTarget"></div>
     </div>
     <div class="pov-label">${VILLAGE}</div><button class="pov-exit" onclick="townExit()">Exit</button>
-    <div class="town-zoom"><button onclick="townZoom(1)" aria-label="Zoom in">+</button><button onclick="townZoom(-1)" aria-label="Zoom out">-</button></div>
+    <div class="tilt"></div>
+    <div class="town-zoom"><button onclick="townZoom(1)" aria-label="Zoom in">+</button><button onclick="townZoom(-1)" aria-label="Zoom out">-</button><button class="style-btn" onclick="townStyle()">${townReal() ? "Cartoon" : "Real"}</button></div>
     <div class="walk-hint town-hint" id="townHint">Tap anywhere to walk. Tap someone to go talk to them.</div>
     <div class="town-talk" id="townTalk"></div>
     <div class="town-bar"><button class="rainbow" onclick="townEyes()">Look through my eyes</button><button class="green" onclick="townGoHome()">Go home</button></div>
@@ -3594,8 +3635,12 @@ function townStep(now) {
 }
 function townDraw(node, p, moving) {
   node.style.cssText = `left:${p.x}px;top:${p.y}px;z-index:${Math.round(p.y) + 2};${p.asleep ? "display:none" : ""}`;
-  node.classList.toggle("moving", moving);
+  const sh = node.querySelector(".t-sheet");
+  node.classList.toggle("moving", moving); node.classList.toggle("has-sheet", !!sh && moving);
   node.querySelector("img").classList.toggle("flip", p.dir < 0);
+  if (sh && moving) { const a = sh.dataset.a, si = FILL["sheet_" + a], st0 = FILL[a] || { top:.08, bot:.94 }, hh = node.querySelector("img").offsetHeight;
+    if (si && !sh.dataset.sized) { const sH = hh * (st0.bot - st0.top) / (si.bot - si.top); sh.style.cssText += `;height:${sH}px;width:${sH * si.ar}px;bottom:${-(1 - si.bot) * sH + (1 - st0.bot) * hh}px`; sh.dataset.sized = 1; }
+    sh.style.backgroundPositionX = `${(Math.floor(TOWN.t * 8) % 4) * 33.333}%`; sh.style.transform = `translateX(-50%)${p.dir < 0 ? " scaleX(-1)" : ""}`; }
   const say = node.querySelector(".say"), txt = TOWN.t < p.talkUntil ? p.line : "";
   if (say.dataset.t !== txt) { say.dataset.t = txt; say.textContent = txt; say.style.display = txt ? "block" : "none"; }
 }
