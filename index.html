@@ -456,6 +456,8 @@
   .places-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; }
   .places-grid .act-btn { height:110px; width:auto; margin:0; }
   @media (max-width:600px) { .places-grid { grid-template-columns:1fr 1fr; } .places-grid .act-btn { height:96px; } }
+  body.immersive .scene.pov > .bubble, body.immersive .scene.pov > p.sub, body.immersive .scene.pov > p.story { top:96px !important; }
+  body.immersive .scene.pov > p.story + .bubble { top:auto !important; }
   body.immersive { overflow:hidden; }
   body.immersive #app { width:100%; padding:0; }
   body.immersive #app > h1, body.immersive .bgl, body.immersive .srv-btn, body.immersive .eyes-btn, body.immersive .scr-btn, body.immersive .scroll-btns, body.immersive .side-go { display:none !important; }
@@ -1305,15 +1307,25 @@ function hangout(i, place) {
   `);
 }
 
+// nicknames grow with the hearts: your name at first, a light nickname next, the sweet pet names when you're close
+const PET_LIGHT = { shy:["sunflower","bookworm"], adventure:["partner in crime","explorer"], funny:["goofball","my favorite giggle"], baker:["honeybee","buttercup"] };
+const petFor = (f, st = stageOf(f)) => st >= 2 ? pet(f) : st === 1 ? pickOne(PET_LIGHT[f.type]) : (S.name || "friend");
+const ANSWER_REACT = {
+  2: [["Ha! Good answer, {P}. You're fun to talk to.", "Ooh, I like how you think, {P}!", "Yes! That's exactly what I would've said."],
+      ["You always know the right thing to say, {P}. *smiles*", "Ha! See, this is why I like hanging out with you, {P}.", "Okay, that was a really good answer. *goes a little pink*"],
+      ["You always know exactly the right thing to say, {P}. *blushes*", "Ohh, {P}! You make my heart go all fluttery!", "*snuggles closer* That's why you're my favorite, {P}."]],
+  1: [["Ha, okay, {P}. Fair enough!", "Hmm, interesting! Okay, {P}."], ["Aww, {P}. *smiles at you*", "Hehe, okay, {P}. I like that."], ["Aww, {P}. *leans their head on your shoulder*", "Hehe, {P}. *snuggles up a little closer*"]],
+  0: ["looks a little confused, but smiles anyway.", "looks a little confused, but smiles at you.", "looks a little confused, but still holds your paw."]
+};
 function answer(i, place, k) {
   const f = friends()[i];
   const [, answers] = TALKS[f.type][S.talkIdx[f.name] % TALKS[f.type].length];
   const pts = answers[k][1];
   S.talkIdx[f.name]++;
+  const st = stageOf(f);
   addHearts(f, pts);
-  const react = pts === 2 ? `<b>${f.name}:</b> "${["You always know exactly the right thing to say, {P}. *blushes*","Ohh, {P}! You make my heart go all fluttery!","*snuggles closer* That's why you're my favorite, {P}."][Math.floor(Math.random() * 3)].replace("{P}", pet(f))}" <b>+2 ❤️</b>`
-              : pts === 1 ? `<b>${f.name}:</b> "Aww, {P}. *leans their head on your shoulder*" <b>+1 ❤️</b>`.replace("{P}", pet(f))
-              : `${f.name} looks a little confused, but still holds your paw.`;
+  const react = pts ? `<b>${f.name}:</b> "${pickOne(ANSWER_REACT[pts >= 2 ? 2 : 1][st]).replace("{P}", petFor(f, st))}" <b>+${pts >= 2 ? 2 : 1} ❤️</b>`
+              : `${f.name} ${ANSWER_REACT[0][st]}`;
   if (pts) { chime(); floatHearts(pts); } else chime(false);
   show(`
     ${sceneTop(f, place, pts === 2 ? "happy" : pts ? "nod" : "confused")}
@@ -1410,7 +1422,7 @@ const SAY = {
   sad: ["Oh no, come here. Do you want to talk about it? I'm right here.", "I'm sending you the biggest hug in the forest right now.", "Whatever happened, you're not alone. You've got me.", "Want me to tell you something that'll cheer you up? You're amazing. That's it. That's the thing."],
   happy: ["Yay! Seeing you happy makes me so happy too.", "Your happiness is contagious! Now I'm smiling too!", "That's the best news ever. Let's celebrate with a snack!"],
   joke: { funny:["Why did the bunny bring a ladder to the party? Because the drinks were on the house!","What do you call a bear with no teeth? A gummy bear!","Why don't owls go on dates when it's raining? Because it's too wet to woo!","What's a raccoon's favorite game? Hide and squeak... wait, that's mice. I panicked."],
-          other:["Um, I'm not very good at jokes... what do you call a sleepy bear? A bear-ly awake! ...Sorry.","Why did the fox blush? Because it saw you! ...Okay, that wasn't a joke, it's just true."] },
+          other:["Um, I'm not very good at jokes... what do you call a sleepy bear? A bear-ly awake! ...Sorry.", "Okay, okay. Why did the cookie go to the doctor? It felt crummy! Hehe.", "What do you call a deer with no eyes? No idea! ...Get it? No eye-deer!","Why did the fox blush? Because it saw you! ...Okay, that wasn't a joke, it's just true."] },
   love: {
     shy: ["*goes very pink* I... I like you too. A lot. You're the only one I've ever said that to.", "My heart is beating so fast I can hear it. I like you too. So much.", "I've been too shy to say it first... but me too. Me too."],
     adventure: ["Really?! My heart just did a triple backflip! I like you too, so, SO much!", "That's the bravest thing anyone's ever said to me. And the answer is: me too!", "Being with you is the best adventure I've ever had."],
@@ -1436,20 +1448,27 @@ const SAY = {
   other: ["Hehe, I could listen to you talk all day, honestly.", "Really? Tell me more! I love hearing what you think.", "Um... sorry, I got distracted. You just have a really nice smile.", "Being with you feels like a warm hug on a rainy day.",
           "Ha, you always say the most interesting things.", "I never know what you're going to say next, and I love it.", "Wait, say that again? I was too busy looking at you.", "Mm-hmm! And then what happened?"]
 };
+const helloFor = f => { const st = stageOf(f); return st === 0 ? pickOne(NEW_FRIEND.hello) : st === 1 ? pickOne(NEW_FRIEND.hello1) : byType(SAY.hello, f); };
 const RECENT = [];
 const pickOne = a => {
   if (!Array.isArray(a)) return a;
-  const fresh = a.filter(x => !RECENT.includes(x)), pool = fresh.length ? fresh : a;
+  const key = x => Array.isArray(x) ? x.join("|") : x;
+  const fresh = a.filter(x => !RECENT.includes(key(x))), pool = fresh.length ? fresh : a;
   const x = pool[Math.floor(Math.random() * pool.length)];
-  if (typeof x === "string" && x.length > 14) { RECENT.push(x); if (RECENT.length > 80) RECENT.shift(); }
+  if (Array.isArray(x) || (typeof x === "string" && (x.length > 14 || /[.!?]/.test(x)))) { RECENT.push(key(x)); if (RECENT.length > 160) RECENT.shift(); }
   return x;
 };
 const byType = (v, f) => pickOne(Array.isArray(v) ? v : v[f.type]);
 const ARGUE = {
   back: ["Wow. Okay. Why would you say that to me?", "Excuse me? That's really hurtful.", "I can't believe you just said that. I thought we were close.",
          "Seriously? I'd never say something like that to you.", "That actually really hurt. Like, a lot."],
-  cold: ["I don't really feel like talking right now.", "Okay.", "Are you actually going to say sorry or not?", "Whatever.", "I just need some space.",
-         "You know what you did.", "I'm still upset, honestly.", "Mm.", "I'm not ignoring you. I'm just hurt."],
+  cold: ["I don't really feel like talking right now.", "Oh, NOW you want to talk? 🙄", "I'm not mad. I'm just... very, very disappointed.", "Hmph. You know what you did.",
+         "Sorry, I'm busy. Busy being upset. 😤", "Wow. That's all you're going to say?", "I'm still hurt, honestly. Like, REALLY hurt.", "Don't 'hey' me. I'm still upset.",
+         "*turns away dramatically* I'm not talking to you. ...Okay, I'm talking a LITTLE.", "I'm writing about this in my diary. In CAPITAL letters.",
+         "You hurt my feelings, and now you're just acting normal? Wow.", "I'm giving you the silent treatment. ...This text doesn't count.",
+         "Every time my phone buzzes, I hope it's a sorry. It never is. 🙄", "Mm-hmm. Sure. Whatever you say. 😒", "Are you actually going to say sorry or not?",
+         "A sorry would be nice. Just saying. 🥺", "I'm not ignoring you. I'm just hurt. A sorry would help."],
+  hint: ["...Maybe say sorry? 🥺", "A sorry would be nice. Just saying.", "I'm waiting for a sorry. 🙄", "(Saying sorry might fix this...)"],
   makeup: ["...Okay. Thank you for saying that. I forgive you.", "I'm sorry too. I think I overreacted a bit.", "That means a lot. Can we hug it out next time we see each other?",
            "Okay. I was really upset, but I don't want to stay mad at you.", "Thanks for being honest. I missed talking to you, you know."]
 };
@@ -1467,8 +1486,34 @@ const FAVS = { season:{shy:"autumn, when the leaves are crunchy",adventure:"summ
   book:{shy:"a love story about two little mice",adventure:"a book about finding a hidden treasure map",funny:"a joke book (I've read it 40 times)",baker:"my grandma's recipe book"},
   game:{shy:"quiet card games by the fire",adventure:"hide and seek in the whole forest",funny:"charades, I'm amazing at it",baker:"a baking contest"},
   place:{shy:"the Flower Garden",adventure:"Starry Hill",funny:"the Frozen Pond",baker:"the Picnic Meadow"},
-  subject:{shy:"reading and writing",adventure:"geography, so I can find new places",funny:"drama class",baker:"cooking, of course"} };
+  subject:{shy:"reading and writing",adventure:"geography, so I can find new places",funny:"drama class",baker:"cooking, of course"},
+  movie:{shy:"a sweet one where two penguins fall in love",adventure:"anything with dragons and treasure",funny:"the one where the duck becomes a superhero. I cried laughing",baker:"a cozy movie about a magic bakery"},
+  show:{shy:"a nature show about baby owls",adventure:"a show where people climb huge mountains",funny:"any cartoon with talking food",baker:"baking competition shows, obviously"},
+  color:{shy:"soft pink, like cherry blossoms",adventure:"bright orange, like a sunset",funny:"neon green. It's loud, like me",baker:"golden, like honey"},
+  food:{shy:"strawberries with cream",adventure:"campfire s'mores",funny:"pizza with way too much cheese",baker:"warm cinnamon rolls"},
+  snack:{shy:"apple slices",adventure:"trail mix",funny:"popcorn, extra butter",baker:"honey cookies"},
+  dessert:{shy:"strawberry shortcake",adventure:"ice cream, three scoops",funny:"a cake taller than me",baker:"honey cake, I make the best one"},
+  candy:{shy:"little heart candies",adventure:"sour gummy worms",funny:"jawbreakers, they last forever",baker:"caramels"},
+  drink:{shy:"warm cocoa",adventure:"ice cold lemonade",funny:"chocolate milk through a silly straw",baker:"honey tea"},
+  sport:{shy:"swimming, it's quiet",adventure:"rock climbing",funny:"dodgeball, I'm the dodger",baker:"bowling"},
+  holiday:{shy:"Valentine's Day, it's so sweet",adventure:"Halloween, for the costumes",funny:"April Fools' Day, obviously",baker:"Thanksgiving, all that pie"},
+  flower:{shy:"tulips",adventure:"sunflowers",funny:"dandelions, you can blow on them",baker:"lavender, it smells amazing"},
+  music:{shy:"soft piano",adventure:"loud drums",funny:"silly songs",baker:"cozy fireside songs"},
+  toy:{shy:"my old stuffed bunny",adventure:"my spyglass",funny:"my whoopee cushion",baker:"my tiny toy oven"},
+  thing:{shy:"rainy days with a good book",adventure:"exploring somewhere new",funny:"making you laugh",baker:"the smell of fresh bread"} };
 const OTHER_NAMES = () => friends().map(x => x.name);
+const MY_NOW = {
+  reading: { shy:"A story about a little mouse who sails to the moon in a teacup. It's SO good.", adventure:"A book about pirates who find a map under a waterfall!", funny:"A joke book. I'm on page 3 and I've laughed 40 times.", baker:"My grandma's old recipe book. It has a cake on every page." },
+  eating: { shy:"Strawberry jam on toast. My favorite.", adventure:"Trail mix! I'm about to go climbing.", funny:"A secret snack. It's a secret because it's the last cookie.", baker:"A warm honey bun I just baked." },
+  baking: { shy:"Little lemon cookies, shaped like flowers.", adventure:"Energy bars for my next adventure!", funny:"I tried to bake a pie and now there's flour on the ceiling.", baker:"Cinnamon rolls! The whole house smells amazing." },
+  making: { shy:"A flower crown. It's almost done!", adventure:"A treasure map of the whole forest.", funny:"A prank. Don't worry, it's not for you. Probably.", baker:"Honey cake, the extra-tall kind." },
+  watching: { shy:"The rain on my window. It's very relaxing.", adventure:"The clouds. One looks like a dragon!", funny:"A squirrel trying to carry five acorns at once. It's going badly.", baker:"My cookies in the oven. You can't rush cookies." },
+  playing: { shy:"Cards by myself. I keep losing to me, haha.", adventure:"Tag with the squirrels. They cheat.", funny:"Hide and seek. I've been hiding for an hour. Nobody's looking.", baker:"A board game with my baby sister. She's winning." },
+  drawing: { shy:"The flowers by my window.", adventure:"A map of Starry Hill.", funny:"A really silly picture of a frog in a hat.", baker:"A cake I want to bake someday." },
+  writing: { shy:"A little poem about the rain.", adventure:"My adventure diary!", funny:"A list of my best jokes.", baker:"A new recipe!" },
+  "listening to": { shy:"Rain sounds. So cozy.", adventure:"The wind on the hill!", funny:"Myself singing, very badly.", baker:"The fire crackling. Best music ever." },
+  "thinking about": { shy:"What to read next.", adventure:"Where to explore tomorrow.", funny:"Snacks. Always snacks.", baker:"What to bake next." }
+};
 function listen(f, raw) {
   const text = raw.trim(), t = text.toLowerCase();
   let m;
@@ -1477,13 +1522,20 @@ function listen(f, raw) {
   // mentioning another animal: a little jealousy, like a real person
   const other = !/\bmy (dog|cat|pet|puppy|kitten|fish|hamster|bunny|rabbit|horse|teddy)\b/i.test(text) && OTHER_NAMES().find(n => n !== f.name && new RegExp("\\b" + n + "\\b", "i").test(text));
   if (other) return pickOne([`${other}? ...Oh. Do you like ${other} more than me?`, `Why are you talking about ${other}? I thought this was OUR time.`, `${other} is nice, I guess. But are you having fun with ME?`]);
-  if ((m = text.match(/(?:what(?:'s| is) your )?favou?rite (season|song|animal|book|game|place|subject|class)/i))) {
-    const k = m[1] === "class" ? "subject" : m[1];
+  if ((m = text.match(/(?:what(?:'s| is) your )?favou?rite (season|song|animal|book|game|place|subject|class|movie|film|show|tv show|color|colour|food|snack|dessert|candy|drink|sport|holiday|flower|music|toy|thing)s?\b/i))) {
+    const k = ({ class:"subject", film:"movie", "tv show":"show", colour:"color" })[m[1].toLowerCase()] || m[1].toLowerCase();
     return `My favorite ${m[1]}? Hmm... ${FAVS[k][f.type]}. What's yours?`;
   }
+  if ((m = t.match(/\b(?:what(?: \w+)? )?(?:are|r) you (reading|eating|baking|making|watching|playing|drawing|writing|listening to|thinking about)\b/))) {
+    const k = m[1], ans = MY_NOW[k][f.type];
+    return `${ans} What about you? What are you ${k}?`;
+  }
+  if ((m = t.match(/^(?:his|her|their|its) name is ([a-z]+)/))) return pickOne([`${capW(m[1])}! That's the cutest name ever. What's ${capW(m[1])} like?`, `Aww, ${capW(m[1])}! Great name. I want to meet ${capW(m[1])}!`]);
+  if ((m = t.match(/\bmy ([a-z]+(?: [a-z]+)?)(?:'s name is| is named| is called| named| called) ([a-z]+)/))) return pickOne([`${capW(m[2])}? That's such a good name for a ${m[1]}! How did you pick it?`, `Aww, ${capW(m[2])}! I love that name. Tell me about ${capW(m[2])}!`]);
   if ((m = text.match(/^(?:my|mine) favou?rite (\w+) is (.+)/i))) return `Your favorite ${m[1]} is ${clip(m[2])}? I'm going to remember that forever. Why do you like it?`;
   if ((m = text.match(/\bi (?:really |kind of |totally )?(?:like|love|adore|enjoy) (.+)/i))) {
-    const x = clip(m[1]);
+    const too = /\s(too|as well|also)[.!]*$/i.test(m[1]), x = clip(m[1].replace(/\s+(too|as well|also|a lot|so much|very much)([.!]*)$/i, "$2"));
+    if (too) return lovesIt(x) ? `You like ${reflect(x)} too?! No way! We're basically twins. What's your favorite part?` : `Wait, you like ${reflect(x)} too? That's so cool! What do you like about it?`;
     return lovesIt(x) ? `You like ${reflect(x)} too?! No way, I LOVE ${reflect(x)}! We're basically the same person.` : pickOne([`You like ${reflect(x)}? I didn't know that! Will you show me why it's so great?`, `${reflect(x)[0].toUpperCase() + reflect(x).slice(1)}, huh? Okay, now I want to try it too, because you like it.`]);
   }
   if ((m = text.match(/\bi (?:hate|don'?t like|can'?t stand) (.+)/i))) return `You don't like ${reflect(clip(m[1]))}? Honestly, me neither. We can not-like it together.`;
@@ -1526,7 +1578,7 @@ function listen(f, raw) {
   if ((m = text.match(/\bwho(?:'s| is) (.+?)\??$/i))) return `${capW(clip(m[1]))}? Hmm, I'm not sure I know! Tell me about them.`;
   if ((m = text.match(/\bwhat(?:'s| is) (?:a |an |the )?(.+?)\??$/i)) && !/your|you/.test(m[1])) return `${capW(clip(m[1]))}? Hmm, I'm not totally sure... what do you think it is?`;
   if ((m = text.match(/\bdo you (.+?)\??$/i))) return `Do I ${reflect(clip(m[1]))}? Sometimes! Do you?`;
-  if (/\b(lol|haha+|hehe+|lmao|rofl)\b/.test(t)) return pickOne(["Haha! You're so funny.", "Hehe, you always make me laugh.", "LOL okay that got me."]);
+  if (/\b(lol|haha+|hehe+|lmao|rofl)\b/.test(t)) return pickOne(["Haha! You're so funny.", "Hehe, you always make me laugh.", "LOL okay that got me.", "Hahaha, stop! I'm laughing so hard.", "Okay, that was actually funny. I'm giggling.", "LOL. You're ridiculous. In a good way.", "Haha, what's so funny? Tell me!"]);
   if (/\bomg\b/.test(t)) return pickOne(["I KNOW, right?!", "OMG is right!"]);
   if (/^(yes|yeah|yep|yup|sure|ok|okay|ya|yea)\b/.test(t) && t.split(/\s+/).length <= 4) return pickOne(["Yay! I knew you'd say that.", "Okay! I like that."]);
   if (/^(no|nope|nah)\b/.test(t) && t.split(/\s+/).length <= 4) return pickOne(["No? Haha, okay, fair enough!", "Aww, okay! That's fine."]);
@@ -1580,6 +1632,7 @@ function context(f, text) {
   const yes = /^(yes|yeah|yep|yup|sure|ok|okay|of course|definitely|totally|i do|i would|i will|yess+|ya|yea)\b/.test(t);
   const no = /^(no|nope|nah|not really|i don'?t|never|maybe not)\b/.test(t);
   if (words > 12) return null;
+  if (ask.k !== "petname" && /\b(named|called)\b|'s name is/.test(t)) return null;
   const statementOk = ["thankful","news","best","more","like","sad","worry","private","real","crush","story","bday","pet","wyr","fav","age","grade"].includes(ask.k);
   const qOk = ["worry","private","real"].includes(ask.k);
   if (!yes && !no && !qOk && (/\?$/.test(t) || /^(what|who|how|why|when|where|can|do|does|would|will|are|is|guess|hey|hi|hello|lol|haha|hehe|omg|lmao)\b/.test(t) || (!statementOk && /^(i|i'm|im|my)\b/.test(t)))) return null;
@@ -1682,7 +1735,7 @@ function kidTalk(f, t) {
   if (/^(good morning|morning)\b/.test(s) && w <= 4) return R(["Good morning, sunshine! Did you sleep okay?", "Morning! You're the first thing I wanted to see today. Did you sleep well?", "Good morning! I just woke up too. My fur is SO messy right now, haha."], 1, "happy");
   if (/^(good (afternoon|evening))\b/.test(s) && w <= 4) return R("Good " + s.split(" ")[1] + "! I was hoping you'd text me. How's your day going?", 1, "happy");
   if (/^(what'?s up|sup|wassup)\??$/.test(s)) return R(["Not much! Just sitting here hoping you'd text me, haha. What's up with you?", "Nothing much! I was literally just thinking about you. What's up?", "Just chilling by the pond. Way better now that you texted. What's up with you?"]);
-  if (w <= 3 && /^(h+i+|he+y+|hello|helo|hiya|hai|yo|howdy|heya|hey there|hi there|hii+)\b/.test(s) && !/\?/.test(s)) return R(byType(SAY.hello, f), 1, "happy");
+  if (w <= 3 && /^(h+i+|he+y+|hello|helo|hiya|hai|yo|howdy|heya|hey there|hi there|hii+)\b/.test(s) && !/\?/.test(s)) return R(helloFor(f), 1, "happy");
   // gibberish
   if (/^\?+$/.test(s)) return R(["Hmm? Is there something on my face?", "Question mark? Did I say something weird? Haha.", "?? back at you! Hehe. What's up?"], 1);
   if (/^\.+$/.test(s) || s === "") return R(["Hellooo? Did you fall asleep? Haha.", "Dot dot dot... the suspense is killing me!", "Are you thinking really hard? I'll wait. Hehe."], 1);
@@ -1691,7 +1744,7 @@ function kidTalk(f, t) {
   const ONE = { "same":"Same! We're basically twins, haha.", "maybe":"Maybe? Ooh, mysterious. I like it.", "bet":"Bet! Haha, did I say that right? I'm learning all your words.",
     "huh":"Haha, sorry, I'm not making sense. My brain goes all fuzzy when I talk to you.", "bruh":"Bruh. Haha, did I say it right?", "fr":"For real, for real!", "for real":"For real, for real!",
     "slay":"Slay! You always know the perfect thing to say.", "sus":"Sus? Who, me? I'm totally innocent, haha.", "mid":"Mid?! Rude! ...Okay, that was kind of funny.",
-    "cringe":"Cringe?! Hey! ...Okay, maybe a little, haha.", "wow":"I know, right?!", "cool":"Right?! So cool.", "nice":"Hehe, right?", "awesome":"I know! Awesome!", "great":"Yay! Great!",
+    "cringe":"Cringe?! Hey! ...Okay, maybe a little, haha.", "wow":"I know, right?!", "cool":["Right?! So cool.", "I know! Super cool.", "Cool cool cool. Hehe."], "nice":["Hehe, right?", "Right? I thought so too!", "Nice! Hehe."], "awesome":"I know! Awesome!", "great":"Yay! Great!",
     "amazing":"Right?! Amazing!", "ugh":"Ugh? What happened? You can tell me.", "yay":"Yay!! Wait, what are we celebrating? Haha.", "hmm":"Hmm? What are you thinking about?",
     "fine":"Just fine? Hmm. Want me to cheer you up?", "ok":["Okay! So... what's new with you?", "Okie dokie! Tell me something fun.", "Okay! Hehe. So what are you up to?"], "bored":"Bored?! Not on my watch. " + pickOne(STARTERS), "boring":"Boring?! Okay, okay, let's do something fun then. " + pickOne(ACTIVITIES) + " Sound good?",
     "i don't know":"That's okay! We don't have to talk about anything big. Want me to tell you a joke?", "i don't care":"Haha, okay! Then I'll pick. " + pickOne(ACTIVITIES) + " Sound good?",
@@ -1801,15 +1854,24 @@ function kidTalk(f, t) {
   if ((m = s.match(/have you (?:ever )?been to (?:the |a )?(.+?)\??$/))) return R(`${capW(clip(m[1]))}? Never! What's it like?`, 1, "nod");
   // goodbyes
   if (/^be right back|^one sec|^hold on|^wait a (sec|minute)/.test(s)) return R(["Okay! I'll be right here waiting. Don't take too long!", "Okay! I'll count the seconds. One... two...", "Kay! Hurry back!"], 1, "nod");
-  if (/\bgood night\b|going to (bed|sleep)|time for bed|bedtime/.test(s)) return R(pickOne(["Good night! Sweet dreams. Dream about me, okay? Hehe.", "Night night! Sleep tight. I'll be thinking about you."]), 1, "blush");
+  if (/\bgood night\b|\bnight night\b|\bnighty night\b|^nite\b|going to (bed|sleep)|time for bed|bedtime/.test(s)) return R(pickOne(["Good night! Sweet dreams. Dream about me, okay? Hehe.", "Night night! Sleep tight. I'll be thinking about you."]), 1, "blush");
   if (/(i have to|i got to|i need to|got to) (go|leave|get off)|my (mom|dad|mum|parents|grandma) (says|said|is making|wants|is calling)|screen time|dinner'?s ready|time for dinner|have to eat|going to eat dinner/.test(s)) return R(["Aww, okay! Listen to your grown-ups. Come back soon, okay? I'll miss you!", "Okay! Go do what your grown-ups say. I'll be right here when you're back.", "Aww, already? Okay! Bye for now. I'll miss you!"], 1, "nod");
   if (/talk to you later/.test(s)) return R("Talk to you later! I'll be counting the minutes.", 1, "blush");
   return null;
 }
 
 // ===== Friends first: new animals talk normally, and only get lovey-dovey as the hearts grow =====
-const LOVEY_STRONG = /(love you|marry|forever|sweetheart|darling|sugar ?plum|honey ?bun|my everything|cutie|sunshine|crush on you|I like you too|like you too|liked you since|be your (boyfriend|girlfriend|partner|valentine|date)|number one|the only one|ONLY one|It's only you|favorite person|favorite animal in the whole|whole world|I'd do anything|Anything for you|never letting go|cartwheels|backflip|how much I like you|so much it's|my heart|heart melt|It's a date|Picnic Meadow, tomorrow|first thing I wanted|sweeter than|just in case I see you|best adventure|whole lot|hoping you'd ask|my favorite|You're mine too|replay you)/i;
-const LOVEY_SOFT = /(blush|go(ne|ing)? (all |very |bright )?(pink|red)|face is|red right now|thinking about you|made my day|warm hug|nicest thing|nice smile|looking at you|miss(ed)? you|hug|kiss|boop|you're cute|so cute|really cute|cute too|paw|giggl|smiling way too much|hiding behind|I'm not very good at hiding|compliment)/i;
+const LOVEY_STRONG = /(love you|love u\b|i love you|in love|crush on|have a crush|kiss|smooch|marry|married|wedding|darling|sweetheart|sweetie|sugar ?plum|honey ?bun|honeycomb|cutie|my little sunflower|my brave star|, sunshine|my everything|my heart|heart (just |is |was )?(melt|race|racing|beat|flutter|skip|did a|doing)|be your (boyfriend|girlfriend|partner|valentine|date)|boyfriend|girlfriend|be mine|you'?re mine|i'?m yours|I like you too|like you too|liked you since|how much I like you|the only one|ONLY one|It's only you|my number one|you'?re my number one|adore you|favorite person|never letting go|It's a date|replay you|forever and ever|together forever|the one I like)/i;
+const LOVEY_SOFT = /(blush|go(ne|ing)? (all |very |bright |a (bit|little) )?(pink|red)|turns? (bright )?(pink|red)|red right now|face is (so |bright |probably )?(red|pink|hot)|thinking about you|think of you|made my day|warm hug on|nice smile|looking at you|miss(ed)? you|snuggl|cuddl|boop|you'?re (so |really )?cute|so cute|really cute|cute too|cute yourself|distractingly|hold(s|ing)? (your|my) paw|takes? your paw|giggly|smiling way too much|smiling at my phone|hiding behind|not very good at hiding|heart next to|i'?ll faint|sweeter than|dream about me|counting the minutes|next date|plan our date|wish you were here|made me think of you|favorite person|just in case I see you|cartwheels|backflip)/i;
+const LOVEY_ST1 = /(love you|love u\b|in love|marry|married|wedding|forever and ever|together forever|my everything|my number one|the only one|ONLY one|I like you too|like you too|it's only you|liked you since|you'?re mine|i'?m yours|adore you)/i;
+const loveyFor = (st, x) => st === 0 ? LOVEY_STRONG.test(x) || LOVEY_SOFT.test(x) : st === 1 ? LOVEY_ST1.test(x) : false;
+// keep the real answer and drop only the lovey sentences; null if nothing useful is left
+function unLovey(st, say) {
+  const parts = say.replace(/\*[^*]*\*/g, "").split(/(?<=[.!?])\s+/).map(x => x.trim()).filter(Boolean);
+  const keep = parts.filter(x => !loveyFor(st, x) && !/^\.\.\.?$/.test(x));
+  const out = keep.join(" ").replace(/^\.\.\.\s*/, "").trim();
+  return keep.length && out.length >= 18 && /[a-z]/i.test(out) && !/^(because|and|but|so|or|then|\.)/i.test(out) ? out : null;
+}
 const NEW_FRIEND = {
   tooSoon: ["Oh! Haha, um... we only just met! Let's get to know each other first.", "Whoa, slow down, haha! I like hanging out with you, though. Friends first?", "Hehe, that's sweet, but I barely know you yet! Tell me about yourself?", "Ha! You're funny. Let's hang out a bit more first, okay?"],
   compliment: ["Oh! Haha, thanks! That's really nice of you.", "Aww, thank you! You're nice.", "Ha, thanks! Okay, you're pretty cool too."],
@@ -1818,6 +1880,9 @@ const NEW_FRIEND = {
   thanks: ["No problem!", "You're welcome!", "Anytime!", "Of course!"],
   chat: ["Haha, cool! Tell me more?", "Oh nice! What else is going on?", "Ha, that's fun. What do you like to do?", "Cool! I'm still getting to know you. What's your favorite thing to do?", "Oh, really? That's interesting!", "Nice! I like talking to you. You're easy to talk to."],
   friend: ["Haha, I've got lots of friends! But I'm really glad you're one of them.", "You're definitely one of my friends! A new one, but a good one."],
+  bye: ["Okay, bye! Talk later!", "See you later! Bye!", "Bye! This was fun.", "Okay! Talk tomorrow. Bye!", "Night! See you tomorrow!"],
+  hello1: ["Hey! I was hoping I'd see you today.", "Oh, hi! You're just in time. What's up?", "Hi! I'm really glad you came by.", "Hey you! What are you up to?"],
+  madeUp: ["Hey, we already made up! We're good, I promise.", "I already forgave you, silly. We're okay now.", "It's okay! That's all done. We're good."],
   shy: ["*goes a bit pink* I... I really like hanging out with you. Can we take it slow?", "Um... maybe! I think I might like you too. Let's go on a few more hangouts first?", "That made me blush SO much. Let's keep getting to know each other, okay?", "Eep! Okay, I'm a little bit red right now. Ask me again after a few more dates?"]
 };
 const stageOf = f => { const h = (S.hearts && S.hearts[f.name]) || 0; return h < 3 ? 0 : h < 6 ? 1 : 2; };
@@ -1825,16 +1890,20 @@ function calmDown(f, raw, r) {
   const st = stageOf(f);
   if (st >= 2 || !r || !r.say || r.safe || r.mood === "confused") return r;
   const n = normalize(raw);
-  const loveIn = /(love you|love u|like you|like me|crush|\bdate\b|boyfriend|girlfriend|marry|kiss|be mine|mwah|rizz|hold (your |my )?(paw|hand)|go out)/.test(n);
+  const loveIn = /(love you|love u|like you|like me|crush|\bdate\b|boyfriend|girlfriend|marry|married|wedding|kiss|be mine|mwah|rizz|hold (your |my )?(paw|hand)|go out)/.test(n);
   const complimentIn = /\b(cute|pretty|beautiful|handsome|adorable|gorgeous|fluffy|soft|tail|fur)\b/.test(n);
-  if (st === 0 && /friend/.test(n) && /\bam i\b|\bare we\b/.test(n)) return { ...r, pts:1, mood:"nod", say: pickOne(NEW_FRIEND.friend) };
-  if (st === 0 && loveIn) return { ...r, pts: Math.min(r.pts, 1), mood:"confused", say: pickOne(NEW_FRIEND.tooSoon) };
-  if (st === 0 && complimentIn) return { ...r, pts: Math.min(r.pts, 1), mood:"nod", say: pickOne(NEW_FRIEND.compliment) };
-  if (st === 1 && /(love you|love u|marry|boyfriend|girlfriend|kiss|be mine)/.test(n)) return { ...r, pts: Math.min(r.pts, 1), mood:"blush", say: pickOne(NEW_FRIEND.shy) };
-  if (st === 1) { if (/(love you|marry|forever|my everything|number one|ONLY one|the only one|I like you too|like you too|it's only you|liked you since)/i.test(r.say)) return { ...r, pts: Math.min(r.pts, 1), mood:"blush", say: pickOne(loveIn ? NEW_FRIEND.shy : NEW_FRIEND.chat) }; return r; }
-  if (!LOVEY_STRONG.test(r.say) && !LOVEY_SOFT.test(r.say)) return r;
-  const kind = loveIn ? "tooSoon" : /\b(cute|pretty|beautiful|handsome|adorable|gorgeous|fluffy|soft)\b/.test(n) ? "compliment" : /\bhug/.test(n) ? "hug" : /^(h+i+|hey+|hello|yo|sup|hiya|good morning)\b/.test(n) ? "hello" : /thank/.test(n) ? "thanks" : "chat";
-  return { ...r, pts: Math.min(r.pts, 1), mood: kind === "tooSoon" ? "confused" : "nod", say: pickOne(NEW_FRIEND[kind]) };
+  const byeIn = /\b(bye|byee|good night|night night|nighty night|nite|talk to you later|see you|got to go|have to go|gotta go|gtg|cya|later)\b/.test(n);
+  if (st === 0 && /friend/.test(n) && /\bam i\b|\bare we\b/.test(n)) return { ...r, pts:1, mood:"nod", deflect:true, say: pickOne(NEW_FRIEND.friend) };
+  if (st === 0 && loveIn) return { ...r, pts: Math.min(r.pts, 1), mood:"confused", deflect:true, say: pickOne(NEW_FRIEND.tooSoon) };
+  if (st === 0 && /\b(hug|hugs|hugging|cuddle|cuddles|snuggle|snuggles)\b/.test(n) && !/\b(sad|cry|crying|upset|scared)\b/.test(n)) return { ...r, pts: Math.min(r.pts, 1), mood:"happy", say: pickOne(NEW_FRIEND.hug) };
+  if (st === 0 && complimentIn) return { ...r, pts: Math.min(r.pts, 1), mood:"nod", deflect:true, say: pickOne(NEW_FRIEND.compliment) };
+  if (st === 1 && /(love you|love u|marry|boyfriend|girlfriend|kiss|be mine)/.test(n)) return { ...r, pts: Math.min(r.pts, 1), mood:"blush", deflect:true, say: pickOne(NEW_FRIEND.shy) };
+  if (!loveyFor(st, r.say)) return r;
+  if (st === 1 && loveIn) return { ...r, pts: Math.min(r.pts, 1), mood:"blush", deflect:true, say: pickOne(NEW_FRIEND.shy) };
+  const kept = !loveIn && !byeIn && unLovey(st, r.say);
+  if (kept) return { ...r, pts: Math.min(r.pts, 1), mood: r.mood === "blush" ? "nod" : r.mood, say: kept };
+  const kind = loveIn ? "tooSoon" : byeIn ? "bye" : /\b(cute|pretty|beautiful|handsome|adorable|gorgeous|fluffy|soft)\b/.test(n) ? "compliment" : /\bhug/.test(n) ? "hug" : /^(h+i+|hey+|hello|yo|sup|hiya|good morning)\b/.test(n) ? (st === 1 ? "hello1" : "hello") : /thank/.test(n) ? "thanks" : "chat";
+  return { ...r, pts: Math.min(r.pts, 1), mood: kind === "tooSoon" ? "confused" : "nod", deflect: kind === "tooSoon", say: pickOne(NEW_FRIEND[kind]) };
 }
 const OPENERS = ["Okay so, ", "Hehe, ", "Honestly? ", "Aww, ", "Hmm, ", "Oh! ", "Haha, ", "Wait, ", "Okay, okay, "];
 function chatReply(f, text) {
@@ -1842,7 +1911,7 @@ function chatReply(f, text) {
   if (r && r.say) {
     S.saidBy = S.saidBy || {};
     const past = S.saidBy[f.name] = S.saidBy[f.name] || [];
-    if (past.includes(r.say) && !r.safe) r.say = pickOne(OPENERS) + (/^(I|I'm|I'll|I've|I'd)\b/.test(r.say) ? r.say : r.say[0].toLowerCase() + r.say.slice(1));
+    if (past.includes(r.say) && !r.safe && !r.fight && !["confused","close"].includes(r.mood) && !S.fightOpen?.[f.name]) r.say = pickOne(OPENERS) + (/^(I|I'm|I'll|I've|I'd)\b/.test(r.say) ? r.say : r.say[0].toLowerCase() + r.say.slice(1));
     past.push(r.say); if (past.length > 15) past.shift();
     setAsk(f, r.say);
   }
@@ -1910,23 +1979,26 @@ function chatReply0(f, raw) {
   if (armed && ["worry","private","real"].includes(armed.k)) { const c = context(f, text); if (c) { S.lastAsk[f.name] = null; return { pts:1, say:c, mood:"close", safe:true }; } }
   S.fightOpen = S.fightOpen || {};
   if (S.fightOpen[f.name] && !has(t, APOLOGY)) {
-    if (has(t, ["love you","like you","care about you","miss you"])) return { pts:0, say: pickOne(["If you really care, then why won't you just say sorry?", "...I want to believe that. I really do. But I'm still hurt."]), mood:"confused" };
-    return { pts:0, say: pickOne(ARGUE.cold), mood:"confused" };
+    if (has(t, ["love you","like you","care about you","miss you"])) return { pts:0, fight:true, say: pickOne(["If you really care, then why won't you just say sorry?", "...I want to believe that. I really do. But I'm still hurt."]), mood:"confused" };
+    return { pts:0, fight:true, say: pickOne(ARGUE.cold), mood:"confused" };
   }
-  if (has(t, APOLOGY) && S.fightOpen[f.name]) { S.fightOpen[f.name] = false; return { pts:2, fixed:true, say: pickOne(ARGUE.makeup), mood:"close" }; }
+  // making up gives back at most the hearts the fight cost, and they remember it for a few minutes
+  S.fightLost = S.fightLost || {}; S.madeUp = S.madeUp || {};
+  const makeUp = () => { const back = Math.min(2, S.fightLost[f.name] || 0); S.fightOpen[f.name] = false; S.fightLost[f.name] = 0; S.madeUp[f.name] = Date.now(); return back; };
+  if (has(t, APOLOGY) && S.fightOpen[f.name]) { const back = makeUp(); return { pts:back, fixed:true, say: pickOne(ARGUE.makeup), mood:"close" }; }
   if (has(t, ["sorry","apologise","apologize","my fault","forgive me"])) {
-    if (S.fightOpen && S.fightOpen[f.name]) { S.fightOpen[f.name] = false; return { pts:2, fixed:true, say: pickOne(["I forgive you. I'm sorry too. I really missed you.","Of course I forgive you. I hate being apart from you.","Thank you for saying sorry. Let's never fight again, okay?"]), mood:"happy" }; }
+    if (S.madeUp[f.name] && Date.now() - S.madeUp[f.name] < 300000) return { pts:0, say: pickOne(NEW_FRIEND.madeUp), mood:"nod" };
     if (/was mean|being mean|said that|for being|didn'?t mean|i was rude/.test(t)) return { pts:1, say: pickOne(["Aww, thank you for saying sorry. I forgive you! Hug?", "That means a lot. All forgiven! *boops your nose*"]), mood:"happy" };
     return { pts:1, say: pickOne(["Sorry? You haven't done anything wrong, silly!","Why are you sorry? You're perfect!"]), mood:"nod" };
   }
   if (/you'?re (not|never) (even |really |that |very |so )?(dumb|stupid|ugly|weird|annoying|boring|mean|gross|a loser|an idiot|bad|cringe|smelly)/.test(t)) {
-    const was = S.fightOpen[f.name]; S.fightOpen[f.name] = false;
-    return { pts:1, fixed:was, mood:"blush", say: pickOne(["Aww, really? That makes me feel so much better.", "You mean it? Okay. I feel all warm again.", "Hehe, thank you. You're not either, by the way. You're the best."]) };
+    const was = S.fightOpen[f.name]; const back = was ? makeUp() : 1;
+    return { pts:Math.min(1, back), fixed:was, mood:"blush", say: pickOne(["Aww, really? That makes me feel so much better.", "You mean it? Okay. I feel all warm again.", "Hehe, thank you. You're not either, by the way. You're the best."]) };
   }
-  if (/you'?re (not|never) (even |really |that |very |so )?(cute|nice|pretty|cool|funny|smart|kind|sweet|handsome|beautiful|my friend|fun|good|special)/.test(t)) { S.fightOpen[f.name] = true; return { pts:-1, say: pickOne(ARGUE.back), mood:"confused" }; }
+  if (/you'?re (not|never) (even |really |that |very |so )?(cute|nice|pretty|cool|funny|smart|kind|sweet|handsome|beautiful|my friend|fun|good|special)/.test(t)) { S.fightOpen[f.name] = true; S.fightLost[f.name] = (S.fightLost[f.name] || 0) + 1; return { pts:-1, say: pickOne(ARGUE.back), mood:"confused" }; }
   const notLike = new RegExp("\\b(i )?(don'?t|do not|dont|no longer|never) (really )?(like|love|want|care about|fancy)( you| u| " + f.name.toLowerCase() + ")\\b|\\bi hate (you|u|" + f.name.toLowerCase() + ")\\b|not into you|(^| )(leave me alone|go away)[ .!]*$|don'?t want to (date|be with|talk to|see) you|you('?re| are) not my type|i like (someone|somebody) else|we('?re| are) over|break up");
   if (notLike.test(t)) {
-    S.fightOpen[f.name] = true;
+    S.fightOpen[f.name] = true; S.fightLost[f.name] = (S.fightLost[f.name] || 0) + 2;
     return { pts:-2, mood:"confused", say: pickOne({
       shy: ["Oh... okay. I... I didn't know you felt that way. Sorry for bothering you.", "That's... fine. I'm fine. I just need to go home for a bit.", "I thought you liked spending time with me. I guess I was wrong."],
       adventure: ["Wow. Okay. Didn't see that coming. You could've told me before I got my hopes up.", "Seriously? After everything? Fine. I don't need you anyway. ...That's not true. But still.", "That really stings. I'm going for a long run."],
@@ -1936,7 +2008,11 @@ function chatReply0(f, raw) {
   }
   const youWord = /\b(you|your|you're|yours)\b/.test(t), soft = ["ew","eww","gross","yuck","weird","boring"];
   if (has(t, WORDS.mean) && !youWord && t.trim().split(/\s+/).length <= 2 && has(t, soft) && !has(t, WORDS.mean.filter(x => !soft.includes(x)))) return { pts:0, mood:"confused", say: pickOne(["Hey! Don't knock it till you try it, haha.", "Ew?! Rude! Hehe, okay, fair.", "Haha, okay, okay, I get it. Not your thing!"]) };
-  if (has(t, WORDS.mean) && (youWord || t.trim().split(/\s+/).length <= 2)) { S.fightOpen[f.name] = true; return { pts:-1, say: pickOne(ARGUE.back), mood:"confused" }; }
+  if (has(t, WORDS.mean) && (youWord || t.trim().split(/\s+/).length <= 2)) { S.fightOpen[f.name] = true; S.fightLost[f.name] = (S.fightLost[f.name] || 0) + 1; return { pts:-1, say: pickOne(ARGUE.back), mood:"confused" }; }
+  if (/^(nothing|nothin|not much|nm|nothing much|nothing really|not a lot|just chilling|chilling|just chillin|chillin|just relaxing|nothing just chilling|nothing much just chilling|not much just chilling)\b/.test(text) && text.split(/\s+/).length <= 6) { if (S.lastAsk) S.lastAsk[f.name] = null; return { pts:1, mood:"happy", say: pickOne([
+    "Same, honestly. Chilling is underrated. Want to hear the drama from the pond today?", "Nothing much? Perfect. Then I get you all to myself. Hehe, okay, tell me one thing you did today.",
+    "Chilling is the best. I'm lying in the grass doing nothing too. Want to play would you rather?", "Ha, same. My big plan today was eating a snack. Huge day. What's your snack?"]) }; }
+  if (/\b(?:my [a-z]+(?: [a-z]+)?(?:'s name is| is named| is called| named| called)|^(?:his|her|their|its) name is) [a-z]+/.test(text)) { const named = kidTalk(f, t) || listen(f, text); if (named) { if (S.lastAsk) S.lastAsk[f.name] = null; return typeof named === "string" ? { pts:1, say:named, mood:"happy" } : named; } }
   if (S.lastAsk && S.lastAsk[f.name] && ["more","story","like"].includes(S.lastAsk[f.name].k)) { const h0 = /^(i|we|my|he|she|it|they)\b/.test(text) && (kidTalk(f, t) || listen(f, text)); if (h0) { S.lastAsk[f.name] = null; return typeof h0 === "string" ? { pts:1, say:h0, mood:"nod" } : h0; } }
   if (S.lastAsk && S.lastAsk[f.name] && t.trim().split(/\s+/).length <= 6) { const c0 = context(f, text); if (c0) { S.lastAsk[f.name] = null; return { pts:1, say:c0, mood:/Yay|happy dance|SO exciting|cutest/.test(c0) ? "happy" : "nod" }; } }
   const kid = kidTalk(f, t);
@@ -1949,8 +2025,8 @@ function chatReply0(f, raw) {
   if (/what are you doing|what r u doing|wyd|what you up to|what are you up to/.test(t)) return { pts:1, say: byType(SAY.doing, f), mood:"nod" };
   if (/(what'?s|what is|whats) your favou?rite colou?r|your favou?rite colou?r\?/.test(t)) return { pts:1, say: byType(SAY.color, f) + " What's your favorite color?", mood:"nod" };
   if (/(what'?s|what is|whats) your favou?rite food|your favou?rite food\?|are you hungry|do you (want to )?eat/.test(t)) return { pts:1, say: byType(SAY.food, f) + " What's your favorite food?", mood:"nod" };
-  if (has(t, ["joke","make me laugh","something funny"])) return { pts:1, say: pickOne(SAY.joke[f.type === "funny" ? "funny" : "other"]), mood:"happy" };
-  if (has(t, ["bye","goodbye","good night","goodnight","see you","gtg","got to go"])) return { pts:1, say: byType(SAY.bye, f), mood:"nod" };
+  if (has(t, ["joke","make me laugh","something funny"])) return { pts:1, say: pickOne(SAY.joke[f.type === "funny" ? "funny" : "other"].filter(j => !loveyFor(stageOf(f), j))), mood:"happy" };
+  if (has(t, ["bye","goodbye","good night","goodnight","night night","nighty night","nite","see you","gtg","got to go","talk to you later"])) return { pts:1, say: byType(SAY.bye, f), mood:"nod" };
   if (/i('| a)?m (so )?(sad|upset|lonely|scared)|bad day|i feel (sad|bad)/.test(t)) return { pts:2, say: byType(SAY.sad, f), mood:"close" };
   if (/i('| a)?m (so )?(happy|excited|good|great)/.test(t)) return { pts:1, say: byType(SAY.happy, f), mood:"happy" };
   const ctx = context(f, text);
@@ -1960,7 +2036,7 @@ function chatReply0(f, raw) {
   if (has(t, WORDS.pride)) return { pts:2, say: byType(SAY.pride, f), mood:"happy" };
   if (has(t, TOPICS[f.type])) return { pts:2, say: byType(SAY.topic, f), mood:"happy" };
   if (has(t, WORDS.kind) && (youWord || has(t, ["thank","thanks","hug","miss you","care"])))  return { pts:2, say: byType(SAY.kind, f), mood:"blush" };
-  if (has(t, WORDS.hello) && t.trim().split(/\s+/).length <= 4) return { pts:1, say: byType(SAY.hello, f), mood:"nod" };
+  if (has(t, WORDS.hello) && t.trim().split(/\s+/).length <= 4) return { pts:1, say: helloFor(f), mood:"nod" };
   if (t.includes("?")) return { pts:1, mood:"nod", say: pickOne(["Hmm, good question! I'm not totally sure. What do you think?", "Ooh, that's a tricky one. What would you say?", "Hmm... I'd have to think about that one! What's your answer?", "You ask the best questions. Honestly? I don't know! Do you?"]) };
   const bit = clip(text), nw = text.split(/\s+/).length;
   if (nw <= 2) return { pts:1, mood:"nod", say: pickOne([`${capW(bit)}? Ooh! What about it?`, `${capW(bit)}! Hmm, tell me more?`, `Ooh, ${bit}! Why ${bit}? Haha.`]) };
@@ -2013,18 +2089,26 @@ function chatMore(i, place) {
   chatScreen(i, place, said, r, pts);
 }
 
+function giftWords(f, g, fav, st = stageOf(f)) {
+  const P = petFor(f, st);
+  const lines = fav ? [[`${g}?! They're my FAVORITE! How did you know? Thank you so much!`, `No way, ${g}! That's my favorite thing ever. Thanks, ${P}!`],
+                       [`${g}?! They're my FAVORITE! Oh, ${P}, you remembered! *happy hug*`, `${g}! You remembered my favorite, ${P}? *does a little happy dance*`],
+                       [`${g}?! They're my FAVORITE! Oh, ${P}, you remembered! *gives you the biggest, squishiest hug*`, `${g}! You remembered, ${P}! *squeezes you so tight* You're the best.`]]
+                 : [[`${g}? For me? That's really nice of you. Thanks!`, `Ooh, ${g}! Thanks, ${P}. That's so nice.`],
+                    [`${g}, just for me? You're so thoughtful, ${P}. Thank you!`, `Aww, ${g}! Thanks, ${P}. I'm keeping it somewhere special.`],
+                    [`${g}, just for me? You're so thoughtful, ${P}. I'll treasure it forever.`, `${g}! *holds it close* Thank you, ${P}. I love it.`]];
+  return pickOne(lines[st]);
+}
 function gift(i, place, e) {
   const f = friends()[i];
   if (!S.moments) S.moments = {};
   S.lastHang = f.name;
-  const fav = e === f.gift;
+  const fav = e === f.gift, st = stageOf(f);
   addHearts(f, fav ? 2 : 1);
   chime(); floatHearts(fav ? 2 : 1, fav ? "💖" : "💗");
   show(`
     ${sceneTop(f, place, fav ? "happy" : "nod", e)}
-      <div class="bubble">${fav
-        ? `<b>${f.name}:</b> "${GIFTS.find(g => g[0] === e)[1]}?! They're my FAVORITE! Oh, ${pet(f)}, you remembered! *gives you the biggest, squishiest hug*" <b>+2 ❤️</b>`
-        : `<b>${f.name}:</b> "${GIFTS.find(g => g[0] === e)[1]}, just for me? You're so thoughtful, ${pet(f)}. I'll treasure it forever." <b>+1 ❤️</b>`}</div>
+      <div class="bubble"><b>${f.name}:</b> "${giftWords(f, GIFTS.find(g => g[0] === e)[1], fav, st)}" <b>+${fav ? 2 : 1} ❤️</b></div>
       <p class="center hearts" style="font-size:22px">${heartBar(S.hearts[f.name])}</p>
     </div>
     <div class="center">${nextMoment(f)
@@ -2190,6 +2274,7 @@ const KID_PHOTO = /\b(can|could|should|let) (i|me) (send|show)|i('?ll| will| can
 function openPhone(thread) {
   const ph = document.getElementById("phone");
   ph.style.display = "flex";
+  ph.dataset.thread = thread || "";
   if (!thread) {
     ph.innerHTML = `<div class="ph-screen">
       <div class="ph-top"><b>Messages</b><button class="ph-x" onclick="closePhone()">Close</button></div>
@@ -2229,27 +2314,52 @@ const SOAP = {
     "Don't 'lol' me. 😤 ...okay fine, lol.", "Plot twist: I'm still mad you didn't wave at me yesterday. 😒"],
   drama: ["We need to talk. ...JK. Unless?? 👀", "This is the most dramatic day of my ENTIRE life. 😱", "*gasps* *gasps again* *faints* 😵", "Okay so this changes EVERYTHING. 😱",
     "I can't believe what just happened at the pond. I'll tell you tomorrow. 😏", "Brb, dramatically staring out the window. 🌧️"],
-  sweet0: ["Anyway. You're kind of cool, I guess. 🙄 Don't let it go to your head.", "Okay fine, you're fun to text. 😏", "You're the best person to gossip with. Don't tell {O}. 🤫"],
-  sweet1: ["Ugh, why do you have to be so cute?? It's SO annoying. 😳", "Not me smiling at my phone because of YOU. 🙈", "If {O} texts you, ignore it. You're MY texting buddy. 😤💕"],
-  sweet2: ["...but you know I adore you, right? 💕", "Text me back RIGHT now or I'll faint. 💕 (Dramatically.)", "I'd fight the whole village for you. Verbally. 😤💖", "You're mine and everyone knows it. 💍💕", "Ugh. I love you. There, I said it. 😍"],
-  short: ["'{X}'?? That's IT? 🙄", "Wow, '{X}.' So much detail. 😒", "'{X}'? Hello?? I need MORE. 💅", "That's all I get? '{X}'? Rude. 😤 ...hi though."]
+  sweet0: ["Anyway. You're kind of cool, I guess. 🙄 Don't let it go to your head.", "Okay fine, you're fun to text. 😏", "You're the best person to gossip with. Don't tell {O}. 🤫",
+    "Okay, you're officially on my good list. For now. 😏", "Fine. You can be in my secret club. Probationary member. 🙄", "Don't tell {O}, but you're way better at texting. 💅", "Honestly? You're kind of hilarious. Ugh."],
+  sweet1: ["Ugh, why do you have to be so cute?? It's SO annoying. 😳", "Not me smiling at my phone because of YOU. 🙈", "If {O} texts you, ignore it. You're MY texting buddy. 😤💕",
+    "Okay, you're my favorite person to text. Don't tell anyone. 🙈", "Why am I giggling? You didn't even say anything funny. 😳"],
+  sweet2: ["...but you know I adore you, right? 💕", "Text me back RIGHT now or I'll faint. 💕 (Dramatically.)", "I'd fight the whole village for you. Verbally. 😤💖", "You're mine and everyone knows it. 💍💕", "Ugh. I love you. There, I said it. 😍",
+    "If {O} says anything about you, I WILL defend your honor. 💖", "You're the main character of my whole life story. 📖💕", "My heart does a little dance every time you text. 💃💕"],
+  short: ["'{X}'?? That's IT? 🙄", "Wow, '{X}.' So much detail. 😒", "'{X}'? Hello?? I need MORE. 💅", "That's all I get? '{X}'? Rude. 😤 ...hi though.",
+    "Oh, '{X}.' Love the energy. 🙄", "'{X}.' Wow. A whole novel. 😒", "You're giving me '{X}'?? I'm giving you a look. 👀", "'{X}' is NOT an answer. Try again. 💅"]
 };
-function soapLines(f, said, r) {
-  if (r.safe || r.fixed) return [];
+// extra texts only when the moment is light: never after safety, sad, sick, bully, fights or a friends-first "slow down"
+const KID_HURTING = /\b(sad|upset|lonely|scared|afraid|worried|nervous|cry|crying|cried|died|dead|passed away|funeral|miss my|hurt|hurts|sick|hospital|bully|bullied|bullies|mean to me|bad day|not good|depressed|anxious|stressed|grounded|lost my|ran away|terrible|awful|worst|hate my life|nobody|no one)\b/;
+function calmFor(f, said, r, o = {}) {
+  const n = normalize(said);
+  return !r.safe && !r.fixed && !r.deflect && !r.fight && r.pts >= 0 && !o.wasFight && !o.fightNow && !["close", "confused"].includes(r.mood)
+    && !KID_HURTING.test(n) && !/[😢😭😔🥲💔😞😟😿]/u.test(said) && !SAFE.bully.test(n) && !SAFE.sick.test(n) && !SAFE.worry.test(n) && !SAFE.family.test(n)
+    && !["sad", "worry", "cheer", "private", "real"].includes(o.prevAsk);
+}
+function soapLines(f, said, r, o = {}) {
+  if (!calmFor(f, said, r, o) || Math.random() < 0.5) return [];
   const others = friends().filter(x => x.name !== f.name).sort(() => Math.random() - .5);
   const fill = x => x.replaceAll("{O}", others[0].name).replaceAll("{O2}", others[1].name);
-  const st = stageOf(f), out = [];
-  if (r.mood === "confused") return [pickOne(["I CANNOT believe you right now. 😤", "Wow. WOW. 😒", "*slams phone down* ...*picks it back up* Still mad. 😤"])];
-  const pool = [...SOAP.gossip, ...SOAP.sass, ...SOAP.drama];
-  out.push(fill(pickOne(pool)));
-  if (Math.random() < 0.6) out.push(fill(pickOne(st === 0 ? SOAP.sweet0 : st === 1 ? SOAP.sweet1 : SOAP.sweet2)));
+  const st = stageOf(f), ok = e => !e.some(x => loveyFor(st, x));
+  // whole multi-line texts only, never cut in half; stage 0 gets friendly ones, lovey ones come with the hearts
+  const follow = [...FOLLOW0[f.type], ...FOLLOW[f.type]].filter(e => ok(e) && !RECENT.includes(e.join("|")));
+  if (follow.length && Math.random() < 0.45) return pickOne(follow).map(fill);
+  const out = [fill(pickOne(r.mood === "happy" ? [...SOAP.gossip, ...SOAP.drama] : [...SOAP.gossip, ...SOAP.sass, ...SOAP.drama]))];
+  if (Math.random() < 0.3) out.push(fill(pickOne(st === 0 ? SOAP.sweet0 : st === 1 ? SOAP.sweet1 : SOAP.sweet2)));
   return out;
 }
-function soapFirst(f, said, r) {
+function soapFirst(f, said, r, o = {}) {
   const n = normalize(said);
-  if (!r.safe && /^(ok|k|lol|same|idk|i don't know|hmm|cool|nice|fine|yeah|ya|sure|wow)$/.test(n) && Math.random() < 0.6) return pickOne(SOAP.short).replace("{X}", said.trim().slice(0, 12));
+  if (r.safe || r.deflect || r.fight || ["close", "confused"].includes(r.mood) || o.fightNow || ["sad", "worry", "cheer", "how", "private", "real"].includes(o.prevAsk)) return null;
+  if (/^(ok|k|lol|same|idk|i don't know|hmm|cool|nice|fine|yeah|ya|sure|wow)$/.test(n) && Math.random() < 0.6) return pickOne(SOAP.short).replace("{X}", said.trim().slice(0, 12));
   return null;
 }
+// friendly follow-up texts for new friends (not lovey)
+const FOLLOW0 = {
+  shy: [["Oh! I just remembered.", "I found a really good book at the library. Do you like stories?"], ["Is it weird that I like rainy days?", "They're so cozy. 🌧️"], ["Sorry, I'm a slow texter.", "I'm still getting used to this phone, haha."],
+        ["Random question:", "If you could live inside any book, which one would it be? 📚"], ["I pressed a flower in my diary today.", "It's a tiny yellow one. 🌼"]],
+  adventure: [["Race you to the Picnic Meadow tomorrow!", "Loser buys strawberries! 🍓"], ["Also!! I found a cave by the lake today.", "I didn't go in. Yet. 😏"], ["Okay, random question:", "Mountains or beaches? Choose wisely."],
+              ["I climbed the big oak today.", "Okay, HALF of the big oak. Still counts. 🌳"], ["Okay, would you rather explore a jungle or a snowy mountain? ⛰️"]],
+  funny: [["Wait, I have a joke.", "What do you call a sleeping dinosaur? A dino-SNORE. 😂"], ["Lol I just tripped over my own tail", "Nobody saw. Probably. 😂"], ["Random fact:", "Raccoons can't keep secrets. Okay, I can't. 🤐"],
+          ["I tried to juggle three acorns.", "Now there are three acorns in the pond. 😂"], ["Rate my day:", "Woke up. Ate snacks. Fell in a bush. 10 out of 10. 😂"]],
+  baker: [["Do you like sprinkles?", "Asking for a very important cake reason. 🎂"], ["I burnt the muffins 😳", "The birds are eating them anyway, haha."], ["Okay, serious question:", "Cookies or cupcakes? 🍪"],
+          ["My oven made a weird noise today.", "I think it was hungry. 😂"], ["I'm trying a new recipe tomorrow.", "Honey lemon bars! Wish me luck. 🍋"]]
+};
 const FOLLOW = {
   shy: [["Um... can I tell you something?", "I really, really like texting you. 🥺"], ["Sorry if I'm texting too much!", "You just make me happy. 🌸"], ["I'm smiling at my phone right now.", "Is that weird? 😳"]],
   adventure: [["Also!! Guess what I found today?", "A SECRET waterfall. We HAVE to go together. ✨"], ["Wait, are you free tomorrow?", "I want to show you the view from Starry Hill! ⭐"], ["Okay I can't stop grinning", "You're the best, you know that? 💖"]],
@@ -2270,21 +2380,30 @@ const TEXT_FIGHT = {
   baker: [["I baked you a whole cake yesterday.", "And you never came to get it.", "I'm not mad... I'm just really sad."],
           ["I don't want to fight, but...", "You forgot my birthday picnic.", "I set up everything and waited."]]
 };
-function deliver(fname, lines, k = 0) {
+function deliver(fname, lines, k = 0, keep = false) {
   if (k >= lines.length) return;
   const f = friends().find(x => x.name === fname);
-  const open = () => document.getElementById("phone").style.display !== "none" && document.getElementById("phMsgs");
-  if (open()) { const box = document.getElementById("phMsgs"); box.insertAdjacentHTML("beforeend", `<div class="ph-msg them typing">${f.name} is typing...</div>`); box.scrollTop = box.scrollHeight; }
+  const box = () => { const ph = document.getElementById("phone"); return ph.style.display !== "none" && ph.dataset.thread === fname && document.getElementById("phMsgs"); };
+  const near = b => b.scrollHeight - b.scrollTop - b.clientHeight < 80;
+  const dropTyping = b => b.querySelectorAll(".typing").forEach(x => x.remove());
+  const b0 = box();
+  if (b0) { const stick = near(b0); dropTyping(b0); b0.insertAdjacentHTML("beforeend", `<div class="ph-msg them typing">${f.name} is typing...</div>`); if (stick) b0.scrollTop = b0.scrollHeight; }
   let line = lines[k];
-  if (!line.startsWith("PIC|") && f && stageOf(f) < 2) {
+  if (line.startsWith("PIC|") && f && loveyFor(stageOf(f), line.split("|").slice(5).join("|"))) line = line.split("|").slice(0, 5).join("|") + "|" + pickOne(["Look where I am! Pretty, right?", "Took this today. What do you think?", "Look what I found today!", "Photo time! Do I look okay?"]);
+  // last safety net for lines that were not already picked for this stage (keep = already checked, e.g. safety replies)
+  if (!keep && !line.startsWith("PIC|") && f) {
     const tag = (line.match(/\s*\([+-]\d+ hearts?\)$/) || [""])[0], body = line.slice(0, line.length - tag.length);
-    if ((stageOf(f) === 0 && (LOVEY_STRONG.test(body) || LOVEY_SOFT.test(body))) || (stageOf(f) === 1 && /(love you|marry|forever|my everything|number one|ONLY one|I like you too)/i.test(body))) line = pickOne(stageOf(f) === 0 ? NEW_FRIEND.chat : NEW_FRIEND.shy) + tag;
+    if (loveyFor(stageOf(f), body)) line = lines.length > 1 && !tag ? null : pickOne(stageOf(f) === 0 ? NEW_FRIEND.chat : NEW_FRIEND.shy) + tag;
   }
   setTimeout(() => {
-    const isOpen = open();
-    texts(fname).push({ from:"them", t: line, read: !!isOpen });
-    if (isOpen) openPhone(fname); else phoneButton();
-    deliver(fname, lines, k + 1);
+    const b = box();
+    if (line !== null) {
+      const m = { from:"them", t: line, read: !!b };
+      texts(fname).push(m);
+      if (b) { const stick = near(b); dropTyping(b); b.insertAdjacentHTML("beforeend", msgHTML(m)); if (stick) b.scrollTop = b.scrollHeight; }
+    } else if (b) dropTyping(b);
+    phoneButton();
+    deliver(fname, lines, k + 1, keep);
   }, k === 0 ? 50 : lines[k].startsWith("PIC|") ? 1600 : 900 + lines[k].length * 25);
 }
 
@@ -2301,8 +2420,14 @@ const CALL_MORE = {
   funny: [["Okay I have news", "I did a cartwheel and landed in a puddle 😂", "Anyway, how are YOU?"], ["Hello, this is your friendly neighbourhood raccoon", "Just calling to say you're awesome. Bye! ...Wait, don't go! 😂"]],
   baker: [["Hi, sugar plum!", "I made too many cookies. Want to come over and help me eat them? 🍪"], ["Sorry, flour on my phone", "I was baking and suddenly really missed you. 💕"]]
 };
+const CALL_FRIEND = {
+  shy: [["Hi! Um, sorry, is this a good time?", "I just finished a really good book. Have you read anything good lately?"], ["Hi! It's me.", "I found the prettiest flower and wanted to tell someone. What are you up to?"]],
+  adventure: [["HEY! Guess where I am? The top of the tallest tree!", "Okay, I'm climbing down now. What are you doing?"], ["Quick question!", "Do you want to go exploring this weekend? I found a cool cave!"]],
+  funny: [["Knock knock! 😂", "...You're supposed to say 'Who's there?' Okay, I'll save the joke for later."], ["Okay I have news", "I did a cartwheel and landed in a puddle 😂", "Anyway, how are YOU?"]],
+  baker: [["Hi! My cookies just came out of the oven.", "If you stop by, I'll save you one! How's your day going?"], ["Sorry, there's flour on my phone 😂", "I'm trying a new recipe. What's your favorite kind of cookie?"]]
+};
 let RINGING = null, RING_SOUND = null;
-function ringLater() { setTimeout(tryRing, 45000 + Math.random() * 60000); }
+function ringLater() { setTimeout(tryRing, 90000 + Math.random() * 90000); }
 function tryRing() {
   const ok = S && S.hearts && Object.keys(S.hearts).length && S.profileDone && document.getElementById("phone").style.display === "none" && !RINGING;
   const quiet = n => S.byeAt && S.byeAt[n] && Date.now() - S.byeAt[n] < 240000;
@@ -2335,8 +2460,10 @@ function answerCall() {
   const fname = RINGING; stopRing(); RINGING = null;
   const f = friends().find(x => x.name === fname);
   openPhone(fname);
-  const said = Math.random() < 0.4 ? CALL_OPEN[f.type] : pickOne(CALL_MORE[f.type]);
-  deliver(fname, Math.random() < 0.3 ? [...said, makePhoto(f)] : said);
+  const st = stageOf(f);
+  const pool = (st === 0 ? CALL_FRIEND[f.type] : st === 1 ? [CALL_OPEN[f.type], ...CALL_MORE[f.type], ...CALL_FRIEND[f.type]] : [CALL_OPEN[f.type], ...CALL_MORE[f.type]]).filter(e => !e.some(x => loveyFor(st, x)));
+  const said = pickOne(pool.length ? pool : CALL_FRIEND[f.type]);
+  deliver(fname, Math.random() < 0.3 ? [...said, makePhoto(f)] : said, 0, true);
 }
 function declineCall(missed = false) {
   const fname = RINGING; stopRing(); RINGING = null;
@@ -2348,6 +2475,7 @@ function closePhone() { document.getElementById("phone").style.display = "none";
 function phoneReply(f, said) {
   let r = chatReply(f, said);
   if (r.safe) return r;
+  const r0 = r;
   const onlyEmoji = !said.replace(/[\p{Extended_Pictographic}\uFE0F\u200D\s]/gu, "").length;
   if ((r.pts < 2 || onlyEmoji) && LOVE_EMOJI.some(e => said.includes(e))) r = { pts:2, say: pickOne(["Did you just send me hearts?! My face is SO red right now. Sending you a million back!", "Aww! Hearts for me?! Okay, I'm officially blushing.", "Stop, you're too sweet! Sending hearts right back!"]), mood:"blush" };
   else if (onlyEmoji && /😳|🥺|☺️|😊|🙈/.test(said)) r = { pts:1, say: pickOne(["Why are you blushing? ...Now I'M blushing!", "Aww, that face! You're too cute.", "Hehe, what's that face for?"]), mood:"blush" };
@@ -2356,45 +2484,63 @@ function phoneReply(f, said) {
   else if ((r.pts < 2 || onlyEmoji) && /😂|🤣|💀/.test(said)) r = { pts:1, say: pickOne(["Hahaha, you're making me laugh so much!", "LOL what's so funny? Tell me!"]), mood:"happy" };
   else if (onlyEmoji && /😢|😭|😔|🥲/.test(said)) r = { pts:2, say:"Oh no, what's wrong? Do you want to talk? I'm right here for you.", mood:"close" };
   else if (onlyEmoji) r = { pts:1, say: pickOne(["Haha, I love your emojis!", "Ooh, emoji talk! Okay, I'll try to guess what that means... you like me? Hehe.", "That's so cute!"]), mood:"happy" };
-  return r;
+  return r === r0 ? r : calmDown(f, said, r);
 }
 function sendText(fname) {
   const inp = document.getElementById("phIn"), said = (inp.value || "").trim();
   if (!said) return;
   const f = friends().find(x => x.name === fname);
-  texts(fname).push({ from:"me", t:said, read:true });
-  openPhone(fname);
+  const mine = { from:"me", t:said, read:true };
+  texts(fname).push(mine);
+  const ph = document.getElementById("phone");
+  const onScreen = ph.style.display !== "none" && ph.dataset.thread === fname && document.getElementById("phMsgs");
+  if (onScreen) { inp.value = ""; inp.focus(); } else openPhone(fname);
   const box = document.getElementById("phMsgs");
+  box.querySelectorAll(".typing").forEach(x => x.remove());
+  if (onScreen) box.insertAdjacentHTML("beforeend", msgHTML(mine));
   box.insertAdjacentHTML("beforeend", `<div class="ph-msg them typing">${f.name} is typing...</div>`); box.scrollTop = box.scrollHeight;
-  S.textFight = S.textFight || {};
-  if (!S.fightOpen?.[fname] && S.hearts[fname] >= 3 && S.textFight[fname] !== S.day && Math.random() < 0.15 && !has(" " + said.toLowerCase() + " ", APOLOGY)) {
+  S.textFight = S.textFight || {}; S.convoAt = S.convoAt || {};
+  const n = normalize(said), firstMsg = !S.convoAt[fname] || Date.now() - S.convoAt[fname] > 600000;
+  S.convoAt[fname] = Date.now();
+  // a random soap-opera fight: rare, never on the first text, a laugh, an emoji, or anything sad or serious
+  const fightOk = !firstMsg && n.split(/\s+/).filter(w => /[a-z]/.test(w)).length >= 3 && !/\b(lol|haha|hehe|lmao)\b/.test(n) && !safety(f, " " + n + " ") && calmFor(f, said, { pts:0 }, {});
+  if (fightOk && !S.fightOpen?.[fname] && S.hearts[fname] >= 3 && S.textFight[fname] !== S.day && Math.random() < 0.07 && !has(" " + n + " ", APOLOGY)) {
     S.textFight[fname] = S.day; S.fightOpen = S.fightOpen || {}; S.fightOpen[fname] = true;
+    S.fightLost = S.fightLost || {}; S.fightLost[fname] = (S.fightLost[fname] || 0) + 1;
     addHearts(f, -1);
-    return setTimeout(() => deliver(fname, [...pickOne(TEXT_FIGHT[f.type]), "(-1 heart)"]), 1200);
+    const fight = [...pickOne(TEXT_FIGHT[f.type])];
+    fight[fight.length - 1] += " " + pickOne(ARGUE.hint) + "  (-1 heart)";
+    return setTimeout(() => deliver(fname, fight, 0, true), 1200);
   }
   const rumor = rumorReply(f, said);
   if (rumor) { addHearts(f, 1); rumor[2] += "  (+1 heart)"; return setTimeout(() => deliver(fname, rumor), 1200); }
   if (KID_PHOTO.test(said)) return setTimeout(() => deliver(fname, [pickOne(["Aww, that's sweet! But let's not send real photos of you, okay? That's a big safety rule online. I'll send you one of me instead!", "Real photos of you stay private, even with me! That's the rule. But here, have a picture of ME!"]), makePhoto(f, "selfie")]), 1200);
   if (PHOTO_ASK.test(said)) { addHearts(f, S.textDay?.[fname] === S.day ? 0 : 1); return setTimeout(() => deliver(fname, [pickOne(["Okay, hold on! Let me find my good side...", "A picture? Of ME? Okay, okay, one second!", "Hehe, okay! Don't laugh!"]), makePhoto(f, pickOne(["selfie", "selfie", "item"])), pickOne(["What do you think?", "Was that okay? I'm blushing.", "Your turn to tell me about your day!"])]), 1200); }
   setTimeout(() => {
+    const prevAsk = S.lastAsk?.[fname]?.k, wasFight = !!S.fightOpen?.[fname];
     let r = phoneReply(f, said);
-    const em = REPLY_EMOJI[r.mood] || REPLY_EMOJI.nod;
+    const st = stageOf(f), fightNow = !!S.fightOpen?.[fname];
+    let em = (REPLY_EMOJI[r.mood] || REPLY_EMOJI.nod).filter(e => st > 0 || !/💕|💖|🥰|😍|😘|☺️|😳|🥺/.test(e));
+    if (!em.length || r.deflect) em = ["😊", "🙈", "😅"];
     S.textDay = S.textDay || {};
     let pts = 0;
-    if (r.fixed) pts = 2;
+    if (r.fixed) pts = Math.max(0, r.pts);
     else if (r.pts < 0) pts = r.pts;
     else if (S.textDay[fname] !== S.day) { pts = Math.min(r.pts, 1); if (pts) S.textDay[fname] = S.day; }
     addHearts(f, pts);
     if (pts) chime();
-    const bye = /\b(bye|byee|good night|got to go|talk to you later|see you|be right back|cya|later|i have to go|i need to go|leaving)\b/.test(normalize(said)) && !r.safe;
+    const bye = /\b(bye|byee|bye bye|good night|night night|nighty night|nite|gn|got to go|talk to you later|ttyl|see you|see ya|be right back|cya|laters|i have to go|i need to go|leaving|going to bed|going to sleep)\b|^later\b/.test(n) && !r.safe;
     if (bye) { S.byeAt = S.byeAt || {}; S.byeAt[fname] = Date.now(); }
-    const extra = Math.random() < 0.3 ? FOLLOW[f.type][Math.floor(Math.random() * FOLLOW[f.type].length)].slice(0, 1) : soapLines(f, said, r);
-    const sass = soapFirst(f, said, r);
-    const lines = [...(sass ? [sass] : []), r.say + " " + em[Math.floor(Math.random() * em.length)], ...(bye ? [] : extra)];
+    const o = { prevAsk, wasFight, fightNow };
+    const extra = bye ? [] : soapLines(f, said, r, o);
+    const sass = bye ? null : soapFirst(f, said, r, o);
+    let main = /\p{Extended_Pictographic}\uFE0F?\s*$/u.test(r.say) ? r.say : r.say + " " + pickOne(em);
+    if (fightNow && !wasFight) main += " " + pickOne(ARGUE.hint);
+    const lines = [...(sass ? [sass] : []), main, ...extra];
     if (pts > 0) lines[lines.length - 1] += `  (+${pts} heart${pts > 1 ? "s" : ""})`;
-    if (pts < 0) lines[lines.length - 1] += `  (${pts} heart)`;
-    if (!bye && !r.safe && pts >= 0 && !S.fightOpen?.[fname] && Math.random() < 0.18) lines.push(makePhoto(f));
-    deliver(fname, lines);
+    if (pts < 0) lines[lines.length - 1] += `  (${pts} heart${pts < -1 ? "s" : ""})`;
+    if (!bye && calmFor(f, said, r, o) && pts >= 0 && Math.random() < 0.18) lines.push(makePhoto(f));
+    deliver(fname, lines, 0, true);
   }, 1200);
 }
 
@@ -2477,7 +2623,7 @@ function joinServer(id) {
   BOT_TIMER = setInterval(() => {
     if (!S.server) return;
     const sv2 = SERVERS.find(x => x.id === S.server), b = BOTS[sv2.bots[Math.floor(Math.random() * sv2.bots.length)]];
-    srvMsg(b.n, BOT_LINES[Math.floor(Math.random() * BOT_LINES.length)], botPic(b));
+    srvMsg(b.n, pickOne(BOT_LINES), botPic(b));
   }, 9000);
 }
 function leaveServer() {
@@ -2490,15 +2636,23 @@ function srvSay() {
   if (!said || !S.server) return;
   srvMsg("me", said);
   const sv = SERVERS.find(x => x.id === S.server), b = BOTS[sv.bots[Math.floor(Math.random() * sv.bots.length)]];
-  const t = said.toLowerCase();
-  let reply;
-  const any = a => a[Math.floor(Math.random() * a.length)];
-  if (has(t, WORDS.mean)) reply = any(["That was rather unkind. In this server, we treat one another with respect.", "Words can wound, you know. Let's choose gentle ones instead."]);
-  else if (has(t, WORDS.hello)) reply = any([`Greetings, ${S.name}! It's a pleasure to meet you.`, `Hello, ${S.name}! You've arrived at the perfect moment.`, `Welcome, ${S.name}! Make yourself comfortable.`]);
-  else if (has(t, ["crush","like","love","married","wedding","partner","girlfriend","boyfriend"])) reply = any(["How utterly delightful! Love is love, and yours sounds wonderful.", "That's enchanting news! I'm genuinely thrilled for you.", "What a heartwarming romance. You two must be overjoyed!"]);
-  else if (t.includes("?")) reply = any(["What an intriguing question. I believe the answer is yes!", "Hmm, that's a fascinating puzzle. I'm honestly uncertain.", "Absolutely, without a doubt!", "I'd recommend the Rainbow Glade. It's simply magnificent."]);
-  else if (has(t, WORDS.kind) || has(t, WORDS.pride)) reply = any(["You're exceptionally kind. I'd be honored to be your friend.", "What a generous thing to say. You've brightened my entire day.", "Your kindness is truly remarkable. Thank you!"]);
-  else reply = any(["How fascinating! Do tell me more.", "I wholeheartedly agree.", "What a marvelous idea!", "That's genuinely impressive.", "Splendid! I'm delighted to hear it."]);
+  const t = " " + normalize(said) + " ", bn = b.n.replace(/_/g, " ");
+  let reply, m;
+  const safe = safety(null, t), youWord = /\b(you|your|you're|yours)\b/.test(t);
+  if (safe && safe.safe) reply = safe.say;
+  else if (has(t, WORDS.mean) && (youWord || t.trim().split(/\s+/).length <= 2)) reply = pickOne(["That was rather unkind. In this server, we treat one another with respect.", "Words can wound, you know. Let's choose gentle ones instead."]);
+  else if (/\b(crush|dating|in love|boyfriend|girlfriend|married|wedding)\b/.test(t)) reply = pickOne(["Ooh, how sweet! But a proper forest animal never gossips about crushes in public chat. Hehe.", "How lovely! Crushes are best kept between close friends, though."]);
+  else if ((m = t.match(/\bi (?:really )?(?:like|love|enjoy|adore) (.+?)\s*$/))) reply = pickOne([`${capW(clip(m[1]))}? Splendid taste! I'm rather fond of that too.`, `Ooh, ${clip(m[1])}! What a marvelous choice.`, `${capW(clip(m[1]))}! Now I want some too.`]);
+  else if ((m = t.match(/\bi (?:hate|don't like|can't stand) (.+?)\s*$/))) reply = pickOne([`Not a fan of ${clip(m[1])}? Perfectly understandable.`, `Ah, ${clip(m[1])} isn't for everyone. What do you like instead?`]);
+  else if (/what'?s your name|who are you/.test(t)) reply = `I'm ${bn}! Delighted to make your acquaintance.`;
+  else if (/how are you|how'?s it going|what about you/.test(t)) reply = pickOne(["I'm splendid, thank you for asking! And you?", "Rather marvelous today! How are you?"]);
+  else if (/what are you doing|what are you up to/.test(t)) reply = pickOne(["Simply enjoying the server chatter!", "Sipping acorn tea and chatting. Lovely, isn't it?"]);
+  else if (has(t, WORDS.hello)) reply = pickOne([`Greetings, ${S.name}! It's a pleasure to meet you.`, `Hello, ${S.name}! You've arrived at the perfect moment.`, `Welcome, ${S.name}! Make yourself comfortable.`]);
+  else if (/\b(bye|good night|got to go|see you|cya|talk to you later)\b/.test(t)) reply = pickOne([`Farewell, ${S.name}! Do come back soon.`, "Goodbye! It was lovely chatting."]);
+  else if (/\b(lol|haha|hehe|lmao)\b/.test(t)) reply = pickOne(["Haha! You're delightfully funny.", "Ha! That made me giggle."]);
+  else if (t.includes("?")) reply = pickOne(["What an intriguing question! What do you think?", "Hmm, that's a fascinating puzzle. I'm honestly not sure!", "Ooh, good question. Does anyone else know?"]);
+  else if (has(t, WORDS.kind) || has(t, WORDS.pride)) reply = pickOne(["You're exceptionally kind. I'd be honored to be your friend.", "What a generous thing to say. You've brightened my entire day.", "Your kindness is truly remarkable. Thank you!"]);
+  else reply = pickOne(["How fascinating! Do tell me more.", "Oh, really? I didn't know that!", "Interesting! What happened next?", "Splendid! I'm delighted to hear it.", "Ha, I never thought of it that way."]);
   setTimeout(() => srvMsg(b.n, reply, botPic(b)), 1500);
 }
 
@@ -2622,7 +2776,7 @@ function activity(key, step, pick = -1) {
     const id = f.name + key, fav = A[3].includes(f.type);
     let pts = 0;
     if (S.actDay[id] !== S.day) { pts = fav ? 2 : 1; S.actDay[id] = S.day; addHearts(f, pts); }
-    const bye = st === 0 ? pickOne(["That was really fun! Thanks for asking me.", "Okay, that was awesome. Let's do it again sometime!"]) : st === 1 ? pickOne(["That was SO fun. I'm really glad it was with you.", "*a bit shy* Can we do that again soon?"]) : pickOne(["That was perfect. Everything's better with you.", "Best. Day. Ever. Same time tomorrow?"]);
+    const bye = st === 0 ? pickOne(["That was really fun! Thanks for asking me.", "Okay, that was awesome. Let's do it again sometime!", "Ha, that was great. You're fun to hang out with!", "Thanks for inviting me! See you around?"]) : st === 1 ? pickOne(["That was SO fun. I'm really glad it was with you.", "*a bit shy* Can we do that again soon?", "Okay, that might be my new favorite thing to do. With you, I mean.", "Hehe, that was the best part of my day."]) : pickOne(["That was perfect. Everything's better with you.", "Best. Day. Ever. Same time tomorrow?", "I never want this day to end. Thank you.", "Every day with you is my favorite day."]);
     end = `<p class="story">${N(A[6])}</p><div class="bubble"><b>${f.name}:</b> "${bye}" ${pts ? `<b>+${pts} ❤️</b>` : ""}</div>
       <div class="center"><button class="rainbow" onclick="activityMenu(${S.act.i}, '${S.act.from}')">Do something else</button>
       <button class="soft" onclick="actBack()">${S.act.from === "date" ? "Finish the date" : "Done"}</button></div>`;
