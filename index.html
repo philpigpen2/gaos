@@ -4422,17 +4422,34 @@ const W3_MAT = {}, W3_GEO = {};
 const w3Mat = (c, o = {}) => W3_MAT[c + JSON.stringify(o)] ||= new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .72 }, o));
 const w3Geo = (k, make) => W3_GEO[k] ||= make();
 // merge each body part's little shapes into one mesh (one draw instead of dozens: fast on phones)
+function w3FurTex() {
+  if (W3_MAT.__furTex) return W3_MAT.__furTex;
+  const cv = document.createElement("canvas"); cv.width = cv.height = 256; const g = cv.getContext("2d");
+  g.fillStyle = "rgb(236,236,236)"; g.fillRect(0, 0, 256, 256); g.lineCap = "round";
+  for (let i = 0; i < 2600; i++) { const x = Math.random() * 256, y = Math.random() * 256, l = 4 + Math.random() * 9, a = Math.PI / 2 + (Math.random() - .5) * .7, v = 175 + Math.random() * 80;
+    g.strokeStyle = `rgba(${v},${v},${v},.55)`; g.lineWidth = .8 + Math.random() * 1.2; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); }
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 3); t.anisotropy = 4; if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding;
+  return (W3_MAT.__furTex = t);
+}
 function w3Bake(root) {
   const groups = []; root.traverse(o => { if (o.children.some(c => c.isMesh)) groups.push(o); });
   const vmat = W3_MAT.__v ||= new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .78 });
+  const fmat = W3_MAT.__vf ||= (() => { const t = w3FurTex(), b = t.clone(); b.encoding = THREE.LinearEncoding; b.needsUpdate = true; return new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .88, map: t, bumpMap: b, bumpScale: .012 }); })();
+  const gmat = W3_MAT.__vg ||= new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .12 });
+  const furSet = new Set((root.userData.furCols || []).map(c => new THREE.Color(c).getHex()));
   groups.forEach(gp => { const meshes = gp.children.filter(c => c.isMesh); if (meshes.length < 2) return;
-    const pos = [], nor = [], col = []; let shadow = false;
+    const parts = { fur: { pos: [], nor: [], col: [], uv: [], shadow: false, n: 0 }, other: { pos: [], nor: [], col: [], uv: [], shadow: false, n: 0 } };
     meshes.forEach(m => { m.updateMatrix(); const geo = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()); geo.applyMatrix4(m.matrix);
-      const P = geo.attributes.position, N = geo.attributes.normal, c = m.material.color || new THREE.Color(1, 1, 1);
-      for (let i = 0; i < P.count; i++) { pos.push(P.getX(i), P.getY(i), P.getZ(i)); nor.push(N.getX(i), N.getY(i), N.getZ(i)); col.push(c.r, c.g, c.b); }
-      if (m.castShadow) shadow = true; gp.remove(m); geo.dispose(); });
-    const G = new THREE.BufferGeometry(); G.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); G.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3)); G.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
-    const M = new THREE.Mesh(G, gp.userData.gloss ? (W3_MAT.__vg ||= new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .12 })) : vmat); M.castShadow = shadow; gp.add(M); });
+      const P = geo.attributes.position, N = geo.attributes.normal, U = geo.attributes.uv, c = m.material.color || new THREE.Color(1, 1, 1);
+      const isFur = !gp.userData.gloss && m.material.color && furSet.has(c.getHex()), d = isFur ? parts.fur : parts.other; d.n++;
+      for (let i = 0; i < P.count; i++) { const x = P.getX(i), y = P.getY(i), z = P.getZ(i), ny = N.getY(i);
+        const sh = gp.userData.gloss ? 1 : (.84 + .16 * (ny * .5 + .5)) * (1 + (Math.sin(x * 91.7 + y * 47.3 + z * 13.1) * .5) * .06);
+        d.pos.push(x, y, z); d.nor.push(N.getX(i), ny, N.getZ(i)); d.col.push(c.r * sh, c.g * sh, c.b * sh); if (U) d.uv.push(U.getX(i), U.getY(i)); else d.uv.push(0, 0); }
+      if (m.castShadow) d.shadow = true; gp.remove(m); geo.dispose(); });
+    Object.entries(parts).forEach(([k, d]) => { if (!d.n) return;
+      const G = new THREE.BufferGeometry(); G.setAttribute("position", new THREE.Float32BufferAttribute(d.pos, 3)); G.setAttribute("normal", new THREE.Float32BufferAttribute(d.nor, 3)); G.setAttribute("color", new THREE.Float32BufferAttribute(d.col, 3));
+      if (k === "fur") G.setAttribute("uv", new THREE.Float32BufferAttribute(d.uv, 2));
+      const M = new THREE.Mesh(G, gp.userData.gloss ? gmat : k === "fur" ? fmat : vmat); M.castShadow = d.shadow; gp.add(M); }); });
 }
 function w3Animal(kind, look, xmas) {
   const [fur, belly, acc] = W3_FUR[kind] || W3_FUR.fox, bird = kind === "owl" || kind === "magpie";
@@ -4487,6 +4504,9 @@ function w3Animal(kind, look, xmas) {
   if (!bird) add(head, tor(.045, .011, Math.PI), 0x4a2a2a, 0, -.13, .29, 1, 1, 1).rotation.z = Math.PI;
   if (kind === "beaver") add(head, BOX, 0xffffff, 0, -.17, .3, .06, .05, .02);
   [-1, 1].forEach(s => { const bl = add(head, SPH, 0xff86a8, s * .175, -.055, .215, .055, .034, .02); bl.rotation.y = s * .55; });
+  if (["fox", "wolf", "mouse", "bunny", "raccoon", "squirrel", "otter", "beaver", "weasel"].includes(kind)) { const wx = kind === "fox" || kind === "wolf" ? .1 : .07, wz = kind === "fox" || kind === "wolf" ? .36 : .29;
+    [-1, 1].forEach(s => [-.03, 0, .03].forEach((dy, k) => { const w = add(head, CYL, kind === "raccoon" || kind === "otter" ? 0xf4f4f4 : 0x2a2224, s * (wx + .07), -.07 + dy, wz - .03, .0035, .14, .0035); w.rotation.z = s * (Math.PI / 2 + (k - 1) * .18); w.rotation.y = -s * .25; })); }
+  if (kind === "fox" || kind === "wolf" || kind === "squirrel") [-1, 1].forEach(s => [0, 1].forEach(k => { const t = add(head, CONE, k ? fur : belly, s * (.24 + k * .02), -.1 - k * .05, .05, .045, .1, .04); t.rotation.z = s * (2.1 + k * .3); }));
   // ears
   const ear = (x, y, rz, geo, sx, sy, sz, col, inner) => { const e = add(head, geo, col, x, y, -.02, sx, sy, sz); e.rotation.z = rz; if (inner) { const i = add(head, geo, inner, x, y, .005, sx * .6, sy * .75, sz * .5); i.rotation.z = rz; } return e; };
   if (kind === "fox" || kind === "wolf") [-1, 1].forEach(s => { ear(s * .17, .27, -s * .3, CONE, .1, .24, .06, fur, 0x3a2a22); });
@@ -4525,7 +4545,7 @@ function w3Animal(kind, look, xmas) {
   if (extra === "headband") add(head, tor(.29, .03), 0x45d0ff, 0, .1, -.02, 1, 1, 1).rotation.x = Math.PI / 2 - .25;
   if (extra === "rainbow") [0xff3b3b, 0xff9f1c, 0xffd23b, 0x3ddc84, 0x3bb7ff, 0x9b6bff].forEach((c, i) => add(spine, tor(.232, .02), c, 0, .4 - i * .04, 0, 1, 1, .8).rotation.x = Math.PI / 2);
   if (xmas && !hat) { const h = new THREE.Group(); h.position.set(0, .22, -.02); h.rotation.z = -.2; head.add(h); add(h, CONE, 0xd62828, 0, .17, 0, .21, .36, .21, true); add(h, tor(.21, .05), 0xffffff, 0, 0, 0, 1, 1, 1).rotation.x = Math.PI / 2; add(h, SPH, 0xffffff, .02, .36, 0, .06, .06, .06); }
-  w3Bake(g);
+  g.userData.furCols = [fur, belly, acc]; w3Bake(g);
   return { g, body, spine, legs, arms, head, eyes, brows, tail, torso: spine, ph: Math.random() * 6, amp: 0, blink: 2 + Math.random() * 3, heading: 0 };
 }
 // one frame of moving: speed is how fast they are going (0 = standing still)
