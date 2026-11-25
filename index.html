@@ -482,6 +482,11 @@
   .cam-frame { position:absolute; inset:14px; border:2px solid #fff8; border-radius:12px; }
   .cam-shutter { width:70px; height:70px; border-radius:50%; background:#fff; border:6px solid #ccc; box-shadow:0 0 0 3px #fff; margin:12px auto 4px; padding:0; }
   .cal-item { background:#fff4f9; border-left:5px solid #ff5a6e; border-radius:8px; padding:8px 12px; margin:6px 0; font-size:15px; }
+  .walker .say { display:none; position:absolute; bottom:calc(100% + 30px); left:50%; transform:translateX(-50%); width:max-content; max-width:180px; background:#fff; color:#2b2233; font:600 13px/1.3 inherit; font-style:normal; padding:6px 10px; border-radius:14px; box-shadow:0 3px 10px #0004; white-space:normal; text-align:center; z-index:5; animation:pop .25s; }
+  .walker .say::after { content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:7px solid transparent; border-top-color:#fff; }
+  .ph-contact .where { color:#8a7a9a; font-size:12px; }
+  .walker { pointer-events:auto; } .walker img, .walker .sheet { filter:contrast(1.04) saturate(.95); }
+  .walk-cam::after { content:""; position:absolute; inset:0; z-index:1060; pointer-events:none; opacity:.07; background-image:repeating-radial-gradient(circle at 17% 32%, #fff 0 .5px, transparent 1px 3px), repeating-radial-gradient(circle at 73% 61%, #000 0 .5px, transparent 1px 4px); mix-blend-mode:overlay; }
   body.immersive { overflow:hidden; }
   body.immersive #app { width:100%; padding:0; }
   body.immersive #app > h1, body.immersive .bgl, body.immersive .srv-btn, body.immersive .eyes-btn, body.immersive .scr-btn, body.immersive .scroll-btns, body.immersive .side-go { display:none !important; }
@@ -2326,7 +2331,7 @@ function openPhone(thread) {
       <div class="ph-top"><button class="ph-x" onclick="phoneHome()">Home</button><b>Messages</b><button class="ph-x" onclick="closePhone()">Close</button></div>
       <button class="ph-meet" onclick="closePhone(); eyesScreen()">Put the phone down and look around</button>
       ${friends().map(f => { const th = texts(f.name), last = th[th.length - 1], un = th.filter(m => m.from === "them" && !m.read).length;
-        return `<div class="ph-contact" onclick="openPhone('${f.name}')">${face(f)}<div><b>${f.name}</b><br><small>${last ? esc(preview(last.t)).slice(0, 34) : "Say hi!"}</small></div>${un ? `<span class="badge">${un}</span>` : ""}</div>`; }).join("")}
+        return `<div class="ph-contact" onclick="openPhone('${f.name}')">${face(f)}<div><b>${f.name}</b> <small class="where">${whereWord(f)}</small><br><small>${last ? esc(preview(last.t)).slice(0, 34) : "Say hi!"}</small></div>${un ? `<span class="badge">${un}</span>` : ""}</div>`; }).join("")}
     </div>`;
   } else {
     const f = friends().find(x => x.name === thread);
@@ -3206,7 +3211,7 @@ function placesScreen() {
   const shopPlace = sk => Object.keys(SHOP_AT).find(k => SHOP_AT[k].some(x => x[0] === sk));
   show(`<h1 style="font-size:36px">Where do you want to go?</h1>
     <div class="box"><h2>Walk around</h2><div class="places-grid">
-      ${WALK_ORDER.map(x => `<button class="act-btn" style="background:${tileBg(x)}" onclick="eyesScreen('${x}')"><span>${WORLD_NAMES[x]}</span></button>`).join("")}
+      ${WALK_ORDER.map(x => { const who = friends().filter(f => whereNow(f) === x).map(f => f.name); return `<button class="act-btn" style="background:${tileBg(x)}" onclick="eyesScreen('${x}')"><span>${WORLD_NAMES[x]}${who.length ? `<br><small>${who.slice(0, 3).join(", ")}${who.length > 3 ? " +" + (who.length - 3) : ""}</small>` : ""}</span></button>`; }).join("")}
     </div></div>
     <div class="box"><h2>Shops</h2><div class="places-grid">
       ${Object.keys(SHOPS).map(sk => `<button class="act-btn" style="background:url(art/shop_${sk}.png) center/contain no-repeat, ${tileBg(shopPlace(sk))}" onclick="S.worldAt='${shopPlace(sk)}'; shopScreen('${sk}')"><span>${SHOPS[sk].name}</span></button>`).join("")}
@@ -3391,11 +3396,11 @@ function eyesScreen(k, cont) {
   try { closePhone(); } catch (e) {}
   k = k || S.worldAt || "forest"; S.worldAt = k; S.guest = null; S.meetPlace = null;
   const nightOut = ["stars", "campfire", "lanterns", "library"].includes(k), all = friends();
-  const here = isNight() && !nightOut ? whoIsAt(k).slice(0, 1) : whoIsAt(k);
-  const extras = all.filter(f => !here.includes(f)).sort((a, b) => hashStr(a.name + k + S.day) - hashStr(b.name + k + S.day)).slice(0, 2);
-  const spots = [[.43, .42], [.58, .56], [.5, .82], [.3, .7]];
+  const here = all.filter(f => whereNow(f) === k).slice(0, 6);
+  const passer = !here.length && lifeSlot() >= 0 ? all.filter(f => whereNow(f)).sort((a, b) => hashStr(a.name + k) - hashStr(b.name + k)).slice(0, 1) : [];
+  const spots = [[.43, .42], [.58, .56], [.5, .82], [.3, .7], [.7, .75], [.36, .9]];
   const people = [...here.map((f, n) => ({ f, wx: spots[n][0] + (hashStr(f.name + S.day) % 7 - 3) / 100, wz: spots[n][1], home: spots[n][0], go: null, wait: 2 + n * 3 })),
-                  ...(isNight() && !nightOut ? [] : extras).map((f, n) => ({ f, wx: n ? .92 : .06, wz: .9 - n * .08, go: n ? .06 : .92, wait: 0, stroller: true }))];
+                  ...passer.map(f => ({ f, wx: .06, wz: .8, go: 1.15, goZ: .7, wait: 0, stroller: true, leaving: true }))];
   const bye = S.worldBye || ""; S.worldBye = "";
   const fresh = !cont && S.povKey !== "world" + k; S.povKey = "world" + k;
   const nextK = WALK_ORDER[(WALK_ORDER.indexOf(k) + 1) % WALK_ORDER.length] || "forest";
@@ -3408,7 +3413,7 @@ function eyesScreen(k, cont) {
       <div class="walk-cam" id="walkCam">
         <div class="walk-bg" id="walkBg" style="background-image:url(art/walk_${k}.png), ${worldBg(k).split(" center/cover")[0]}"></div>
         ${(SHOP_AT[k] || []).map(([sk], n) => `<button class="walker shop" data-s="${n}" onclick="shopScreen('${sk}')"><img src="art/shop_${sk}.png" alt="" onerror="this.style.visibility='hidden'"><span>${SHOPS[sk].name}</span></button>`).join("")}
-        ${people.map((p, n) => { const a = ART[p.f.emo]; return `<button class="walker" data-n="${n}" onclick="meetScreen('${p.f.name}')"><img src="art/${a}.png" alt="">${SHEETS.has(a) ? `<div class="sheet" style="background-image:url(art/sheet_${a}.png)"></div>` : ""}<span>${p.f.name}</span></button>`; }).join("")}
+        ${people.map((p, n) => { const a = ART[p.f.emo]; return `<button class="walker" data-n="${n}" onclick="meetScreen('${p.f.name}')"><img src="art/${a}.png" alt="">${SHEETS.has(a) ? `<div class="sheet" style="background-image:url(art/sheet_${a}.png)"></div>` : ""}<span>${p.f.name}</span><em class="say"></em></button>`; }).join("")}
         ${k === "forest" || k === "pines" ? `<div class="rays"></div>` : ""}
         <div class="walk-haze" style="--haze:${WALK_HAZE[k] || "rgba(235,240,255,.28)"}"></div>
         ${bits}
@@ -3420,7 +3425,7 @@ function eyesScreen(k, cont) {
         <button class="dp up" data-key="up" aria-label="Walk forward"></button><button class="dp left" data-key="left" aria-label="Turn left"></button>
         <button class="dp right" data-key="right" aria-label="Turn right"></button><button class="dp down" data-key="down" aria-label="Walk back"></button>
       </div>
-      <div class="walk-hint" id="walkHint" style="${cont || S.walkedOnce ? "opacity:0" : ""}">Hold your finger on the ground to walk. Slide it left or right to turn.</div>
+      <div class="walk-hint" id="walkHint" style="${(cont || S.walkedOnce) && !(lifeSlot() < 0) ? "opacity:0" : ""}">${lifeSlot() < 0 ? "Everyone is asleep. Tap the clock to sleep until morning." : "Hold your finger on the ground to walk. Slide it left or right to turn."}</div>
     </div>
     ${bye ? `<div class="bubble">${bye}</div>` : ""}</div>
     <div class="box center walk-box"><div class="walk-grid">
@@ -3462,6 +3467,46 @@ function footstep() {
     const g = actx.createGain(); g.gain.value = .22; n.buffer = b; n.connect(f); f.connect(g); g.connect(actx.destination); n.start();
   } catch (e) {}
 }
+// --- Little game of life: everyone has a daily routine ---
+const ROUTINE = {
+  shy:[["village"], ["library", "garden"], ["village", "picnic"], ["garden", "library", "rain"], ["lanterns", "village"], ["stars"]],
+  adventure:[["village"], ["forest", "pines", "creek"], ["picnic", "berries"], ["treehouse", "creek", "lake"], ["campfire", "village"], ["stars", "campfire"]],
+  funny:[["village"], ["lake", "pond"], ["picnic", "village"], ["pond", "berries", "birch"], ["village", "lanterns"], ["campfire"]],
+  baker:[["village"], ["village", "berries"], ["picnic", "village"], ["berries", "garden", "birch"], ["village", "lanterns"], ["campfire", "lanterns"]]
+};
+function lifeSlot() { const h = (S.clock ?? 480) / 60; return h < 6 || h >= 22.5 ? -1 : h < 9 ? 0 : h < 12 ? 1 : h < 14 ? 2 : h < 17 ? 3 : h < 20 ? 4 : 5; }
+function whereNow(f) {
+  const sl = lifeSlot(); if (sl < 0) return null;
+  const opts = (ROUTINE[f.type] || ROUTINE.shy)[sl];
+  return opts[hashStr(f.name + (S.tday || 1) + sl) % opts.length];
+}
+const whereWord = f => { const w = whereNow(f); return w ? "At " + (WORLD_NAMES[w] || w) : "Asleep"; };
+const CHITCHAT = [["Did you see {ME}'s post?", "Obviously. 👀"], ["I'm SO hungry.", "Cafe? Cafe."], ["Race you to the lake!", "You're ON!"], ["Is it true about {O}??", "I can't say... 😶"], ["Nice scarf!", "Thanks, I made it! 💕"],
+  ["Have you seen {ME} today?", "Shh, they're right there! 😳"], ["Ugh, {O} is SO annoying.", "Right?! ...Wait, don't tell them I said that."], ["Want ice cream later?", "Only if it's strawberry! 🍓"], ["Did you hear thunder?", "That was my tummy. 😂"],
+  ["{ME} is so cool.", "I know, right? 🥰"], ["Where are you going?", "Secret mission. 🤫"], ["I saw {O} and {O2} holding paws!", "NO WAY. 😱"], ["Your fur looks nice today.", "Aww, stop it! 😊"], ["I'm going to win the quiz show.", "In your dreams. 💅"]];
+function addWalker(p) {
+  const cam = document.getElementById("walkCam"), haze = cam && cam.querySelector(".walk-haze"); if (!haze) return;
+  const a = ART[p.f.emo], n = WALK.people.length; WALK.people.push(p);
+  haze.insertAdjacentHTML("beforebegin", `<button class="walker" data-n="${n}" onclick="meetScreen('${p.f.name}')"><img src="art/${a}.png" alt="">${SHEETS.has(a) ? `<div class="sheet" style="background-image:url(art/sheet_${a}.png)"></div>` : ""}<span>${p.f.name}</span><em class="say"></em></button>`);
+}
+function lifeTick(W) {
+  // who should be here right now? people leave, new people arrive
+  const want = friends().filter(f => whereNow(f) === W.k);
+  W.people.forEach(p => { if (!p.gone && !p.leaving && !p.stroller && !want.includes(p.f)) { p.leaving = true; p.go = p.wx < .5 ? -.15 : 1.15; p.goZ = Math.min(1.05, p.wz + .3); p.wait = 0; } });
+  want.forEach(f => { if (W.people.filter(p => !p.gone && !p.leaving).length < 6 && !W.people.some(p => p.f === f && !p.gone && !p.leaving)) {
+    const side = Math.random() < .5; addWalker({ f, wx: side ? -.12 : 1.12, wz: .55 + Math.random() * .35, go: .3 + Math.random() * .4, goZ: .4 + Math.random() * .45, wait: 0, home: .5 }); } });
+  // two animals near each other stop and chat
+  const idle = W.people.filter(p => !p.gone && !p.leaving && p.go === null && !p.talking);
+  for (let i = 0; i < idle.length; i++) for (let j = i + 1; j < idle.length; j++) {
+    const a = idle[i], b = idle[j];
+    if (Math.abs(a.wx - b.wx) < .16 && Math.abs(a.wz - b.wz) < .2 && Math.random() < .5) {
+      const [l1, l2] = pickOne(CHITCHAT).map(x => soapFill(x, a.f.name));
+      a.talking = b.talking = W.t + 7; a.faceTo = b.wx > a.wx ? 1 : -1; b.faceTo = -a.faceTo; a.wait = b.wait = 8;
+      a.line = l1; setTimeout(() => { if (WALK === W) { a.line = ""; b.line = l2; } }, 2600); setTimeout(() => { if (WALK === W) b.line = ""; }, 5600);
+      return;
+    }
+  }
+}
 function walkTick(now) { if (walkStep(now)) requestAnimationFrame(walkTick); }
 setInterval(() => { if (WALK && performance.now() - WALK.last > 120) walkStep(performance.now()); }, 40);   // keeps walking even if the screen skips frames
 function walkStep(now) {
@@ -3477,6 +3522,7 @@ function walkStep(now) {
   if (walking) W.dist += fwd * .13 * dt;
   if (fwd || turn) { S.walkedOnce = true; const hint = document.getElementById("walkHint"); if (hint) hint.style.opacity = 0; }
   if (walking) { W.stepT += dt; if (W.stepT > .4) { W.stepT = 0; footstep(); } }
+  W.lifeT = (W.lifeT || 0) + dt; if (W.lifeT > 2) { W.lifeT = 0; lifeTick(W); }
   const boxEl = document.querySelector(".walk-box"), visH = SH - (boxEl ? boxEl.offsetHeight : 0), hz = visH * .5;
   const bgW = Math.max(SW * 1.45, SH * 1.8), bgH = bgW / 1.5, top = hz - bgH * .45, left = -W.cam * (bgW - SW);
   const zoom = 1 + W.z * .7, ox = W.cam * (bgW - SW) + SW / 2, oy = bgH * .45;
@@ -3502,16 +3548,20 @@ function walkStep(now) {
   document.querySelectorAll(".walker:not(.shop)").forEach(el => {
     const p = W.people[+el.dataset.n];
     // animals stroll around: pick a spot, walk there, stop, look around, repeat
-    if (p.go === null) { p.wait -= dt; if (p.wait <= 0) { p.go = Math.max(.08, Math.min(.92, (p.home ?? .5) + (Math.random() - .5) * .3)); } }
+    if (p.gone) { el.style.display = "none"; return; }
+    if (p.go === null) { p.wait -= dt; if (p.wait <= 0) { p.go = Math.max(.12, Math.min(.88, (p.home ?? .5) + (Math.random() - .5) * .45)); p.goZ = Math.max(.32, Math.min(.98, p.wz + (Math.random() - .5) * .35)); } }
     let moving = false;
-    if (p.go !== null) { const d = p.go - p.wx, sp = (p.stroller ? .035 : .025) * dt;
-      if (Math.abs(d) <= sp) { p.wx = p.go; p.go = p.stroller ? (p.wx > .5 ? .06 : .92) : null; p.wait = p.stroller ? 1 : 4 + Math.random() * 6; }
-      else { p.wx += Math.sign(d) * sp; p.dir = Math.sign(d); moving = true; } }
+    if (p.go !== null) { const dx = p.go - p.wx, dz = (p.goZ ?? p.wz) - p.wz, dist = Math.hypot(dx * 1.4, dz), sp = (p.leaving || p.stroller ? .05 : .032) * dt;
+      if (dist <= sp) { p.wx = p.go; p.wz = p.goZ ?? p.wz; p.go = null; p.wait = 4 + Math.random() * 7; if (p.leaving || p.wx < -.05 || p.wx > 1.05) p.gone = true; }
+      else { p.wx += dx / dist * sp; p.wz += dz / dist * sp; if (Math.abs(dx) > .002) p.dir = Math.sign(dx); moving = true; } }
+    const sayEl = el.querySelector(".say");
+    if (sayEl) { const txt = p.talking && W.t < p.talking ? (p.line || "") : ""; if (sayEl.dataset.t !== txt) { sayEl.dataset.t = txt; sayEl.textContent = txt; sayEl.style.display = txt ? "block" : "none"; } }
+    if (p.talking && W.t >= p.talking) { p.talking = 0; p.faceTo = 0; }
     const D = p.wz - W.z;
     if (D < .06) { el.style.display = "none"; return; }
     const hh = Math.min(SH * 1.15, visH * .11 * (REAL_SIZE[ART[p.f.emo]] || 1) / D), sx = left + ox + (p.wx * bgW - ox) * zoom, feet = hz + visH * .1 / D;
     el.style.cssText = `display:flex;left:${sx}px;top:${feet - hh}px;height:${hh}px;z-index:${Math.round(1000 - D * 900)};filter:${light} blur(${Math.max(0, (D - .5) * 2.4).toFixed(2)}px) saturate(${(1.05 - D * .25).toFixed(2)})`;
-    const flip = moving ? p.dir < 0 : sx > SW / 2;
+    const flip = moving ? p.dir < 0 : p.faceTo ? p.faceTo < 0 : sx > SW / 2;
     el.querySelector("img").classList.toggle("flip", flip);
     const sh = el.querySelector(".sheet");
     el.classList.toggle("walking", moving); el.classList.toggle("has-sheet", !!sh && moving);
