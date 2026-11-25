@@ -552,6 +552,30 @@
     body:not(.immersive) .phone-btn svg { width:26px; height:26px; }
     body:not(.immersive) #app { padding-top:58px; padding-bottom:30px; }
   }
+  body.xmas .cover { background:linear-gradient(rgba(255,250,245,.5), rgba(255,250,245,.78)), url(art/xmas_village.png) center/cover !important; }
+  #snow { position:fixed; inset:0; pointer-events:none; z-index:900; }
+  #xlights { position:fixed; left:0; right:0; top:0; height:16px; display:flex; justify-content:space-around; pointer-events:none; z-index:901; border-top:2px solid #2d4a2d; }
+  #xlights i { width:9px; height:13px; border-radius:50% 50% 50% 50% / 40% 40% 60% 60%; margin-top:1px; animation:twinkle 1.4s var(--d) infinite alternate; }
+  #xlights i:nth-child(4n+1) { background:#ff3b3b; color:#ff3b3b; } #xlights i:nth-child(4n+2) { background:#3bd16f; color:#3bd16f; } #xlights i:nth-child(4n+3) { background:#ffd23b; color:#ffd23b; } #xlights i:nth-child(4n) { background:#3bb7ff; color:#3bb7ff; }
+  @keyframes twinkle { from { opacity:.45; box-shadow:none; } to { opacity:1; box-shadow:0 0 8px 2px currentColor; } }
+  .xmas-sub { font:700 22px/1.2 inherit; color:#fff; background:linear-gradient(90deg,#c62828,#2e7d32); display:inline-block; padding:4px 16px; border-radius:16px; margin:-4px 0 6px; box-shadow:0 4px 12px #0003; }
+  body.xmas .town.real .town-world { background:url(art/r_snow.png), #f3f7fb; background-size:300px; }
+  body.xmas .town:not(.real) .town-world { background-color:#eef5fb; }
+  body.xmas .town-ground { filter:saturate(.75) brightness(1.08); }
+  body.xmas.walking::after { content:""; position:fixed; left:0; right:0; bottom:0; height:22%; background:linear-gradient(transparent, rgba(255,255,255,.55)); pointer-events:none; z-index:5; }
+  #popup { position:fixed; inset:0; z-index:2000; background:rgba(20,12,30,.55); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .pop-in { background:#fff; border-radius:26px; padding:18px; max-width:420px; width:100%; text-align:center; box-shadow:0 20px 50px #0006; animation:pop .35s; max-height:90vh; overflow-y:auto; }
+  .rel-pair { display:flex; align-items:flex-end; justify-content:center; gap:4px; } .rel-pair img { height:120px; } .rel-pair img.flip { transform:scaleX(-1); }
+  .rel-heart { width:54px; height:50px; margin:0 4px 40px; animation:beat 1s infinite; }
+  .rel-tag { font-size:18px; } .rel-chip { display:inline-block; background:linear-gradient(90deg,#ff6fae,#9775fa); color:#fff; font-size:12px; font-weight:700; padding:2px 9px; border-radius:10px; vertical-align:middle; }
+  #notif { position:fixed; left:50%; top:-120px; transform:translateX(-50%); z-index:2100; width:min(360px,92vw); display:flex; gap:10px; align-items:center; background:rgba(255,255,255,.97); border-radius:20px; padding:10px 14px; box-shadow:0 10px 30px #0004; transition:top .35s; cursor:pointer; font-size:15px; }
+  #notif.on { top:10px; } #notif img { height:44px; width:44px; object-fit:contain; } .notif-q { width:44px; height:44px; border-radius:50%; background:#9775fa; color:#fff; font:900 26px/44px inherit; text-align:center; }
+  .photo.pic2 { position:relative; overflow:hidden; } .photo .lay, .pthumb .lay { position:absolute; filter:drop-shadow(0 4px 5px #0005); }
+  .pthumb .lay { height:auto; }
+  .pm-canvas { position:relative; width:100%; max-width:520px; margin:0 auto; aspect-ratio:4/3; border-radius:20px; background-size:cover; background-position:center; overflow:hidden; touch-action:none; box-shadow:0 6px 20px #0003; }
+  .pm-canvas .lay { position:absolute; cursor:grab; filter:drop-shadow(0 6px 6px #0005); } .pm-canvas .lay.sel { filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 8px #ff6fae); }
+  .pm-tools button { padding:8px 12px; font-size:15px; } .pm-tray .date-pick { flex:0 0 74px; height:74px; }
+  .pic-done .ph-pic { margin:8px auto; max-width:100%; } .pic-done .photo { width:100%; height:auto; aspect-ratio:4/3; }
   body.immersive { overflow:hidden; }
   body.immersive #app { width:100%; padding:0; }
   body.immersive #app > h1, body.immersive .bgl, body.immersive .srv-btn, body.immersive .eyes-btn, body.immersive .scr-btn, body.immersive .scroll-btns, body.immersive .side-go { display:none !important; }
@@ -919,6 +943,7 @@ function show(html) {
   app.querySelectorAll(".story > p").forEach(b => wordsIn(b, 0.03));
   window.scrollTo(0, 0);
   try { updateSky(); } catch (e) {}
+  try { xmasDecor(); } catch (e) {}
   requestAnimationFrame(() => { const bx = document.querySelector("body.immersive .box"); if (bx) document.documentElement.style.setProperty("--boxh", bx.offsetHeight + "px"); });
 }
 
@@ -943,11 +968,12 @@ setInterval(saveGame, 4000);
 addEventListener("pagehide", saveGame);
 document.addEventListener("visibilitychange", () => { if (document.hidden) saveGame(); });
 function titleScreen() {
-  setBg("glade");
+  setBg(XMAS() ? "xmas_village" : "glade");
   show(`
     <div class="cover">
       <div class="cover-flags"><span class="wave"><i class="flag"></i></span><span class="wave two"><i class="flag"></i></span><span class="wave"><i class="flag"></i></span></div>
       <h1>${GAME_TITLE}</h1>
+      ${XMAS() ? `<div class="xmas-sub">Christmas in Animal Burrow</div>` : ""}
       <div class="lil rb">💖 Love is Love 💖</div>
       <p class="sub">A forest story about finding someone who loves you <b>just the way you are</b> 🌈</p>
       ${loadSave() ? `<div class="center"><button class="green big-btn" onclick="continueGame()">Continue my game</button></div>` : ""}
@@ -958,7 +984,7 @@ function titleScreen() {
         <div><span class="bob two">🐻</span><span class="beat">💛</span><span class="bob">🐻</span></div>
       </div>
       <div class="center" style="margin-top:22px"><button class="rainbow big-btn" onclick="MODE=1;newGame();createScreen()">▶ 1 Player</button>
-        <button class="rainbow big-btn" onclick="MODE=2;newGame();createScreen()">▶▶ 2 Players</button>
+        <button class="rainbow big-btn" onclick="MODE=2;newGame();createScreen()">▶▶ 2 Players</button><br><button class="soft" style="margin-top:10px" onclick="xmasToggle()">Christmas: ${XMAS() ? "ON" : "OFF"}</button>
         <p style="font-size:16px">Two players take turns on the same computer. No chatting, nothing online. 💕</p></div>
     </div>
   `);
@@ -1304,7 +1330,7 @@ function mapScreen() {
             <div class="name">${f.name} the ${f.kind} ${S.profile ? `<span class="match">${matchPct(f)}% match</span>` : ""}</div>
             <div class="likes">Loves: ${likesOf(f).join(", ")}</div>
             <div>${f.about}</div>
-            <div class="hearts">${heartBar(S.hearts[f.name])}</div>
+            <div class="hearts">${heartBar(S.hearts[f.name])}</div><div class="rel-chip">${relLabel(f)}</div>
           </div>
           <button onclick="placeScreen(${i})">Hang out</button>
           <button class="soft" onclick="activityMenu(${i},'map')">Activity</button>
@@ -1390,6 +1416,7 @@ function sceneTop(f, place, mood = "walk", giftEmo = "") {
 
 function addHearts(f, n) {
   S.hearts[f.name] = Math.max(0, Math.min(10, S.hearts[f.name] + n));
+  if (n > 0 && S.hearts[f.name] >= 10 && ((S.rel && S.rel[f.name]) || 0) < 2) relUp(f);
 }
 
 function hangout(i, place) {
@@ -1999,7 +2026,7 @@ const NEW_FRIEND = {
   madeUp: ["Hey, we already made up! We're good, I promise.", "I already forgave you, silly. We're okay now.", "It's okay! That's all done. We're good."],
   shy: ["*goes a bit pink* I... I really like hanging out with you. Can we take it slow?", "Um... maybe! I think I might like you too. Let's go on a few more hangouts first?", "That made me blush SO much. Let's keep getting to know each other, okay?", "Eep! Okay, I'm a little bit red right now. Ask me again after a few more dates?"]
 };
-const stageOf = f => { const h = (S.hearts && S.hearts[f.name]) || 0; return h < 3 ? 0 : h < 6 ? 1 : 2; };
+const stageOf = f => { if (S.rel && S.rel[f.name] >= 1) return 2; const h = (S.hearts && S.hearts[f.name]) || 0; return h < 3 ? 0 : h < 6 ? 1 : 2; };
 function calmDown(f, raw, r) {
   const st = stageOf(f);
   if (st >= 2 || !r || !r.say || r.safe || r.mood === "confused") return r;
@@ -2089,6 +2116,8 @@ function chatReply0(f, raw) {
   const text = normalize(raw), t = " " + text + " ";
   const safe = safety(f, t);
   if (safe) return safe;
+  if (XMAS() && XMAS_TALK.test(text) && !(S.fightOpen && S.fightOpen[f.name]) && Math.random() < .8) return { pts:1, mood:"happy", say: pickOne(XMAS_REPLY) };
+  if (!(S.fightOpen && S.fightOpen[f.name])) { const g = gossipReply(f, raw); if (g) return { pts:0, mood:"happy", say: g.slice(0, 3).join(" ") }; }
   const armed = S.lastAsk && S.lastAsk[f.name];
   if (armed && ["worry","private","real"].includes(armed.k)) { const c = context(f, text); if (c) { S.lastAsk[f.name] = null; return { pts:1, say:c, mood:"close", safe:true }; } }
   S.fightOpen = S.fightOpen || {};
@@ -2350,7 +2379,7 @@ function phoneButton() {
   const u = on ? unreadCount() : 0;
   badge.style.display = u ? "flex" : "none"; badge.textContent = u;
 }
-function textFrom(fname, msg) { texts(fname).push({ from:"them", t:msg, read:false }); phoneButton(); }
+function textFrom(fname, msg) { texts(fname).push({ from:"them", t:msg, read:false }); phoneButton(); notify(fname, msg); }
 function face(f) { const n = ART[f.emo]; return HAVE.has(n) ? `<img src="art/${n}.png" alt="">` : ""; }
 // ===== Photos: the animals send you pictures (made from the game's own art, nothing real) =====
 const PHOTO_PLACES = { picnic:"the Picnic Meadow", stars:"Starry Hill", pond:"the Frozen Pond", garden:"the Flower Garden", village:"Animal Burrow", path:"the forest path" };
@@ -2376,6 +2405,8 @@ function makePhoto(f, kind) {
   return `PIC|${kind}|${place}|${kind === "view" ? "" : (ART[f.emo] || "")}|${item}|${cap}`;
 }
 function msgHTML(m) {
+  if (typeof m.t === "string" && m.t.startsWith("PIC2|")) { const p = photoInner(m.t), cap = m.t.split("|")[3];
+    return `<div class="ph-msg ${m.from === "me" ? "me" : "them"} ph-pic" onclick="this.classList.toggle('big')"><div class="photo pic2" style="background-image:url(art/${p.place}.png)">${p.html}</div>${cap ? `<div>${esc(cap)}</div>` : ""}</div>`; }
   if (typeof m.t === "string" && m.t.startsWith("PIC|")) {
     const [, kind, place, who, item, cap] = m.t.split("|");
     return `<div class="ph-msg ${m.from === "me" ? "me" : "them"} ph-pic" onclick="this.classList.toggle('big')"><div class="photo ${kind}" style="background-image:url(art/${place}.png)">${who && HAVE.has(who) ? `<img class="sel" src="art/${who}.png" alt="">` : ""}${item && HAVE.has(item) ? `<img class="pitem" src="art/${item}.png" alt="">` : ""}</div><div class="cap">${esc(cap)}</div></div>`;
@@ -2396,7 +2427,7 @@ function openPhone(thread) {
       <div class="ph-top"><button class="ph-x" onclick="phoneHome()">Home</button><b>Messages</b><button class="ph-x" onclick="closePhone()">Close</button></div>
       <button class="ph-meet" onclick="closePhone(); eyesScreen()">Put the phone down and look around</button>
       ${friends().map(f => { const th = texts(f.name), last = th[th.length - 1], un = th.filter(m => m.from === "them" && !m.read).length;
-        return `<div class="ph-contact" onclick="openPhone('${f.name}')">${face(f)}<div><b>${f.name}</b> <small class="where">${whereWord(f)}</small><br><small>${last ? esc(preview(last.t)).slice(0, 34) : "Say hi!"}</small></div>${un ? `<span class="badge">${un}</span>` : ""}</div>`; }).join("")}
+        return `<div class="ph-contact" onclick="openPhone('${f.name}')">${face(f)}<div><b>${f.name}</b> <span class="rel-chip">${relLabel(f)}</span> <small class="where">${whereWord(f)}</small><br><small>${last ? esc(preview(last.t)).slice(0, 34) : "Say hi!"}</small></div>${un ? `<span class="badge">${un}</span>` : ""}</div>`; }).join("")}
     </div>`;
   } else {
     const f = friends().find(x => x.name === thread);
@@ -2455,7 +2486,7 @@ function soapLines(f, said, r, o = {}) {
   // whole multi-line texts only, never cut in half; stage 0 gets friendly ones, lovey ones come with the hearts
   const follow = [...FOLLOW0[f.type], ...FOLLOW[f.type]].filter(e => ok(e) && !RECENT.includes(e.join("|")));
   if (follow.length && Math.random() < 0.45) return pickOne(follow).map(fill);
-  const out = [fill(pickOne(r.mood === "happy" ? [...SOAP.gossip, ...SOAP.drama] : [...SOAP.gossip, ...SOAP.sass, ...SOAP.drama]))];
+  const out = [fill(pickOne(XMAS() && Math.random() < .45 ? XMAS_TEXT : r.mood === "happy" ? [...SOAP.gossip, ...SOAP.drama] : [...SOAP.gossip, ...SOAP.sass, ...SOAP.drama]))];
   if (Math.random() < 0.3) out.push(fill(pickOne(st === 0 ? SOAP.sweet0 : st === 1 ? SOAP.sweet1 : SOAP.sweet2)));
   return out;
 }
@@ -2516,6 +2547,7 @@ function deliver(fname, lines, k = 0, keep = false) {
     if (line !== null) {
       const m = { from:"them", t: line, read: !!b };
       texts(fname).push(m);
+      if (!b) notify(fname, line);
       if (b) { const stick = near(b); dropTyping(b); b.insertAdjacentHTML("beforeend", msgHTML(m)); if (stick) b.scrollTop = b.scrollHeight; }
     } else if (b) dropTyping(b);
     phoneButton();
@@ -2630,6 +2662,8 @@ function sendText(fname) {
   }
   const rumor = rumorReply(f, said);
   if (rumor) { addHearts(f, 1); rumor[2] += "  (+1 heart)"; return setTimeout(() => deliver(fname, rumor), 1200); }
+  const gos = gossipReply(f, said);
+  if (gos) return setTimeout(() => deliver(fname, gos), 1200);
   if (KID_PHOTO.test(said)) return setTimeout(() => deliver(fname, [pickOne(["Aww, that's sweet! But let's not send real photos of you, okay? That's a big safety rule online. I'll send you one of me instead!", "Real photos of you stay private, even with me! That's the rule. But here, have a picture of ME!"]), makePhoto(f, "selfie")]), 1200);
   if (PHOTO_ASK.test(said)) { addHearts(f, S.textDay?.[fname] === S.day ? 0 : 1); return setTimeout(() => deliver(fname, [pickOne(["Okay, hold on! Let me find my good side...", "A picture? Of ME? Okay, okay, one second!", "Hehe, okay! Don't laugh!"]), makePhoto(f, pickOne(["selfie", "selfie", "item"])), pickOne(["What do you think?", "Was that okay? I'm blushing.", "Your turn to tell me about your day!"])]), 1200); }
   setTimeout(() => {
@@ -3071,6 +3105,38 @@ function showEnd(win, say, score, dateF, dateI) {
     <button class="soft" onclick="gameShows()">Other shows</button><button class="soft" onclick="mapScreen()">Back to the village</button>`);
 }
 
+// ===== Gossiping WITH you: they spill the tea and trash-talk the others (silly, never cruel) =====
+const GOSSIP_CUE = /\b(gossip|tea|spill|drama|did you hear|guess what|between us|don'?t tell|secret|what do you think (of|about)|thoughts on|annoying|weird|so rude|rude|mean|cringe|ugh|can'?t stand|is so|so extra|show ?off|bossy|jealous|copycat|copied|smells|dramatic)\b/;
+const TRASH = [
+  "Okay, {O} is SO dramatic. They cried because their toast was 'too toasty.' 🙄",
+  "Don't tell anyone but {O} sings in the shower and it sounds like a goose with a cold. 🪿😂",
+  "{O} copied my scarf. Like, the EXACT same color. Coincidence? I think NOT. 😤",
+  "{O} thinks they're the best dancer in the village. They are NOT. They dance like a wobbly jelly. 💀",
+  "Ugh, {O} talks about their own tail for like an HOUR. We get it. It's fluffy. 🙄",
+  "{O} said they don't like honey. Who doesn't like HONEY?! Suspicious. 🕵️",
+  "Okay real talk: {O} is kind of a show-off. 'Look at me, I can climb a tree.' Okay?? So can squirrels. 💅",
+  "{O} snores SO loud at sleepovers. The whole fort shook. 😂",
+  "{O} always says 'I'm not hungry' and then eats everyone's snacks. EVERY time. 🍪😒",
+  "Not to be mean, but {O}'s jokes are... a lot. Like, I laughed to be polite. 😬",
+  "{O} took a selfie for 20 minutes at the pond. TWENTY. I timed it. ⏱️",
+  "Between you and me? {O} is a little bit bossy. 'Sit here, stand there.' Who made you the boss?? 🙄"];
+const TRASH_AGREE = ["RIGHT?! I thought I was the only one who noticed! 😱", "Okay, I'm SO glad you said it first. 😂", "Omg yes. YES. Thank you. 🙌", "STOP, you're so right. 💀", "I literally said that yesterday!! 😤"];
+const TRASH_WHISPER = ["...okay but you did NOT hear that from me. 🤐", "Shhh. This stays between us. 🤫", "Anyway. I still like them. Mostly. 😅", "Okay okay, I'm being mean. They're actually fine. ...Kind of. 😏"];
+function gossipReply(f, said) {
+  const n = normalize(said), t = " " + n + " ";
+  if (safety(f, t) || SAFE.bully.test(n) || KID_HURTING.test(n)) return null;
+  const others = friends().filter(x => x.name !== f.name);
+  const named = others.find(o => new RegExp("\\b" + o.name.toLowerCase() + "\\b").test(n));
+  if (!(named ? GOSSIP_CUE.test(n) || /\?/.test(said) : /\b(gossip|spill|tea|drama|tell me something|any news)\b/.test(n))) return null;
+  const who = named || pickOne(others), fill = x => x.replaceAll("{O}", who.name);
+  const neg = /\b(annoying|weird|rude|mean|cringe|ugh|can'?t stand|so extra|show ?off|bossy|jealous|copycat|copied|smells|dramatic|is so)\b/.test(n);
+  const out = [named && neg ? pickOne(TRASH_AGREE) : named ? pickOne([`${named.name}? Ohhh, I have THOUGHTS. 👀`, `Okay, ${named.name}... where do I even START? 💅`, `Ooh, ${named.name}. Okay, but you can't tell ANYONE.`]) : pickOne(["Ooh, you want the TEA? Okay. Come closer. 👀", "Okay, I wasn't going to say anything, but...", "Oh, you came to the RIGHT animal. 💅"]), fill(pickOne(TRASH))];
+  if (Math.random() < .5) out.push(fill(pickOne(TRASH)));
+  out.push(pickOne(TRASH_WHISPER));
+  // sometimes it gets back to them...
+  if (Math.random() < .25) setTimeout(() => textFrom(who.name, pickOne([`Soooo I heard you and ${f.name} were talking about me. 😒 Cool. Cool cool cool.`, `Funny how ${f.name} thinks my jokes are 'a lot.' I heard EVERYTHING. 😤`, `Wow. Gossiping about me with ${f.name}?? I'm not mad. I'm just... taking notes. 📝`])), 40000);
+  return out;
+}
 // ===== Gossip behind your back =====
 const RUMORS = ["snore like a leaf blower", "dance like a flapping penguin", "sing in the bath SUPER loud", "ate ALL the cookies at the party", "text like a grandma", "have a secret crush on somebody", "tripped in front of everyone and pretended it was a dance move", "think you're the best at everything", "still sleep with a teddy bear", "talk to your plants"];
 function sendRumor(teller) {
@@ -3330,6 +3396,9 @@ const POST_TEXT = {
 };
 const POST_SOAP = ["Some animals need to learn how to keep a secret. 🙄 Not naming names. ({O})", "Not me seeing {O} and {O2} at the cafe together. 👀👀", "Okay, who ate my cupcake? I KNOW it was you, {O}. 😤", "Feeling cute. Might delete later. 💅", "Some of you are SO dramatic. Anyway, love you all. 💕", "{O} said my fur looks messy today. Well, {O}'s fur looks like a broom. 🙃", "Unfollowing anyone who doesn't like pancakes. Bye. 💅", "Guess who's NOT invited to my party. 🙂 ({O}, it's you.)"];
 const POST_ME = { 1:["{ME} said hi to me today and now I can't stop smiling. 🙈", "Is it weird that I like when {ME} texts me? Asking for a friend. 😳"], 2:["Shoutout to {ME} for being the BEST. 💖", "Me and {ME} >>> everyone else. Sorry not sorry. 💅💕", "{ME} is SO cute. That's it. That's the post. 😍"] };
+const POST_RUDE = ["Not to be rude, but {ME}'s dancing is... a LOT. 😂", "{ME} thinks they're SO cool. 🙄", "Saw {ME} trip in the town square today. 💀 Iconic though.", "Who keeps letting {ME} pick the music? 😩", "{ME} took the last cookie AGAIN. I'm keeping a list. 📝", "Is it just me or does {ME} talk to plants? 👀"];
+const RUDE_C = ["LOL true 😂", "Facts. 💀", "Ew, who posted this? 😂", "Nobody asked. 💅", "Cringe. (jk... or am I?)", "Okay that's kind of mean... but funny. 😬"];
+const DEFEND_C = ["Hey! Be nice to {ME}! 😤", "{ME} is awesome, actually. 💅", "Delete this. {ME} is my friend. 😠", "Mean comments are NOT cute. 🙄", "Ignore them, {ME}. You're the best! 💕"];
 const COMMENTS = ["OMG 😍", "Iconic. 💅", "Who's {O}?? 👀", "Not you doing this AGAIN 😂", "I want some!!", "Okay, but why wasn't I invited? 😤", "Love this 💕", "Drama. I love it. 🍿", "Ummm explain?? 👀", "Same, honestly.", "Best post today ✨", "Rude. 😒 (jk love you)", "HAHAHA", "Wait what 😳", "This is so you 😂"];
 function soapFill(x, who) { const o = friends().filter(f => f.name !== who).sort(() => Math.random() - .5); return x.replaceAll("{O}", o[0].name).replaceAll("{O2}", o[1].name).replaceAll("{ME}", S.name || "you"); }
 function makePost(f, text, pic) {
@@ -3343,8 +3412,11 @@ function freshPosts() {
   const since = nowAbs() - (S.feedAt || 0), n = !S.feed.length ? 6 : Math.min(3, Math.floor(since / 90));
   for (let i = 0; i < n; i++) {
     const f = pickOne(friends()), st = stageOf(f), r = Math.random();
-    const text = r < .35 ? soapFill(pickOne(POST_SOAP), f.name) : r < .5 && st >= 1 ? soapFill(pickOne(POST_ME[st]), f.name) : pickOne(POST_TEXT[f.type]);
-    S.feed.unshift(makePost(f, text));
+    const rude = r >= .85 && st < 2;
+    const text = rude ? soapFill(pickOne(POST_RUDE), f.name) : XMAS() && r >= .6 && r < .85 ? pickOne(XMAS_POSTS) : r < .35 ? soapFill(pickOne(POST_SOAP), f.name) : r < .5 && st >= 1 ? soapFill(pickOne(POST_ME[st]), f.name) : pickOne(POST_TEXT[f.type]);
+    const post = makePost(f, text);
+    if (rude) { const fan = friends().filter(x => x.name !== f.name).sort((a, b) => S.hearts[b.name] - S.hearts[a.name]); post.comments = [{ who: fan[2].name, t: soapFill(pickOne(RUDE_C), f.name) }, { who: fan[0].name, t: soapFill(pickOne(DEFEND_C), f.name) }]; }
+    S.feed.unshift(post);
   }
   if (n) S.feedAt = nowAbs();
   S.feed = S.feed.slice(0, 40);
@@ -3391,6 +3463,8 @@ function bookPost(pic) {
   friends().slice().sort(() => Math.random() - .5).slice(0, 3).forEach((f, n) => setTimeout(() => {
     const st = stageOf(f); p.likes += 1 + Math.floor(Math.random() * 3);
     p.comments.push({ who: f.name, t: soapFill(pickOne(st === 0 ? ["Cool!", "Nice 👍", "Haha, same.", "Okay, this is actually good.", "Who even posts this? 😂 (jk)"] : st === 1 ? ["Hehe, love this 😊", "Okay this made me smile 🙈", "Cute!! 💕", "Why is this so you 😂"] : ["My FAVORITE post ever 😍", "Stop, you're too cute 💖", "Everyone look at how amazing they are 💕", "Liked it 100 times. 💅"]), f.name) });
+    if (n === 2 && Math.random() < .5) { const meanie = friends().slice().sort((a, b) => S.hearts[a.name] - S.hearts[b.name])[0], hero = friends().slice().sort((a, b) => S.hearts[b.name] - S.hearts[a.name])[0];
+      p.comments.push({ who: meanie.name, t: soapFill(pickOne(RUDE_C), meanie.name) }); setTimeout(() => { p.comments.push({ who: hero.name, t: soapFill(pickOne(DEFEND_C), hero.name) }); if (document.querySelector(".bb")) bookApp(); }, 1600); }
     if (n === 1 && Math.random() < .6) { const o = pickOne(friends().filter(x => x.name !== f.name)); p.comments.push({ who: o.name, t: soapFill(pickOne([`Why did ${f.name} comment so fast?? 👀`, "Didn't even tag me. Wow. 😒", "The drama in these comments 🍿"]), o.name) }); }
     if (document.querySelector(".bb")) bookApp();
   }, 1500 + n * 1800));
@@ -3398,7 +3472,7 @@ function bookPost(pic) {
 // --- Photos and Camera ---
 function allPhotos() {
   const out = [];
-  friends().forEach(f => texts(f.name).forEach(m => { if (typeof m.t === "string" && m.t.startsWith("PIC|")) out.push(m.t); }));
+  friends().forEach(f => texts(f.name).forEach(m => { if (typeof m.t === "string" && m.t.startsWith("PIC")) out.push(m.t); }));
   (S.feed || []).forEach(p => { if (p.pic) out.push(p.pic); });
   (S.myPics || []).forEach(t => out.push(t));
   return [...new Set(out)].reverse();
@@ -3407,8 +3481,8 @@ function photosApp() {
   const ph = document.getElementById("phone"); ph.style.display = "flex"; ph.dataset.thread = "";
   const pics = allPhotos();
   ph.innerHTML = `<div class="ph-screen">${appTop("Photos")}<div class="ph-msgs pgrid">
-    ${pics.length ? pics.map(t => { const [, kind, place, who, item] = t.split("|");
-      return `<div class="pthumb" style="background-image:url(art/${place}.png)" onclick="this.classList.toggle('big')">${who && HAVE.has(who) ? `<img src="art/${who}.png" alt="">` : ""}</div>`; }).join("") : `<p class="sub" style="color:var(--ink);text-shadow:none">No photos yet. Ask someone for a selfie, or use the Camera!</p>`}
+    <button class="rainbow" style="grid-column:1 / -1" onclick="photoMaker()">Make your own picture</button>
+    ${pics.length ? pics.map(t => photoThumb(t, "this.classList.toggle('big')")).join("") : `<p class="sub" style="color:var(--ink);text-shadow:none">No photos yet. Ask someone for a selfie, or use the Camera!</p>`}
   </div></div>`;
 }
 function cameraApp(shot) {
@@ -3418,7 +3492,7 @@ function cameraApp(shot) {
   ph.innerHTML = `<div class="ph-screen">${appTop("Camera")}<div class="ph-msgs" style="align-items:center">
     ${shot ? msgHTML({ from: "them", t: shot }) : `<div class="cam-view" style="background-image:url(art/${place}.png)"><img src="art/${me}.png" alt=""><div class="cam-frame"></div></div>`}
     ${shot ? `<button class="rainbow" onclick="cameraPost()">Post it on Burrowbook</button><button class="soft" onclick="cameraApp()">Take another</button>`
-           : `<button class="cam-shutter" aria-label="Take a selfie" onclick="cameraSnap('${place}')"></button><small>Take a selfie of your animal</small>`}
+           : `<button class="cam-shutter" aria-label="Take a selfie" onclick="cameraSnap('${place}')"></button><small>Take a selfie of your animal</small><button class="rainbow" onclick="photoMaker()">Make your own picture</button>`}
   </div></div>`;
 }
 function cameraSnap(place) {
@@ -3507,7 +3581,7 @@ function townScreen() {
   show(`<div class="town ${townReal() ? "real" : ""}" id="town"><div class="town-world" id="townWorld" style="width:${TW}px;height:${TH}px">
       ${townGround()}
       ${Object.keys(TOWN_SPOT).filter(k => !["village"].includes(k)).map(k => `<div class="town-sign" style="left:${TOWN_SPOT[k][0]}px;top:${TOWN_SPOT[k][1] + 46}px">${WORLD_NAMES[k] || k}</div>`).join("")}
-      ${TOWN_DECOR.map(d => `<img class="t-spr ${d.glow ? "t-lamp" : ""}" src="art/${tSpr(d.sp)}.png" alt="" style="left:${d.x}px;top:${d.y}px;width:${d.w}px;z-index:${Math.round(d.y)}" ${SPR_FALLBACK}>`).join("")}
+      ${TOWN_DECOR.concat(XMAS() ? XMAS_DECOR : []).map(d => `<img class="t-spr ${d.glow ? "t-lamp" : ""}" src="art/${tSpr(d.sp)}.png" alt="" style="left:${d.x}px;top:${d.y}px;width:${d.w}px;z-index:${Math.round(d.y)}" ${SPR_FALLBACK}>`).join("")}
       ${TOWN_BLD.map((b, n) => `<img class="t-spr t-bld ${b[4] ? "tap" : ""}" data-b="${n}" src="art/${tSpr(b[0])}.png" alt="${b[5]}" style="left:${b[1]}px;top:${b[2]}px;width:${b[3]}px;z-index:${b[2]}" ${b[4] ? `onclick="townTapBld(${n}, event)"` : ""} ${SPR_FALLBACK}>${b[5] ? `<div class="town-sign bld" style="left:${b[1]}px;top:${b[2] + 8}px;z-index:${b[2] + 1}">${b[5]}</div>` : ""}`).join("")}
       ${all.map((f, i) => townAnimalHTML(ART[f.emo], f.name, `ta${i}`, `onclick="townTapAnimal(${i}, event)"`)).join("")}
       ${townAnimalHTML(me, esc(S.name), "taMe", "", "t-me")}
@@ -3525,6 +3599,7 @@ function townScreen() {
   document.body.classList.add("immersive", "townmode"); scrollTo(0, 0);
   const people = all.map((f, i) => { const w = whereNow(f), sp = w ? spotFor(i, w) : ANIMAL_HOME(i), h = hashStr(f.name);
     return { f, i, x: sp[0], y: sp[1], tx: null, ty: null, wait: 1 + (h % 5), asleep: !w, line: "", talkUntil: 0, dir: 1 }; });
+  pickAdmirers();
   TOWN = { people, me: { x: pos[0], y: pos[1], tx: null, ty: null, dir: 1, line: "", talkUntil: 0 }, zoom: S.townZoom || (innerWidth < 600 ? .6 : .8), camX: pos[0], camY: pos[1], free: false, t: 0, last: performance.now(), lifeT: 0, after: null, chatWith: null };
   townWire(); requestAnimationFrame(townTick);
 }
@@ -3569,14 +3644,21 @@ function goOutside() { return S.outside === "town" ? townScreen() : eyesScreen()
 function townTalkOpen(i) {
   const T = TOWN, p = T.people[i], f = p.f, st = stageOf(f);
   T.chatWith = i; p.tx = null; p.wait = 999; const hint = document.getElementById("townHint"); if (hint) hint.style.opacity = 0; p.dir = T.me.x < p.x ? -1 : 1; T.me.dir = -p.dir;
-  townSay(p, pickOne(MEET_HELLO[st]), 5);
+  const isAdm = S.admirer === f.name && !S.admirerGone && !S.admirerOk;
+  townSay(p, isAdm ? pickOne(["Oh! Um. I wasn't following you! I was just... walking. The same way. 😳", "*freezes* ...You saw me? I mean, hi! Random! 😅"]) : pickOne(MEET_HELLO[st]), 5);
   const box = document.getElementById("townTalk");
-  box.innerHTML = `<div class="tt-head"><img src="${toonImg(ART[f.emo])}" alt=""><b>${f.name}</b><small>${heartBar(S.hearts[f.name])}</small><button class="ph-x" onclick="townTalkClose()">Bye</button></div>
+  box.innerHTML = `<div class="tt-head"><img src="${toonImg(ART[f.emo])}" alt=""><b>${f.name}</b><span class="rel-chip">${relLabel(f)}</span><small>${heartBar(S.hearts[f.name])}</small><button class="ph-x" onclick="townTalkClose()">Bye</button></div>
     <div class="tt-type"><input id="ttIn" maxlength="120" placeholder="Say something to ${f.name}..." onkeydown="if(event.key==='Enter')townSayTo()"><button onclick="townSayTo()">Say it</button></div>
+    ${isAdm ? `<div class="tt-acts" style="margin-bottom:6px"><button class="soft" onclick="admirerSpace()">Please stop following me</button><button class="soft" onclick="admirerOkay()">Aww, you can walk with me</button></div>` : ""}
     <div class="tt-acts"><button class="soft" onclick="townHug()">Hug</button><button class="rainbow" onclick="townSave(); activityMenu(${i}, 'town')">Play together</button>
-      <button class="soft" onclick="townSave(); planScreen('${f.name}')">Make plans</button><button class="green" onclick="townSave(); inviteOver('${f.name}')">Come to my house</button></div>`;
+      <button class="soft" onclick="townSave(); planScreen('${f.name}')">Make plans</button><button class="soft" onclick="picTogether('${f.name}')">Take a picture together</button>${XMAS() ? `<button class="soft" onclick="giveGift('${f.name}')">Give a present</button>` : ""}<button class="green" onclick="townSave(); inviteOver('${f.name}')">Come to my house</button></div>`;
   box.style.display = "block"; noEmoji(box);
 }
+function admirerSpace() { const T = TOWN, p = T.people[T.chatWith]; S.admirerGone = true;
+  townSay(p, pickOne(["You're right. Following people isn't okay. I'm really sorry. I'll give you space. 😣", "Oh... yeah. That was weird of me. Sorry! I'll stop. 🙈"]), 6);
+  postFeed(pickOne(friends().filter(x => x.name !== p.f.name)).name, `Heard ${S.name} told ${p.f.name} to stop following them around. Good for you! 💪`); }
+function admirerOkay() { const T = TOWN, p = T.people[T.chatWith]; S.admirerOk = true; addHearts(p.f, 1);
+  townSay(p, pickOne(["Really?! Okay! I'll walk WITH you instead of behind you. Hehe. 😊", "Yay! Sorry for being sneaky. I just think you're cool. 🙈"]), 6); }
 function townTalkClose() { const T = TOWN; if (!T) return; const box = document.getElementById("townTalk"); if (box) box.style.display = "none";
   if (T.chatWith !== null) { const p = T.people[T.chatWith]; p.wait = 2; townSay(p, pickOne(["See you later!", "Bye bye!", "Okay, bye! 👋"]), 2.5); } T.chatWith = null; }
 function townSay(p, txt, secs) { p.line = txt; p.talkUntil = TOWN.t + secs; }
@@ -3612,10 +3694,19 @@ function townStep(now) {
   // everyone else lives their day
   T.lifeT += dt;
   if (T.lifeT > 1.5) { T.lifeT = 0;
-    T.people.forEach(p => { if (T.chatWith === p.i) return; const w = whereNow(p.f), home = ANIMAL_HOME(p.i), sp = w ? spotFor(p.i, w) : home;
+    T.people.forEach(p => { p.follow = false; if (T.chatWith === p.i) return; const w = whereNow(p.f), home = ANIMAL_HOME(p.i), sp = w ? spotFor(p.i, w) : home;
       p.asleep = !w && Math.hypot(p.x - home[0], p.y - home[1]) < 20;
       if (Math.hypot(p.x - sp[0], p.y - sp[1]) > 160 && p.tx === null) { p.tx = sp[0]; p.ty = sp[1]; p.travel = true; }
       if (!w && p.tx === null && !p.asleep) { p.tx = home[0]; p.ty = home[1]; p.travel = true; } });
+    // secret admirer sneaks after you; one animal follows another around
+    const adm = S.admirer && !S.admirerGone && T.people.find(p => p.f.name === S.admirer);
+    if (adm && !adm.asleep && T.chatWith !== adm.i) { const d = Math.hypot(adm.x - m.x, adm.y - m.y); adm.follow = true;
+      if (d > 230) { adm.tx = m.x - (m.dir || 1) * 170; adm.ty = m.y - 40; adm.travel = true; }
+      if (Math.random() < .12) townSay(adm, S.admirerOk ? pickOne(["*walks next to you happily*", "Hehe, hi again!"]) : pickOne(["*hides behind a tree* 👀", "*pretends to look at a flower*", "...", "*peeks*"]), 2.5);
+      if (!S.admirerOk && Math.random() < .03) notify("Secret Admirer", soapFill(pickOne(ADMIRER_NOTES), "").replace("{P}", WORLD_NAMES[townNearestPlace()] || "the town")); }
+    const nf = S.npcFollow && T.people.find(p => p.f.name === S.npcFollow[0]), tgt = S.npcFollow && T.people.find(p => p.f.name === S.npcFollow[1]);
+    if (nf && tgt && !nf.asleep && !tgt.asleep && T.chatWith !== nf.i) { nf.follow = true; if (Math.hypot(nf.x - tgt.x, nf.y - tgt.y) > 150) { nf.tx = tgt.x - 110; nf.ty = tgt.y - 30; nf.travel = true; }
+      if (Math.random() < .06) townSay(tgt, pickOne([`${nf.f.name}, why are you following me?! 😤`, "Is someone behind me?? 👀", `${nf.f.name}! I can SEE you!`]), 3); }
     // two friends standing close chat
     const idle = T.people.filter(p => p.tx === null && !p.asleep && T.chatWith !== p.i && T.t > p.talkUntil + 4);
     for (let a = 0; a < idle.length; a++) for (let b = a + 1; b < idle.length; b++) { const A = idle[a], B = idle[b];
@@ -3625,7 +3716,7 @@ function townStep(now) {
   T.people.forEach(p => {
     const node = document.getElementById("ta" + p.i); if (!node) return;
     let moving = false;
-    if (p.tx === null && T.chatWith !== p.i && !p.asleep) { p.wait -= dt; if (p.wait <= 0) { const w = whereNow(p.f); if (w) { const sp = spotFor(p.i, w); p.tx = sp[0] + (Math.random() - .5) * 90; p.ty = sp[1] + (Math.random() - .5) * 50; } p.wait = 3 + Math.random() * 6; } }
+    if (p.tx === null && T.chatWith !== p.i && !p.asleep && !p.follow) { p.wait -= dt; if (p.wait <= 0) { const w = whereNow(p.f); if (w) { const sp = spotFor(p.i, w); p.tx = sp[0] + (Math.random() - .5) * 90; p.ty = sp[1] + (Math.random() - .5) * 50; } p.wait = 3 + Math.random() * 6; } }
     if (p.tx !== null) { const dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy), sp = (p.travel ? 95 : 55) * dt;
       if (d <= sp) { p.x = p.tx; p.y = p.ty; p.tx = null; p.travel = false; } else { p.x += dx / d * sp; p.y += dy / d * sp; if (Math.abs(dx) > .5) p.dir = Math.sign(dx); moving = true; } }
     townDraw(node, p, moving);
@@ -3652,7 +3743,7 @@ function picPicker(name) {
   const pics = allPhotos().slice(0, 30);
   ph.querySelector(".ph-screen").insertAdjacentHTML("beforeend", `<div id="picPick"><div class="pp-top"><b>Send a picture</b><button class="ph-x" onclick="document.getElementById('picPick').remove()">Close</button></div>
     <button class="rainbow" onclick="sendPic('${name}', 'new')">Take a selfie and send it</button>
-    <div class="pgrid">${pics.map((t, n) => { const [, kind, place, who] = t.split("|"); return `<div class="pthumb" style="background-image:url(art/${place}.png)" onclick="sendPic('${name}', ${n})">${who && HAVE.has(who) ? `<img src="art/${who}.png" alt="">` : ""}</div>`; }).join("")}</div></div>`);
+    <div class="pgrid">${pics.map((t, n) => photoThumb(t, `sendPic('${name}', ${n})`)).join("")}</div></div>`);
 }
 const PIC_BACK = {
   me: [["Haha, nice pic!", "Cool selfie! Where's that?", "Ooh, look at you!"], ["Aww, you look really cute in that. 😳", "Okay, that's a good picture of you. 🙈", "*saves it* ...What? It's a nice picture."], ["Okay you're SO cute. That's my new wallpaper. 😍", "STOP. You look amazing. 💖", "I'm putting this in a frame. Seriously. 💕"]],
@@ -3666,16 +3757,164 @@ function sendPic(name, which) {
     t = `PIC|selfie|${place}|${me}||${pickOne(["Me!", "Hi from me!", "Selfie for you!"])}`; S.myPics = S.myPics || []; S.myPics.push(t); }
   else t = allPhotos()[which];
   const pp = document.getElementById("picPick"); if (pp) pp.remove();
+  sendPicT(name, t);
+}
+function sendPicT(name, t) {
+  const f = fName(name), me = ART[S.animal[0]];
   if (!t) return;
   const mine = { from: "me", t, read: true }; texts(name).push(mine);
   const box = document.getElementById("phMsgs"); if (box) { box.insertAdjacentHTML("beforeend", msgHTML(mine)); box.scrollTop = box.scrollHeight; }
-  const who = t.split("|")[3], st = stageOf(f);
-  const line = who === me ? pickOne(PIC_BACK.me[st]) : who === ART[f.emo] ? pickOne(PIC_BACK.them) : pickOne(PIC_BACK.view);
+  const st = stageOf(f), isPic2 = t.startsWith("PIC2|"), who = isPic2 ? "" : t.split("|")[3];
+  const hasMe = isPic2 ? t.includes(me + ",") : who === me, hasThem = isPic2 ? t.includes(ART[f.emo] + ",") : who === ART[f.emo];
+  const line = hasMe && hasThem ? pickOne(st === 0 ? ["Haha, that's us! Nice one.", "We look so funny together! 😂"] : st === 1 ? ["Aww, we look cute together... 🙈", "Can I keep this one? 😳"] : ["US!! I'm framing this. 💖", "Best picture of us EVER. 😍"]) : hasMe ? pickOne(PIC_BACK.me[st]) : hasThem ? pickOne(PIC_BACK.them) : pickOne(PIC_BACK.view);
   S.picDay = S.picDay || {}; let tag = "";
   if (S.picDay[name] !== S.tday) { S.picDay[name] = S.tday; addHearts(f, 1); tag = "  (+1 heart)"; }
   const back = Math.random() < .5 ? [makePhoto(f, "selfie"), pickOne(["Here's one of me back!", "Okay, my turn! 📸", "Fair trade. 😏"])] : [];
   setTimeout(() => deliver(name, [line + tag, ...back]), 1300);
 }
+// ===== Christmas time! (switch it off on the title screen) =====
+const XMAS = () => { try { return localStorage.getItem("gaosXmas") !== "0"; } catch (e) { return true; } };
+function xmasToggle() { try { localStorage.setItem("gaosXmas", XMAS() ? "0" : "1"); } catch (e) {} xmasDecor(); titleScreen(); }
+let SNOW = null;
+function xmasDecor() {
+  const on = XMAS(); document.body.classList.toggle("xmas", on);
+  let c = document.getElementById("snow"), l = document.getElementById("xlights");
+  if (!on) { if (c) c.remove(); if (l) l.remove(); SNOW = null; return; }
+  if (!l) { document.body.insertAdjacentHTML("beforeend", `<div id="xlights">${Array.from({ length: 24 }, (_, i) => `<i style="--d:${(i % 4) * .35}s"></i>`).join("")}</div>`); }
+  if (!c) { document.body.insertAdjacentHTML("beforeend", `<canvas id="snow"></canvas>`); c = document.getElementById("snow");
+    SNOW = { c, ctx: c.getContext("2d"), flakes: Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), r: 1 + Math.random() * 3, s: .02 + Math.random() * .05, w: Math.random() * 6 })), t: 0 };
+    const tick = () => { if (!SNOW) return; const now = performance.now(); if (now - SNOW.t < 30) return; const dt = Math.min(.1, (now - (SNOW.t || now)) / 1000); SNOW.t = now;
+      const W = c.width = innerWidth, H = c.height = innerHeight, g = SNOW.ctx; g.clearRect(0, 0, W, H); g.fillStyle = "rgba(255,255,255,.9)";
+      SNOW.flakes.forEach(f => { f.y += f.s * dt * 3; f.w += dt; if (f.y > 1.02) { f.y = -.02; f.x = Math.random(); }
+        g.beginPath(); g.arc((f.x + Math.sin(f.w) * .01) * W, f.y * H, f.r, 0, 6.3); g.fill(); }); };
+    const loop = () => { tick(); requestAnimationFrame(loop); }; requestAnimationFrame(loop); setInterval(tick, 60); }
+}
+const XMAS_TEXT = ["What do you want for Christmas?? Tell me EVERYTHING. 🎄", "I already wrapped your present. No peeking! 🎁", "Okay, {O} is acting SO weird about Secret Santa. I think they got ME. 👀",
+  "Hot cocoa or candy canes? This is very important. ☕", "It snowed SO much! Snowball fight later?? ❄️", "I'm making gingerbread animals. One looks like you. 😂", "{O} put up SIX trees. Six! Who needs six trees?! 🎄🙄",
+  "Do you think Santa visits Animal Burrow? I left out acorns just in case. 🎅", "I've been singing Jingle Bells all day. My family is begging me to stop. 🔔😂", "Ice skating on the Frozen Pond tomorrow? I promise I won't fall. Much. ⛸️"];
+const XMAS_POSTS = ["The whole village is covered in snow!! ❄️❄️❄️", "Decorated the tree! Rate it 1-10. 🎄", "Secret Santa is going to be SO good this year. 🎁", "Made a snowman. His name is Gerald. ☃️",
+  "Hot cocoa season is the best season. ☕", "Who keeps eating all the Christmas cookies?! 🍪👀", "Lights are up! Come see them tonight. ✨", "Caroling at 6. Bring your loudest voice! 🎶"];
+const XMAS_TALK = /\b(christmas|xmas|santa|present|presents|gift|gifts|snow|snowman|reindeer|rudolph|elf|elves|sleigh|stocking|candy cane|gingerbread|jingle|carol|ornament|tree|cocoa|holiday)\b/;
+const XMAS_REPLY = ["Christmas is my FAVORITE. The lights, the snow, the cookies! What's your favorite part? 🎄", "I asked Santa for a new scarf. And maybe a pony. A small one. What did you ask for? 🎅",
+  "I love snow days! Let's build a snowman together. I'll do the head. ☃️", "Shhh, I'm still wrapping your present. It's a surprise! 🎁", "I can hear sleigh bells already. Can you? 🔔",
+  "My family makes gingerbread every year. I always eat the gumdrop buttons first. 🍪", "Do you open presents on Christmas Eve or Christmas morning? This is a big question. 🎁"];
+const XGIFTS = [["cocoa", "Hot cocoa", "Hot cocoa with marshmallows?! You know me SO well. ☕💕"], ["santahat", "A Santa hat", "*puts it on* How do I look? Festive? FESTIVE. 🎅"],
+  ["scarf", "A cozy scarf", "It's so soft! I'm wearing it every single day. 🧣"], ["flowers", "Winter flowers", "Flowers in the snow? That's magic. Thank you! 💐"]];
+function giveGift(name, from) {
+  const f = fName(name), have = XGIFTS.filter(g => HAVE.has(g[0]) || g[0] === "cocoa" || g[0] === "santahat");
+  popup(`<h2>Give ${f.name} a present</h2><div class="walk-grid">${have.map((g, i) => `<button class="act-btn date-pick" onclick="giftPick('${name}', ${i})"><img src="art/${g[0]}.png" alt="" onerror="this.style.visibility='hidden'"><span>${g[1]}</span></button>`).join("")}</div><button class="soft" onclick="closePopup()">Not now</button>`);
+}
+function giftPick(name, i) {
+  const f = fName(name), g = XGIFTS[i]; closePopup(); chime(); floatHearts(4, "🎁");
+  S.giftDay = S.giftDay || {}; const first = S.giftDay[name] !== S.tday; if (first) { S.giftDay[name] = S.tday; addHearts(f, 1); }
+  const back = pickOne(["I got you something too! *hands you a tiny box with a bow* Open it! 🎁", "Wait, wait! I have one for YOU! It's a snow globe of Animal Burrow. ❄️", "Merry Christmas!! You're the best. 🎄💖"]);
+  if (TOWN && TOWN.chatWith != null) { townSay(TOWN.people[TOWN.chatWith], g[2], 5); setTimeout(() => TOWN && TOWN.chatWith != null && townSay(TOWN.people[TOWN.chatWith], back, 5), 2600); }
+  else popup(`<h2>${f.name}</h2>${face(f)}<p>${g[2]}</p><p>${back}</p><button class="rainbow" onclick="closePopup()">Merry Christmas!</button>`);
+  if (first) postFeed(name, pickOne([`${S.name} gave me ${g[1].toLowerCase()} for Christmas!! 🎁💕`, `Best Christmas present EVER from ${S.name}. 🎄`]));
+}
+const XMAS_DECOR = [{ sp: "t_xmastree", x: 1000, y: 905, w: 190 }, { sp: "t_presents", x: 1060, y: 925, w: 70 }, { sp: "t_presents", x: 945, y: 930, w: 60 },
+  { sp: "t_snowman", x: 1150, y: 1080, w: 80 }, { sp: "t_snowman", x: 560, y: 1000, w: 75 }, { sp: "t_snowman", x: 1500, y: 1120, w: 70 }, { sp: "t_xmastree", x: 1840, y: 1060, w: 120 }, { sp: "t_xmastree", x: 220, y: 760, w: 120 }];
+// ===== Relationship levels: a full row of hearts moves you up =====
+const relOf = f => (S.rel && S.rel[f.name]) || 0;
+const partnerWord = () => S.gender === "boy" ? "Boyfriend" : "Girlfriend";
+const REL_NAME = n => ["Friends", "Dating", partnerWord(), "Engaged", "Married"][n] || "Friends";
+const relLabel = f => REL_NAME(relOf(f));
+function relUp(f) {
+  if (S.levelingUp) return; S.levelingUp = true;
+  S.rel = S.rel || {}; const lv = (S.rel[f.name] = relOf(f) + 1);
+  S.hearts[f.name] = 3;
+  const title = lv === 1 ? `You and ${f.name} are now DATING!` : `${f.name} is officially your ${partnerWord()}!`;
+  const next = lv === 1 ? `Fill the hearts again and ${f.name} becomes your ${partnerWord()}.` : `Fill the hearts again and you can propose!`;
+  setTimeout(() => {
+    S.levelingUp = false; chime(); floatHearts(6); try { confetti(); } catch (e) {}
+    popup(`<div class="rel-pop"><div class="rel-pair"><img src="art/${ART[S.animal[0]]}.png" alt=""><svg class="rel-heart" viewBox="0 0 32 29"><path d="M16 29 C16 29 0 18 0 8.5 C0 3.5 4 0 8.5 0 C12 0 14.5 2 16 4.5 C17.5 2 20 0 23.5 0 C28 0 32 3.5 32 8.5 C32 18 16 29 16 29Z" fill="#ff4f8b"/></svg><img class="flip" src="art/${ART[f.emo]}.png" alt=""></div>
+      <h2>${title}</h2><p class="rel-tag">${REL_NAME(lv - 1)} &rarr; <b>${REL_NAME(lv)}</b></p><p>${next}</p><button class="rainbow" onclick="closePopup()">Yay!</button></div>`);
+    postFeed(f.name, lv === 1 ? `Sooo... ${S.name} and I are DATING now. 🙈💕` : `Officially ${S.name}'s ${partnerWord().toLowerCase()}!! 💖 Don't be jealous, everyone. 💅`);
+    textFrom(f.name, lv === 1 ? pickOne(["So... we're dating now?! I can't stop smiling. 🙈", "Is this real?? We're DATING! 💕"]) : pickOne([`${partnerWord()}. I like the sound of that. 💖`, "Officially yours! Best day EVER. 💕"]));
+    const gos = pickOne(friends().filter(x => x.name !== f.name));
+    setTimeout(() => textFrom(gos.name, pickOne([`WAIT. You and ${f.name}?!?! Since WHEN?? 😱`, `Everyone is talking about you and ${f.name}. EVERYONE. 👀`, `You and ${f.name}... okay, I'm not jealous. I'm FINE. 😤`])), 6000);
+  }, 400);
+}
+function popup(html) { closePopup(); document.body.insertAdjacentHTML("beforeend", `<div id="popup"><div class="pop-in">${html}</div></div>`); noEmoji(document.getElementById("popup")); }
+function closePopup() { const p = document.getElementById("popup"); if (p) p.remove(); }
+// ===== Notification sound and banner for texts =====
+function textTone() {
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    (XMAS() ? [[1319, 0], [1319, .1], [1319, .2], [1568, .32]] : [[1046, 0], [1568, .12]]).forEach(([fr, t0]) => { const o = actx.createOscillator(), g = actx.createGain(); o.type = "sine"; o.frequency.value = fr;
+      g.gain.setValueAtTime(0, actx.currentTime + t0); g.gain.linearRampToValueAtTime(.18, actx.currentTime + t0 + .02); g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + t0 + .35);
+      o.connect(g); g.connect(actx.destination); o.start(actx.currentTime + t0); o.stop(actx.currentTime + t0 + .4); });
+    if (navigator.vibrate) navigator.vibrate(60);
+  } catch (e) {}
+}
+function notify(fname, msg) {
+  const ph = document.getElementById("phone");
+  if (ph && ph.style.display !== "none" && ph.dataset.thread === fname) return;
+  textTone();
+  const f = fName(fname), n = document.getElementById("notif") || (document.body.insertAdjacentHTML("beforeend", `<div id="notif"></div>`), document.getElementById("notif"));
+  n.innerHTML = `${f ? face(f) : `<span class="notif-q">?</span>`}<div><b>${f ? f.name : esc(fname)}</b><br>${esc(preview(String(msg))).slice(0, 60)}</div>`;
+  n.onclick = () => { n.classList.remove("on"); if (f) openPhone(fname); };
+  n.classList.remove("on"); void n.offsetWidth; n.classList.add("on");
+  clearTimeout(notify.t); notify.t = setTimeout(() => n.classList.remove("on"), 3800);
+}
+// ===== Your own pictures: a picture maker, and pictures together =====
+// PIC2|place|art,x,y,h,flip;art,x,y,h,flip|caption   (x,y = feet position in % of the photo, h = height in %)
+function photoInner(t) {
+  if (t.startsWith("PIC2|")) { const [, place, layers] = t.split("|");
+    return { place, html: (layers || "").split(";").filter(Boolean).map(l => { const [a, x, y, h, fl] = l.split(","); return `<img class="lay" src="art/${a}.png" alt="" style="left:${x}%;top:${y}%;height:${h}%;transform:translate(-50%,-100%)${fl === "1" ? " scaleX(-1)" : ""}">`; }).join("") }; }
+  const [, kind, place, who, item] = t.split("|");
+  return { place, html: `${who && HAVE.has(who) ? `<img class="sel" src="art/${who}.png" alt="">` : ""}${item && HAVE.has(item) ? `<img class="pitem" src="art/${item}.png" alt="">` : ""}`, kind };
+}
+function photoThumb(t, click) { const p = photoInner(t); return `<div class="pthumb" style="background-image:url(art/${p.place}.png)" onclick="${click}">${p.html}</div>`; }
+const PM_BGS = ["village", "picnic", "garden", "stars", "pond", "lake", "berries", "campfire", "lanterns", "treehouse", "library", "rain", "kitchen", "room", "walk_forest", "walk_creek", "walk_birch", "walk_pines", "tvstudio", "in_cafe", "in_icecream", "in_cinema"];
+let PM = null;
+function photoMaker() {
+  try { closePhone(); } catch (e) {}
+  PM = PM || { bg: HAVE.has(S.worldAt) ? S.worldAt : "garden", layers: [{ a: ART[S.animal[0]], x: 50, y: 92, h: 55, f: 0 }], sel: 0, cap: "" };
+  const stickers = [ART[S.animal[0]], ...friends().map(f => ART[f.emo])].filter((v, i, a) => a.indexOf(v) === i).concat(Object.values(ITEM_ART).filter(n => HAVE.has(n)));
+  show(`<h1 style="font-size:32px">Make a picture</h1>
+    <div class="pm-canvas" id="pmCanvas" style="background-image:url(art/${PM.bg}.png)">${PM.layers.map((l, i) => `<img class="lay ${i === PM.sel ? "sel" : ""}" data-i="${i}" src="art/${l.a}.png" alt="" style="left:${l.x}%;top:${l.y}%;height:${l.h}%;transform:translate(-50%,-100%)${l.f ? " scaleX(-1)" : ""}">`).join("")}</div>
+    <div class="pm-tools center"><button class="soft" onclick="pmEdit('big')">Bigger</button><button class="soft" onclick="pmEdit('small')">Smaller</button><button class="soft" onclick="pmEdit('flip')">Flip</button><button class="soft" onclick="pmEdit('del')">Remove</button></div>
+    <div class="box"><h2>Add someone or something</h2><div class="walk-grid pm-tray">${stickers.map(n => `<button class="act-btn date-pick" onclick="pmAdd('${n}')"><img src="art/${n}.png" alt=""><span></span></button>`).join("")}</div>
+      <h2 style="margin-top:10px">Background</h2><div class="walk-grid">${PM_BGS.filter(b => HAVE.has(b) || b.includes("_") || ["kitchen","tvstudio","lake","berries","campfire","lanterns","treehouse","library","rain","room"].includes(b)).map(b => `<button class="act-btn" style="background:url(art/${b}.png) center/cover" onclick="PM.bg='${b}';photoMaker()"><span></span></button>`).join("")}</div>
+      <input id="pmCap" maxlength="80" placeholder="Write a caption (optional)" value="${esc(PM.cap)}" oninput="PM.cap=this.value" style="width:100%;margin-top:10px;font-size:16px;padding:10px;border-radius:14px;border:2px solid #f0d0e0">
+      <div class="center" style="margin-top:8px"><button class="rainbow" onclick="pmSave()">Save picture</button><button class="soft" onclick="PM=null;mapScreen()">Cancel</button></div></div>`);
+  pmWire();
+}
+function pmWire() {
+  const c = document.getElementById("pmCanvas"); let drag = null;
+  c.addEventListener("pointerdown", e => { const im = e.target.closest(".lay"); if (!im) return; e.preventDefault(); PM.sel = +im.dataset.i; c.querySelectorAll(".lay").forEach(x => x.classList.toggle("sel", x === im));
+    const r = c.getBoundingClientRect(), l = PM.layers[PM.sel]; drag = { im, r, dx: e.clientX - (r.left + l.x / 100 * r.width), dy: e.clientY - (r.top + l.y / 100 * r.height) }; c.setPointerCapture(e.pointerId); });
+  c.addEventListener("pointermove", e => { if (!drag) return; const l = PM.layers[PM.sel];
+    l.x = Math.max(0, Math.min(100, (e.clientX - drag.dx - drag.r.left) / drag.r.width * 100)); l.y = Math.max(5, Math.min(115, (e.clientY - drag.dy - drag.r.top) / drag.r.height * 100));
+    drag.im.style.left = l.x + "%"; drag.im.style.top = l.y + "%"; });
+  c.addEventListener("pointerup", () => drag = null); c.addEventListener("pointercancel", () => drag = null);
+}
+function pmAdd(n) { const isItem = Object.values(ITEM_ART).includes(n); PM.layers.push({ a: n, x: 30 + Math.random() * 40, y: isItem ? 80 : 92, h: isItem ? 22 : 50, f: 0 }); PM.sel = PM.layers.length - 1; photoMaker(); }
+function pmEdit(k) { const l = PM.layers[PM.sel]; if (!l) return; if (k === "big") l.h = Math.min(120, l.h * 1.15); if (k === "small") l.h = Math.max(8, l.h / 1.15); if (k === "flip") l.f = l.f ? 0 : 1; if (k === "del") { PM.layers.splice(PM.sel, 1); PM.sel = PM.layers.length - 1; } photoMaker(); }
+const picStr = (bg, layers, cap) => `PIC2|${bg}|${layers.map(l => [l.a, Math.round(l.x), Math.round(l.y), Math.round(l.h), l.f ? 1 : 0].join(",")).join(";")}|${(cap || "").replace(/[|;]/g, " ")}`;
+function pmSave() { const t = picStr(PM.bg, PM.layers, PM.cap); S.myPics = S.myPics || []; S.myPics.push(t); PM = null; chime(); picDone(t); }
+function picDone(t, withName) {
+  popup(`<div class="pic-done"><h2>Saved to your Photos!</h2>${msgHTML({ from: "them", t })}
+    <button class="rainbow" onclick="closePopup(); openPhone(); bookApp(); bookPost(${JSON.stringify(t).replace(/"/g, "&quot;")})">Post it on Burrowbook</button>
+    ${withName ? `<button class="green" onclick="closePopup(); openPhone('${withName}'); sendPicT('${withName}', ${JSON.stringify(t).replace(/"/g, "&quot;")})">Send it to ${withName}</button>` : `<button class="green" onclick="closePopup(); openPhone('msgs')">Send it to someone</button>`}
+    <button class="soft" onclick="closePopup()">Done</button></div>`);
+}
+function picTogether(name, place) {
+  const f = fName(name); place = place || (TOWN ? townNearestPlace() : S.meetPlace || S.worldAt || "garden");
+  const bg = HAVE.has(place) ? place : `walk_${place}`;
+  const t = picStr(bg, [{ a: ART[S.animal[0]], x: 36, y: 96, h: 52, f: 0 }, { a: ART[f.emo], x: 66, y: 96, h: 52, f: 1 }], `Me and ${f.name}!`);
+  S.myPics = S.myPics || []; S.myPics.push(t); chime(); floatHearts(2);
+  S.picTogetherDay = S.picTogetherDay || {}; if (S.picTogetherDay[name] !== S.tday) { S.picTogetherDay[name] = S.tday; addHearts(f, 1); }
+  picDone(t, name);
+}
+// ===== Secret admirers who follow people around (and learning to say "please give me space") =====
+function pickAdmirers() {
+  if (S.admDay === S.tday) return; S.admDay = S.tday; S.admirerGone = false;
+  const all = friends().slice().sort(() => Math.random() - .5);
+  S.admirer = Math.random() < .55 ? all[0].name : null; S.admirerOk = false;
+  S.npcFollow = [all[1].name, all[2].name];
+}
+const ADMIRER_NOTES = ["I saw you at {P} today... you looked really nice. 👀", "Roses are red, violets are blue, I walked behind you, all the way to {P}. 🌹", "You probably don't know who I am... but I know who YOU are. 😳 (In a nice way!!)", "Guess who? Not telling. 🤭", "I like your laugh. That's all. Bye. 🙈"];
 // ===== Walking around, through your eyes =====
 Object.assign(WORLD_NAMES, { forest:"Whispering Forest", pines:"Pine Woods", creek:"Mossy Creek", birch:"Golden Birch Wood" });
 const WALK_ORDER = ["forest", "village", "picnic", "creek", "garden", "berries", "pines", "lake", "treehouse", "birch", "library", "rain", "pond", "campfire", "lanterns", "stars"];
@@ -3918,6 +4157,8 @@ function renderMeet() {
         <button class="rainbow" onclick="activityMenu(${i},'meet')">Play together</button>
         <button class="rainbow" onclick="S.meetPlace=null; inviteOver('${f.name}')">Come to my house</button>
         <button class="soft" onclick="planScreen('${f.name}')">Make plans for later</button>
+        <button class="soft" onclick="picTogether('${f.name}', S.meetPlace)">Take a picture together</button>
+        ${XMAS() ? `<button class="soft" onclick="giveGift('${f.name}')">Give a present</button>` : ""}
         <button class="soft" onclick="visitDo('bye')">Say goodbye</button>
       </div>
       <p class="sub" style="margin:4px 0 0">${heartBar(S.hearts[f.name])}</p>
@@ -4263,6 +4504,7 @@ function confessScreen(fname, festival = false) {
 function yesScreen(fname) {
   setBg("glade");
   const f = friends().find(x => x.name === fname);
+  S.rel = S.rel || {}; S.rel[fname] = Math.max(3, S.rel[fname] || 0); try { postFeed(fname, `WE'RE ENGAGED!!! 💍 ${S.name} asked and I said YES!`); } catch (e) {}
   chime(); floatHearts(4); confetti();
   const grumbleLine = S.grumble >= 3
     ? `Even <b>Grumble, Sneer and Cackle</b> 🦡🦦🐦‍⬛ are there, waving little rainbow flags. "We're sorry we laughed at you," they say. "We were wrong. Love is love!" 🏳️‍🌈`
@@ -4374,6 +4616,7 @@ function weddingVows() {
 
 function weddingKiss(v) {
   const f = friends().find(x => x.name === S.wed.f);
+  S.rel = S.rel || {}; S.rel[f.name] = 4;
   chime(); floatHearts(5); confetti();
   const grumble = S.grumble >= 3
     ? `<p>And in the front row... are those <b>Grumble, Sneer and Cackle</b> wiping away happy tears? 🥲 The animals who once laughed at you are now cheering the loudest! 📣</p>`
