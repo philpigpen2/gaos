@@ -575,6 +575,7 @@
   .w3t-row { display:flex; gap:6px; margin:8px 0; } .w3t-row input { flex:1; font-size:16px; padding:9px 12px; border-radius:14px; border:2px solid #f0d0e0; min-width:0; } .w3t-row button { margin:0; }
   #w3talk .tt-acts { display:flex; flex-wrap:wrap; gap:6px; } #w3talk .tt-acts button { margin:0; padding:7px 10px; font-size:14px; }
   body.w3mode #snow, body.w3mode #xlights, body.w3mode #sky { display:none !important; }
+  .voice-tag { display:inline-block; font-size:12px; color:#6b5a85; font-style:italic; margin-left:4px; }
   #snow { position:fixed; inset:0; pointer-events:none; z-index:900; }
   #xlights { position:fixed; left:0; right:0; top:0; height:16px; display:flex; justify-content:space-around; pointer-events:none; z-index:901; border-top:2px solid #2d4a2d; }
   #xlights i { width:9px; height:13px; border-radius:50% 50% 50% 50% / 40% 40% 60% 60%; margin-top:1px; animation:twinkle 1.4s var(--d) infinite alternate; }
@@ -1353,7 +1354,7 @@ function mapScreen() {
             <div class="name">${f.name} the ${f.kind} ${S.profile ? `<span class="match">${matchPct(f)}% match</span>` : ""}</div>
             <div class="likes">Loves: ${likesOf(f).join(", ")}</div>
             <div>${f.about}</div>
-            <div class="hearts">${heartBar(S.hearts[f.name])}</div><div class="rel-chip">${relLabel(f)}</div><div class="job-chip">${jobTitle(f)}</div>
+            <div class="hearts">${heartBar(S.hearts[f.name])}</div><div class="rel-chip">${relLabel(f)}</div><div class="job-chip">${jobTitle(f)}</div><div class="voice-tag">${voiceOf(f).tag}</div>
           </div>
           <button onclick="placeScreen(${i})">Hang out</button>
           <button class="soft" onclick="activityMenu(${i},'map')">Activity</button>
@@ -2719,7 +2720,13 @@ function sendText(fname) {
     if (pts > 0) lines[lines.length - 1] += `  (+${pts} heart${pts > 1 ? "s" : ""})`;
     if (pts < 0) lines[lines.length - 1] += `  (${pts} heart${pts < -1 ? "s" : ""})`;
     if (!bye && calmFor(f, said, r, o) && pts >= 0 && Math.random() < 0.07) lines.push(makePhoto(f));
-    deliver(fname, lines, 0, true);
+    const scripted = r.safe ? lines : lines.map(l => voiceLine(f, l));
+    if (AI_ON && !r.safe && !r.gib && !r.fixed && !SAFE.bully.test(normalize(said)) && !KID_HURTING.test(normalize(said))) {
+      showTyping(fname);
+      const mood = fightNow ? "upset and hurt: they were mean and have not said sorry yet" : r.chilly ? "still a little annoyed after a fight, giving short replies" : "";
+      const tagOf = l => (l.match(/\s*\([+-]\d+ hearts?\)$/) || [""])[0], tag = tagOf(lines[lines.length - 1]);
+      aiReply(f, said, { mood }).then(ai => { if (!ai) return deliver(fname, scripted, 0, true); ai[ai.length - 1] += tag; deliver(fname, ai, 0, true); });
+    } else deliver(fname, scripted, 0, true);
   }, 1200);
 }
 
@@ -3291,6 +3298,56 @@ function workShift(pick) {
   const order = pickOne([`Hi! Can I get ${SHIFT.want}, please?`, `${SHIFT.want}. And make it snappy. 💅`, `Ummm... I'll have... ${SHIFT.want}! No wait. Yes. ${SHIFT.want}.`, `One ${SHIFT.want.replace(/^(a|an|the|10) /, "")}, please! 😊`]);
   stageScreen(J.bg, `${J.title} at ${J.place}`, [...(co ? [[co, 18, 36]] : []), [c, 75, 44]], (SHIFT.line ? SHIFT.line + "<br>" : "") + `<b>${c.name}:</b> "${order}"`,
     `<h2>Customer ${SHIFT.n + 1} of 5</h2>${J.menu.map((m, i) => `<button class="soft" onclick="workShift(${i})">${m}</button>`).join("")}`);
+}
+// ===== Personalities: every animal has their own voice (used by the built-in replies AND the AI) =====
+// Index matches the order in FRIENDS.girl / FRIENDS.boy (same personality for both lists).
+const VOICES = [
+  { tag:"Shy bookworm. Talks softly.", ai:"Very shy, soft-spoken bookworm. Types in all lowercase, starts with 'um' or 'oh!' a lot, uses '...' and trails off, apologizes too much, gets flustered when complimented. Soft emojis like 🌸 🥺 📚.",
+    emo:["🌸", "🥺", "📚"], low:true, pre:["um, ", "oh! ", "", "", "um... "] },
+  { tag:"Loud, brave, all CAPS energy.", ai:"Loud, brave and wild. Uses CAPS for excitement, lots of '!!', says 'LET'S GOOO' and 'no way!!', always wants an adventure, very confident and proud. Emojis like 🔥 ⚡ 🏔️.",
+    emo:["🔥", "⚡"], caps:true, post:["!!", " LET'S GOOO", "!", ""] },
+  { tag:"Class clown. Jokes about everything.", ai:"The class clown. Makes jokes and puns about everything, says 'lmao', '💀' and 'I'm crying', roasts friends playfully, can't be serious for long. Emojis like 😂 💀.",
+    emo:["😂", "💀"], post:[" lmao", " 💀", " (get it?)", "", ""] },
+  { tag:"Warm mom-friend. Always baking.", ai:"Warm, gentle mom-friend who is always baking. Calls the player 'sweetie' or 'hun', offers snacks, worries if they're okay, mentions cookies and honey cake a lot. Emojis like 🍯 🧁 💛.",
+    emo:["🍯", "🧁", "💛"], pre:["Aw sweetie, ", "Oh hun, ", "", ""] },
+  { tag:"Dreamy artist. Speaks in pictures.", ai:"Dreamy, artistic and poetic. Describes things like paintings or songs (colors, sunsets, stars), a little spacey, gentle and kind, uses '...' and '✨'.",
+    emo:["✨", "🎨", "🌅"], post:["... ✨", "", " ✨"] },
+  { tag:"Too cool. Chill, lowercase.", ai:"Super chill and too cool. Types in lowercase, says 'ngl', 'fr', 'lowkey', 'bet', short replies, secretly very loyal and soft. Emojis like 😎 🌙.",
+    emo:["😎", "🌙"], low:true, pre:["ngl ", "lowkey ", "", ""], post:[" fr", "", ""] },
+  { tag:"Hyper speed-talker!!!", ai:"Hyper, chatty speed-talker. Says 'OMG OMG', uses '!!!', jumps between topics, run-on sentences with 'and and', always snacking. Emojis like 🤩 🥜.",
+    emo:["🤩", "🥜"], pre:["OMG OMG ", "WAIT ", "", ""], post:["!!!", "", "!!"] },
+  { tag:"Grumpy outside, squishy inside.", ai:"Prickly and a little grumpy on the outside ('hmph', 'whatever', 'fine'), but secretly super sweet and caring, and gets embarrassed when caught being nice. Emojis like 🙄 💕.",
+    emo:["🙄", "💕"], pre:["Hmph. ", "Fine. ", "", ""] },
+  { tag:"Dramatic diva. Everything is a story.", ai:"A dramatic diva and aspiring writer. Calls people 'darling', narrates their life like a novel ('*dramatically*'), everything is the BEST or WORST thing ever. Emojis like 💅 📖 ✨.",
+    emo:["💅", "📖"], pre:["Darling, ", "*dramatically* ", "", ""] }
+];
+const voiceOf = f => VOICES[Math.max(0, (FRIENDS[S.gender] || friends()).findIndex(x => x.name === f.name)) % VOICES.length];
+function voiceLine(f, line) {
+  if (!f || typeof line !== "string" || line.startsWith("PIC") || line.length < 2) return line;
+  const v = voiceOf(f), tag = (line.match(/\s*\([+-]\d+ hearts?\)$/) || [""])[0]; let s = line.slice(0, line.length - tag.length);
+  if (v.pre && Math.random() < .55) { const p = pickOne(v.pre); if (p && !s.toLowerCase().startsWith(p.trim().toLowerCase().replace(/[.,!]+$/, ""))) s = p + s[0].toLowerCase() + s.slice(1); }
+  if (v.post && Math.random() < .5) { const p = pickOne(v.post); if (p) s = s.replace(/[.!]*(\s*\p{Extended_Pictographic}️?)*\s*$/u, "") + p; }
+  if (v.low) s = s.replace(/\b(I|I'm|I'll|I've|I'd)\b/g, m => m.toLowerCase()).replace(/^./, c => c.toLowerCase());
+  if (v.caps && Math.random() < .5) s = s.replace(/\b(so|really|amazing|best|love|wow|yes|no|never|always|super|huge|need)\b/i, w => w.toUpperCase());
+  if (v.emo && !/\p{Extended_Pictographic}/u.test(s.slice(-3)) && Math.random() < .5) s += " " + pickOne(v.emo);
+  return s + tag;
+}
+// ===== Live AI texting (only when the game is played through the local AI server on this Mac) =====
+let AI_ON = false;
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) fetch("/ai/ok").then(r => r.ok && r.json()).then(j => { AI_ON = !!(j && j.ok); }).catch(() => {});
+function aiReply(f, said, extra = {}) {
+  if (!AI_ON) return Promise.resolve(null);
+  const hist = texts(f.name).slice(-15, -1).map(m => ({ from: m.from === "me" ? "me" : "them", t: typeof m.t === "string" && m.t.startsWith("PIC") ? "[sent a photo]" : String(m.t).replace(/\s*\([+-]\d+ hearts?\)$/, "") }));
+  const body = { animal: { name: f.name, kind: f.kind, about: f.about + (f.bio ? " " + f.bio : ""), voice: voiceOf(f).ai, job: `${jobTitle(f)} at ${JOBS[jobOf(f)].place}` },
+    where: whereWord(f), time: fmtTime(S.clock ?? 480) + (isNight() ? " (night)" : ""), relation: relLabel(f), stage: stageOf(f), mood: extra.mood || "",
+    others: friends().filter(x => x.name !== f.name).map(x => x.name), history: extra.history || hist, said };
+  const ctl = new AbortController(); setTimeout(() => ctl.abort(), 45000);
+  return fetch("/ai/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctl.signal })
+    .then(r => r.json()).then(j => j && Array.isArray(j.lines) && j.lines.length ? j.lines : null).catch(() => null);
+}
+function showTyping(fname) {
+  const ph = document.getElementById("phone"), b = ph && ph.style.display !== "none" && ph.dataset.thread === fname && document.getElementById("phMsgs");
+  if (b && !b.querySelector(".typing")) { b.insertAdjacentHTML("beforeend", `<div class="ph-msg them typing">${fname} is typing...</div>`); b.scrollTop = b.scrollHeight; }
 }
 // ===== Gossip behind your back =====
 const RUMORS = ["snore like a leaf blower", "dance like a flapping penguin", "sing in the bath SUPER loud", "ate ALL the cookies at the party", "text like a grandma", "have a secret crush on somebody", "tripped in front of everyone and pretended it was a dance move", "think you're the best at everything", "still sleep with a teddy bear", "talk to your plants"];
@@ -4225,9 +4282,9 @@ function w3Say(p, txt, secs = 4) { const el = document.getElementById("w3say"); 
 function w3TalkOpen(i) {
   const p = W3.people.find(q => q.i === i), f = p.f; W3.talk = p; W3.actKey = null; document.getElementById("w3act").innerHTML = "";
   const isAdm = S.admirer === f.name && !S.admirerGone && !S.admirerOk;
-  w3Say(p, isAdm ? "Oh! Um. I wasn't following you! I was just... walking. The same way. 😳" : pickOne(MEET_HELLO[stageOf(f)]), 6);
+  w3Say(p, isAdm ? "Oh! Um. I wasn't following you! I was just... walking. The same way. 😳" : voiceLine(f, pickOne(MEET_HELLO[stageOf(f)])), 6);
   const box = document.getElementById("w3talk");
-  box.innerHTML = `<div class="w3t-head">${face(f)}<b>${f.name}</b> <span class="rel-chip">${relLabel(f)}</span> <span class="job-chip">${jobTitle(f)}</span><small>${heartBar(S.hearts[f.name])}</small><button class="ph-x" onclick="w3TalkClose()">Bye</button></div>
+  box.innerHTML = `<div class="w3t-head">${face(f)}<b>${f.name}</b> <span class="rel-chip">${relLabel(f)}</span> <span class="job-chip">${jobTitle(f)}</span><span class="voice-tag">${voiceOf(f).tag}</span><small>${heartBar(S.hearts[f.name])}</small><button class="ph-x" onclick="w3TalkClose()">Bye</button></div>
     <div class="w3t-row"><input id="w3in" maxlength="140" placeholder="Say something to ${f.name}..." onkeydown="if(event.key==='Enter')w3Send()"><button class="green" onclick="w3Send()">Say</button></div>
     <div class="tt-acts"><button class="soft" onclick="w3Hug()">Hug</button><button class="soft" onclick="w3TalkClose(); activityMenu(${i}, 'map')">Do something together</button>
       <button class="soft" onclick="w3TalkClose(); planScreen('${f.name}')">Make plans</button><button class="soft" onclick="picTogether('${f.name}', W3 && W3.place)">Take a picture together</button>
@@ -4236,9 +4293,13 @@ function w3TalkOpen(i) {
 }
 function w3Send() {
   const inp = document.getElementById("w3in"), said = inp.value.trim(); if (!said || !W3 || !W3.talk) return; inp.value = "";
-  const f = W3.talk.f, r = chatReply(f, said); S.w3TalkDay = S.w3TalkDay || {};
+  const p = W3.talk, f = p.f, r = chatReply(f, said); S.w3TalkDay = S.w3TalkDay || {};
   addHearts(f, Math.max(-1, Math.min(r.pts, S.w3TalkDay[f.name] === S.tday ? 0 : 1))); if (r.pts > 0) S.w3TalkDay[f.name] = S.tday;
-  w3Say(W3.talk, r.say, Math.max(4, r.say.length / 12));
+  S.w3Chat = S.w3Chat || {}; const h = S.w3Chat[f.name] = (S.w3Chat[f.name] || []).slice(-12); h.push({ from: "me", t: said });
+  const say = t => { h.push({ from: "them", t }); if (W3 && W3.talk === p) w3Say(p, t, Math.max(4, t.length / 12)); };
+  if (AI_ON && !r.safe && !r.gib && !r.fixed && !SAFE.bully.test(normalize(said)) && !KID_HURTING.test(normalize(said))) { w3Say(p, "...", 30);
+    aiReply(f, said, { history: h.slice(0, -1), mood: r.fight ? "upset and hurt: they were mean to you" : "" }).then(ai => say(ai ? ai.join(" ") : r.safe ? r.say : voiceLine(f, r.say))); }
+  else say(r.safe ? r.say : voiceLine(f, r.say));
   const hb = document.querySelector("#w3talk small"); if (hb) hb.innerHTML = heartBar(S.hearts[f.name]);
 }
 function w3Hug() { const p = W3.talk, f = p.f, st = stageOf(f); S.townHugDay = S.townHugDay || {};
