@@ -123,6 +123,7 @@
   .itm { height:54px; width:auto; vertical-align:middle; margin-right:8px; filter:drop-shadow(0 3px 4px rgba(0,0,0,.2)); }
   .grid .itm { height:70px; margin:0; display:block; }
   .lbl { display:block; font-size:15px; }
+  .animal-lbl { font-weight:800; font-size:16px; margin-top:2px; }
   .big-itm { height:90px; }
   .acc { position:absolute; left:50%; top:-28px; transform:translateX(-50%); height:70px; z-index:2; }
   .w1 .bob, .w2 .bob { position:relative; display:inline-block; }
@@ -1080,7 +1081,7 @@ function createScreen() {
     <div class="box center">
       <h2>What animal are you?</h2>
       <div class="grid">${PLAYER_ANIMALS.map(([e, n]) =>
-        `<button class="soft ${S.animal && S.animal[0] === e ? "picked" : ""}" title="${n}" onclick="S.animal=['${e}','${n}'];createScreen()">${e}</button>`).join("")}</div>
+        `<button class="soft ${S.animal && S.animal[0] === e ? "picked" : ""}" title="${n}" onclick="S.animal=['${e}','${n}'];createScreen()">${e}<span class="lbl animal-lbl">${n}</span></button>`).join("")}</div>
     </div>
     <div class="box center">
       <h2>Are you a girl or a boy?</h2>
