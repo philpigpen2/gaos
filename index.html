@@ -3775,6 +3775,7 @@ function bookPost(pic) {
   S.feed = S.feed || [];
   const p = { who: "me", text: said, pic: pic || "", likes: 0, liked: false, at: nowAbs(), seen: true, comments: [] };
   S.feed.unshift(p); bookApp();
+  if (said && bookBigNews(p, said)) return;
   const safe = said ? chatReply(friends()[0], said) : null;
   if (safe && safe.safe) { setTimeout(() => { p.comments.push({ who: friends()[0].name, t: safe.say }); bookApp(); }, 1200); return; }
   friends().slice().sort(() => Math.random() - .5).slice(0, 3).forEach((f, n) => setTimeout(() => {
@@ -3785,6 +3786,22 @@ function bookPost(pic) {
     if (n === 1 && Math.random() < .6) { const o = pickOne(friends().filter(x => x.name !== f.name)); p.comments.push({ who: o.name, t: soapFill(pickOne([`Why did ${f.name} comment so fast?? 👀`, "Didn't even tag me. Wow. 😒", "The drama in these comments 🍿"]), o.name) }); }
     if (document.querySelector(".bb")) bookApp();
   }, 1500 + n * 1800));
+}
+// big life news on Burrow Book: your partner jumps in first, SO happy, then everyone goes wild
+function bookBigNews(p, said) {
+  const t = said.toLowerCase(), baby = /\b(baby|babies|pregnant|expecting|preggo|stork)\b/.test(t),
+    love = /\b(married|engaged|dating|relationship|together|boyfriend|girlfriend|partner|husband|wife|in love|love)\b/.test(t);
+  if (!baby && !love) return false;
+  const sp = (typeof spouse === "function" && spouse()) || (typeof sweetheart === "function" && sweetheart()) || null;
+  const others = friends().filter(f => !sp || f.name !== sp.name).sort(() => Math.random() - .5).slice(0, 3);
+  const spLine = baby ? pickOne(["YES WE ARE!!! 😭💕 I'm SO happy I can't stop crying happy tears!!", "YES YES YES!!! We're having a BABY!!! 🍼😭 Best news EVER!!", "IT'S TRUE!!! 😭🍼 I already bought 12 tiny hats. TWELVE."])
+    : pickOne(["YES!! It's official!! 😍💕 Luckiest animal in the whole Burrow!", "Yes we are!!! 💕 I'm the happiest animal ALIVE!", "Aww, I'm blushing SO hard right now 😳💕 Love you!!"]);
+  const wow = baby ? ["OH MY GOSH!!! A BABY?!?! 😱😭🍼", "I'M SCREAMING!!! Congratulations!!! 🎉🍼", "Can I be the babysitter? PLEASE?! 🥺🍼", "Okay I'm crying now. Thanks a LOT. 😭💕"]
+    : ["CUTEST COUPLE EVER 😍", "FINALLY!!! I called it! 💕", "Stop it, you two are too cute 😭💕", "Okay but when's the wedding?? 💍👀"];
+  chime(); floatHearts(4);
+  if (sp) setTimeout(() => { p.likes += 5; p.comments.push({ who: sp.name, t: spLine }); if (sp && S.hearts[sp.name] !== undefined) addHearts(sp, 1); if (document.querySelector(".bb")) bookApp(); }, 1100);
+  others.forEach((f, n) => setTimeout(() => { p.likes += 3 + Math.floor(Math.random() * 6); p.comments.push({ who: f.name, t: !sp && baby && n === 0 ? "WAIT. WHAT?! A BABY?! WHO?! HOW?! I need ALL the details!! 😱👀" : wow[n % wow.length] }); if (document.querySelector(".bb")) bookApp(); }, 2400 + n * 1500));
+  return true;
 }
 // --- Photos and Camera ---
 function allPhotos() {
@@ -4483,26 +4500,31 @@ function w3Animal(kind, look, xmas) {
   let legs, arms, spine, torso; const quad = !bird;
   if (quad) {
     // four legs, like a real animal: a round body, a neck, and a big cute head
-    const pawC = darker(fur, .18);
-    add(body, SPH, fur, 0, .64, -.02, .29, .27, .5, true, furM);
+    const pawC = darker(fur, .18), lowC = kind === "fox" ? 0x2a1c18 : kind === "raccoon" ? 0x2b2b30 : null, lowM = lowC ? w3Mat(lowC, { roughness: .85 }) : null;
+    const bun = kind === "bunny", coon = kind === "raccoon", fox = kind === "fox";
+    add(body, SPH, fur, 0, .64, -.02, fox ? .27 : .29, fox ? .26 : .27, bun ? .34 : .5, true, furM);
     add(body, SPH, belly, 0, .55, .06, .23, .19, .4);
-    add(body, SPH, fur, 0, .7, .3, .27, .29, .27, true, furM);
-    add(body, SPH, belly, 0, .66, .44, .17, .2, .12);
-    add(body, SPH, fur, 0, .66, -.36, .26, .25, .22, true, furM);
+    add(body, SPH, fur, 0, .7, bun ? .2 : .3, fox ? .25 : .27, fox ? .27 : .29, .27, true, furM);
+    add(body, SPH, belly, 0, .66, bun ? .34 : .44, .17, .2, .12);
+    add(body, SPH, fur, 0, bun ? .7 : .66, bun ? -.24 : -.36, bun ? .31 : fox ? .24 : .26, bun ? .31 : .25, bun ? .28 : .22, true, furM);
     torso = body.children[0];
-    spine = new THREE.Group(); spine.position.set(0, .8, .4); body.add(spine);
+    spine = new THREE.Group(); spine.position.set(0, .8, bun ? .28 : .4); body.add(spine);
     add(spine, CYL, fur, 0, .14, .05, .13, .3, .13, false, furM).rotation.x = .45;
     if (extra !== "rainbow") { const col = add(spine, tor(.14, .03), shirt, 0, .04, .02, 1, 1, 1, false, clothM); col.rotation.x = Math.PI / 2 - .45; add(spine, SPH, 0xd4af37, 0, -.03, .17, .03, .03, .02, false, w3Mat(0xd4af37, { metalness: .7, roughness: .3 })); }
     const leg = (sd, z, front) => { const L = new THREE.Group(); L.position.set(sd * .16, .64, z); body.add(L);
-      if (!front) add(L, SPH, fur, 0, -.02, -.02, .14, .19, .19, true, furM);
+      if (!front) add(L, SPH, fur, 0, -.02, bun ? -.06 : -.02, bun ? .17 : .14, bun ? .26 : .19, bun ? .27 : .19, true, furM);
       add(L, cap(.075, .2), fur, 0, -.18, 0, 1, 1, 1, true, furM);
       const kn = new THREE.Group(); kn.position.y = -.33; L.add(kn); L.userData.knee = kn; L.userData.elbow = kn;
-      add(kn, cap(.062, .17), fur, 0, -.12, 0, 1, 1, 1, true, furM);
-      add(kn, SPH, pawC, 0, -.255, .035, .08, .05, .1, true);
-      [-1, 0, 1].forEach(k => add(kn, SPH, pawC, k * .032, -.262, .11, .026, .022, .03));
+      add(kn, cap(.062, .17), lowC || fur, 0, -.12, 0, 1, 1, 1, true, lowM || furM);
+      const pc = lowC || pawC;
+      if (bun && !front) add(kn, SPH, pc, 0, -.255, .09, .075, .05, .2, true);
+      else add(kn, SPH, pc, 0, -.255, .035, .08, .05, .1, true);
+      if (!bun) [-1, 0, 1].forEach(k => add(kn, SPH, pc, k * .032, -.262, .11, .026, .022, .03));
+      if (bun && front) L.scale.y = .78; if (coon && !front) L.scale.y = 1.15; if (fox) L.scale.y = 1.1;
       return L; };
-    legs = [leg(-1, -.34, false), leg(1, -.34, false)];
-    arms = [leg(-1, .34, true), leg(1, .34, true)];
+    legs = [leg(-1, bun ? -.22 : -.34, false), leg(1, bun ? -.22 : -.34, false)];
+    arms = [leg(-1, bun ? .24 : .34, true), leg(1, bun ? .24 : .34, true)];
+    if (bun) { legs.forEach(X => { X.rotation.x = .5; X.userData.knee.rotation.x = 1.5; }); body.position.y = -.17; body.rotation.x = -.18; }
   } else {
   // legs: thigh + shin that bend at the knee, chunky sneakers
   legs = [-1, 1].map(sd => { const L = new THREE.Group(); L.position.set(sd * .115, .9, 0); body.add(L);
@@ -4531,6 +4553,7 @@ function w3Animal(kind, look, xmas) {
   const owlish = kind === "owl";
   if (owlish) add(head, SPH, belly, 0, -.01, .14, .25, .22, .16);
   const eyes = new THREE.Group(); eyes.userData.gloss = true; head.add(eyes); if (owlish) eyes.position.z = .045; const er = (owlish ? .1 : .082) * (quad ? 1.22 : 1.1), irisC = W3_EYE[kind] || 0x5a3a2a;
+  if (quad) { eyes.scale.setScalar(1.14); eyes.position.set(0, -.01, .03); }
   if (quad) [-1, 1].forEach(s => { const ex = s * .138, ez = .215;
     // big, round, shiny eyeballs: a soft dark rim, a thin white edge, a coloured iris, a big pupil and two sparkles
     add(eyes, SPH, darker(fur, .5), ex, .06, ez - .004, .09, .084, .05);
@@ -4548,7 +4571,7 @@ function w3Animal(kind, look, xmas) {
     if (!bird) for (let k = 0; k < 3; k++) { const l = add(eyes, cap(.0065, .036), 0x1b1420, s * (.11 + er * .62 + k * .01), .04 + er * 1.02 - k * .022, .262, 1, 1, 1); l.rotation.z = -s * (.55 + k * .42); } });
   const browG = new THREE.Group(); head.add(browG); if (!quad) [-1, 1].forEach(sd => { const b2 = add(browG, cap(.011, .062), 0x3a2622, sd * .11, .16, .25, 1, 1, 1); b2.rotation.z = Math.PI / 2 + sd * .1; }); const brows = [browG];
   if (!bird && kind !== "hedgehog") [[-.05, .25, .1, .07], [.03, .27, .08, .08], [.09, .23, .02, .06]].forEach(([x, y, z, r]) => add(head, SPH, fur, x, y, z, r, r * .8, r));
-  if (kind === "raccoon") add(head, SPH, acc, 0, .045, .17, .27, .085, .1);
+  if (kind === "raccoon") { add(head, SPH, acc, 0, .05, .17, .3, .1, .1); [-1, 1].forEach(s => { add(head, SPH, acc, s * .15, .045, .19, .15, .115, .09); add(head, SPH, acc, s * .13, -.04, .2, .13, .1, .1); add(head, SPH, acc, s * .25, .02, .1, .07, .1, .12); add(head, SPH, 0xf4f4f4, s * .11, .16, .2, .11, .04, .07); }); add(head, SPH, 0xf4f4f4, 0, -.06, .22, .15, .08, .1); add(head, SPH, acc, 0, .1, .24, .03, .09, .03); }
   if (kind === "badger") { add(head, SPH, 0xf4f4f4, 0, .11, .07, .075, .2, .24); [-1, 1].forEach(s => add(head, SPH, 0x1e1e22, s * .13, .05, .12, .07, .13, .16)); }
   // muzzle, nose, mouth
   if (bird) add(head, CONE, kind === "owl" ? 0xf2a93b : 0x2b2b30, 0, -.05, .3, .055, .14, .055).rotation.x = Math.PI / 2;
@@ -4561,7 +4584,8 @@ function w3Animal(kind, look, xmas) {
     else if (kind === "mouse" || kind === "hedgehog" || kind === "raccoon" || kind === "weasel") { const sn = add(head, CONE, belly, 0, -.07, .3, .1, .24, .09); sn.rotation.x = Math.PI / 2; nose(.43, -.07, kind === "mouse" ? 0xff8fab : 0x1b1416, .035); }
     else { add(head, SPH, belly, 0, -.08, .25, .13, .095, .12); nose(.36, -.04); }
   }
-  else if (kind === "fox" || kind === "wolf") { const sn = add(head, CONE, belly, 0, -.07, .3, .12, .26, .1); sn.rotation.x = Math.PI / 2; add(head, SPH, 0x1b1b22, 0, -.07, .44, .045, .04, .04); }
+  else if (kind === "fox") { const sn = add(head, CONE, belly, 0, -.09, .34, .11, .36, .085); sn.rotation.x = Math.PI / 2; const top = add(head, CONE, fur, 0, -.055, .33, .1, .34, .06, false, furM); top.rotation.x = Math.PI / 2; add(head, SPH, 0x1b1b22, 0, -.07, .52, .04, .035, .035, false, w3Mat(0x1b1b22, { roughness: .25 })); head.scale.x *= .92; }
+  else if (kind === "wolf") { const sn = add(head, CONE, belly, 0, -.07, .3, .12, .26, .1); sn.rotation.x = Math.PI / 2; add(head, SPH, 0x1b1b22, 0, -.07, .44, .045, .04, .04); }
   else { add(head, SPH, belly, 0, -.09, .22, .14, .1, .1); add(head, SPH, kind === "mouse" || kind === "bunny" ? 0xff8fab : 0x1b1b22, 0, -.05, .315, .042, .034, .03); add(head, SPH, 0xffffff, -.012, -.04, .342, .012, .008, .006); }
   if (!bird && !quad) add(head, tor(.045, .011, Math.PI), 0x4a2a2a, 0, -.13, .29, 1, 1, 1).rotation.z = Math.PI;
   if (kind === "beaver") add(head, BOX, 0xffffff, 0, -.17, .3, .06, .05, .02);
@@ -4572,13 +4596,13 @@ function w3Animal(kind, look, xmas) {
   // ears
   const ear = (x, y, rz, geo, sx, sy, sz, col, inner) => { const e = add(head, geo, col, x, y, -.02, sx, sy, sz); e.rotation.z = rz; if (inner) { const i = add(head, geo, inner, x, y, .005, sx * .6, sy * .75, sz * .5); i.rotation.z = rz; } return e; };
   if (kind === "fox" || kind === "wolf") [-1, 1].forEach(s => { ear(s * .17, .27, -s * .3, CONE, .1, .24, .06, fur, 0x3a2a22); });
-  else if (kind === "bunny") [-1, 1].forEach(s => ear(s * .1, .43, -s * .15, cap(.06, .3), 1, 1, .5, fur, 0xffb3c6));
+  else if (kind === "bunny") [-1, 1].forEach(s => { const e = ear(s * .1, .5, -s * .12, cap(.06, .42), 1, 1, .45, fur, 0xffb3c6); e.rotation.x = -.25; });
   else if (kind === "mouse") [-1, 1].forEach(s => ear(s * .22, .2, 0, SPH, .14, .14, .04, fur, 0xffb3c6));
   else if (kind === "deer") [-1, 1].forEach(s => ear(s * .26, .13, -s * 1.1, SPH, .06, .15, .03, fur, 0xffd9c2));
   else if (kind === "squirrel") [-1, 1].forEach(s => ear(s * .15, .27, -s * .25, CONE, .07, .17, .05, fur));
   else if (kind === "owl") [-1, 1].forEach(s => ear(s * .16, .26, -s * .45, CONE, .06, .14, .04, fur));
   else if (kind === "magpie") add(head, SPH, fur, 0, .2, -.12, .08, .1, .14);
-  else if (kind !== "hedgehog") [-1, 1].forEach(s => ear(s * .2, .22, 0, SPH, .085, .085, .045, kind === "raccoon" ? acc : fur, kind === "bear" || kind === "otter" ? belly : null));
+  else if (kind !== "hedgehog") [-1, 1].forEach(s => ear(s * .2, .22, 0, SPH, .085, .085, .045, kind === "raccoon" ? 0xf4f4f4 : fur, kind === "bear" || kind === "otter" ? belly : kind === "raccoon" ? acc : null));
   // hedgehog spikes on the head and back
   if (kind === "hedgehog") for (let i = 0; i < 34; i++) { const a = (i % 9) / 8 * Math.PI - Math.PI / 2, row = Math.floor(i / 9), onHead = row < 2;
     if (quad && !onHead) continue;
@@ -4587,10 +4611,12 @@ function w3Animal(kind, look, xmas) {
   if (kind === "hedgehog" && quad) for (let i = 0; i < 40; i++) { const a = ((i % 8) / 7 - .5) * 2.4, z = .3 - Math.floor(i / 8) * .17; const sp = add(body, CONE, acc, Math.sin(a) * .29, .66 + Math.cos(a) * .27, z, .05, .2, .05); sp.rotation.x = -1.2; sp.rotation.z = -Math.sin(a) * 1.1; }
   // tail
   const tail = new THREE.Group(); tail.position.set(0, .95, -.16); body.add(tail); if (quad) { tail.position.set(0, .76, -.52); tail.rotation.x = -.45; }
-  if (kind === "fox" || kind === "wolf") { add(tail, SPH, fur, 0, .02, -.26, .13, .13, .32, true).rotation.x = .5; add(tail, SPH, belly, 0, -.1, -.52, .08, .08, .1); }
+  if (kind === "fox") { add(tail, SPH, fur, 0, .0, -.32, .16, .16, .42, true, furM).rotation.x = .35; add(tail, SPH, 0xfff3e6, 0, -.13, -.68, .11, .11, .14); }
+  else if (kind === "wolf") { add(tail, SPH, fur, 0, .02, -.26, .13, .13, .32, true).rotation.x = .5; add(tail, SPH, belly, 0, -.1, -.52, .08, .08, .1); }
   else if (kind === "squirrel") add(tail, SPH, fur, 0, .38, -.12, .15, .42, .17, true).rotation.x = -.25;
-  else if (kind === "bunny" || kind === "deer") add(tail, SPH, 0xffffff, 0, 0, -.04, .08, .08, .08);
-  else if (kind === "raccoon") for (let i = 0; i < 5; i++) add(tail, SPH, i % 2 ? acc : fur, 0, .05 + i * .03, -.12 - i * .08, .08, .08, .07, i === 2).rotation.x = .4;
+  else if (kind === "bunny") add(tail, SPH, 0xffffff, 0, .05, .02, .11, .11, .1);
+  else if (kind === "deer") add(tail, SPH, 0xffffff, 0, 0, -.04, .08, .08, .08);
+  else if (kind === "raccoon") for (let i = 0; i < 8; i++) add(tail, SPH, i % 2 || i === 7 ? acc : fur, 0, -.02 - i * .035, -.1 - i * .075, .11 - i * .004, .11 - i * .004, .07, true);
   else if (kind === "beaver") add(tail, BOX, 0x4a3020, 0, -.2, -.22, .2, .04, .34).rotation.x = -.5;
   else if (kind === "otter" || kind === "weasel") add(tail, CONE, fur, 0, -.15, -.3, .07, .5, .07).rotation.x = -1.9;
   else if (kind === "mouse") add(tail, CYL, 0xffb3c6, 0, -.12, -.3, .015, .55, .015).rotation.x = -1.2;
@@ -4612,7 +4638,7 @@ function w3Animal(kind, look, xmas) {
   else if (extra === "rainbow") [0xff3b3b, 0xff9f1c, 0xffd23b, 0x3ddc84, 0x3bb7ff, 0x9b6bff].forEach((c, i) => add(spine, tor(.232, .02), c, 0, .4 - i * .04, 0, 1, 1, .8).rotation.x = Math.PI / 2);
   if (xmas && !hat) { const h = new THREE.Group(); h.position.set(0, .22, -.02); h.rotation.z = -.2; head.add(h); add(h, CONE, 0xd62828, 0, .17, 0, .21, .36, .21, true); add(h, tor(.21, .05), 0xffffff, 0, 0, 0, 1, 1, 1).rotation.x = Math.PI / 2; add(h, SPH, 0xffffff, .02, .36, 0, .06, .06, .06); }
   g.userData.furCols = [fur, belly, acc]; w3Bake(g);
-  return { g, body, spine, legs, arms, head, eyes, brows, tail, torso: spine, quad, ph: Math.random() * 6, amp: 0, blink: 2 + Math.random() * 3, heading: 0 };
+  return { g, body, spine, legs, arms, head, eyes, brows, tail, torso: spine, quad, gait: kind === "bunny" ? "hop" : kind === "raccoon" ? "waddle" : "trot", ph: Math.random() * 6, amp: 0, blink: 2 + Math.random() * 3, heading: 0 };
 }
 // four-legged trot: legs move in diagonal pairs, the body bobs, the head bobs, the tail wags
 function w3AnimQuad(c, dt, speed, air, t) {
@@ -4620,14 +4646,17 @@ function w3AnimQuad(c, dt, speed, air, t) {
   c.amp += ((speed > .05 ? 1 : 0) - c.amp) * Math.min(1, dt * 8);
   c.ph += dt * (6 + speed * 1.5) * (speed > .05 ? 1 : 0);
   const a = c.amp, L = c.legs, A = c.arms;
+  if (c.gait === "hop" && !air) return w3AnimHop(c, dt, speed, t);
   if (air) { L.forEach(X => { X.rotation.x = .7; X.userData.knee.rotation.x = .9; }); A.forEach(X => { X.rotation.x = -.8; X.userData.knee.rotation.x = 1.1; }); c.body.rotation.x = -.12; }
   else {
     const leg = (X, p) => { const sw = Math.sin(p); X.rotation.x = -sw * (.5 + .25 * runK) * a; X.userData.knee.rotation.x = Math.max(0, Math.cos(p)) * (.85 + .4 * runK) * a; };
-    leg(A[0], c.ph); leg(L[1], c.ph); leg(A[1], c.ph + Math.PI); leg(L[0], c.ph + Math.PI);
+    if (c.gait === "waddle") { leg(L[0], c.ph * .7); leg(A[0], c.ph * .7 + 1.6); leg(L[1], c.ph * .7 + Math.PI); leg(A[1], c.ph * .7 + Math.PI + 1.6); }
+    else { leg(A[0], c.ph); leg(L[1], c.ph); leg(A[1], c.ph + Math.PI); leg(L[0], c.ph + Math.PI); }
     c.body.rotation.x = Math.sin(c.ph * 2) * .035 * a; }
   const breathe = Math.sin(t * 2.2) * .008;
   c.body.position.y = Math.abs(Math.sin(c.ph)) * (.045 + .04 * runK) * a + breathe;
-  c.body.rotation.z = (1 - a) * Math.sin(t * .8) * .02; c.body.position.x = 0;
+  c.body.rotation.z = (1 - a) * Math.sin(t * .8) * .02 + (c.gait === "waddle" ? Math.sin(c.ph * .7) * .09 * a : 0); c.body.position.x = 0;
+  if (c.gait === "waddle") c.body.rotation.x += .1;
   c.spine.rotation.x = -.05 + Math.sin(c.ph * 2) * .06 * a + (1 - a) * Math.sin(t * .6 + c.ph) * .05;
   c.spine.rotation.y = (1 - a) * Math.sin(t * .45 + c.ph) * .35 + (c.look || 0) * .6;
   c.head.rotation.y = (c.look || 0) * .4 + (1 - a) * Math.sin(t * .37 + 1) * .15; c.head.rotation.z = (1 - a) * Math.sin(t * .5) * .08;
@@ -4635,6 +4664,26 @@ function w3AnimQuad(c, dt, speed, air, t) {
   c.tail.rotation.y = Math.sin(t * (a > .5 ? 9 : 4) + c.ph) * (.35 + .25 * a); c.tail.rotation.z = 0;
   c.blink -= dt; c.eyes.scale.y = c.blink < .12 ? .1 : 1; if (c.blink < 0) c.blink = 2 + Math.random() * 4;
   if (c.brows) c.brows.forEach(b => b.position.y = c.nod ? Math.abs(Math.sin(t * 4)) * .025 : 0);
+}
+// bunnies hop: both back feet push together, the front paws land first; sitting still, they tuck their back legs and twitch their nose
+function w3AnimHop(c, dt, speed, t) {
+  const L = c.legs, A = c.arms, a = c.amp;
+  if (speed > .05) {
+    const p = (c.ph * .75) % (Math.PI * 2), up = Math.max(0, Math.sin(p));
+    L.forEach(X => { X.rotation.x = -Math.cos(p) * .75; X.userData.knee.rotation.x = .25 + Math.max(0, -Math.sin(p)) * 1.1; });
+    A.forEach(X => { X.rotation.x = Math.cos(p + .6) * .6; X.userData.knee.rotation.x = .2 + up * .5; });
+    c.body.position.y = up * .32; c.body.rotation.x = -Math.cos(p) * .22;
+  } else {
+    L.forEach(X => { X.rotation.x = .5; X.userData.knee.rotation.x = 1.5; });
+    A.forEach(X => { X.rotation.x = 0; X.userData.knee.rotation.x = 0; });
+    c.body.position.y = -.17 + Math.sin(t * 2.2) * .006; c.body.rotation.x = -.18;
+  }
+  c.body.rotation.z = 0; c.body.position.x = 0;
+  c.spine.rotation.x = .05; c.spine.rotation.y = (1 - a) * Math.sin(t * .45 + c.ph) * .35 + (c.look || 0) * .6;
+  c.head.rotation.y = (c.look || 0) * .4; c.head.rotation.z = 0;
+  c.head.rotation.x = (c.nod ? Math.sin(t * 9) * .12 : 0) + (Math.sin(t * 3.1) > .7 ? Math.sin(t * 40) * .025 : 0);
+  c.tail.rotation.y = Math.sin(t * 6) * .15; c.tail.rotation.z = 0;
+  c.blink -= dt; c.eyes.scale.y = c.blink < .12 ? .1 : 1; if (c.blink < 0) c.blink = 2 + Math.random() * 4;
 }
 // one frame of moving: speed is how fast they are going (0 = standing still)
 function w3Anim(c, dt, speed, air, t) {
