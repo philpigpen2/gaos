@@ -163,6 +163,12 @@
   .ph-top .ph-x:first-child { margin-left:0; }
   .ph-contact { display:flex; align-items:center; gap:12px; padding:12px 14px; border-bottom:1px solid #f0e0e8; cursor:pointer; position:relative; }
   .ph-contact:hover { background:#fff4f9; }
+  .ph-more { position:sticky; bottom:10px; align-self:center; flex-shrink:0; margin:8px auto; padding:8px 18px; border-radius:20px; background:#ff6fae; color:#fff; font-weight:800; box-shadow:0 4px 12px rgba(0,0,0,.25); z-index:3; }
+  .ph-more.hide { visibility:hidden; }
+  .ph-screen { overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-width:thin; scrollbar-color:#ff8fc0 #fbe9f2; }
+  .ph-screen > .ph-top { position:sticky; top:0; z-index:3; flex-shrink:0; }
+  .ph-screen > .ph-contact, .ph-screen > .ph-meet, .ph-screen > button, .ph-screen > h3 { flex-shrink:0; }
+  .ph-screen::-webkit-scrollbar { width:8px; } .ph-screen::-webkit-scrollbar-thumb { background:#ff8fc0; border-radius:8px; } .ph-screen::-webkit-scrollbar-track { background:#fbe9f2; }
   .ph-contact img { height:54px; width:54px; object-fit:contain; }
   .ph-contact .badge { position:static; margin-left:auto; animation:none; }
   .ph-msgs { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; background:#fffafc; }
@@ -2501,12 +2507,14 @@ function openPhone(thread) {
   if (!thread) return phoneHome();
   if (thread === "msgs") thread = "";
   ph.dataset.thread = thread || "";
+  setTimeout(phMore, 30);
   if (!thread) {
     ph.innerHTML = `<div class="ph-screen">
       <div class="ph-top"><button class="ph-x" onclick="phoneHome()">Home</button><b>Messages</b><button class="ph-x" onclick="closePhone()">Close</button></div>
       <button class="ph-meet" onclick="closePhone(); eyesScreen()">Put the phone down and look around</button>
       ${friends().map(f => { const th = texts(f.name), last = th[th.length - 1], un = th.filter(m => m.from === "them" && !m.read).length;
         return `<div class="ph-contact" onclick="openPhone('${f.name}')">${face(f)}<div><b>${f.name}</b> <span class="rel-chip">${relLabel(f)}</span> <small class="where">${whereWord(f)}</small><br><small>${last ? esc(preview(last.t)).slice(0, 34) : "Say hi!"}</small></div>${un ? `<span class="badge">${un}</span>` : ""}</div>`; }).join("")}
+      <button class="ph-more" onclick="this.closest('.ph-screen').scrollBy({ top: 260, behavior: 'smooth' })">More ▼</button>
     </div>`;
   } else {
     const f = friends().find(x => x.name === thread);
@@ -6109,6 +6117,8 @@ function jealousCheck(f, where) {
   maybeCaught(f.name, saw ? 1 : .5, where);
 }
 
+function phMore() { const sc = document.querySelector("#phone .ph-screen"), b = sc && sc.querySelector(".ph-more"); if (!b) return;
+  const upd = () => b.classList.toggle("hide", sc.scrollHeight - sc.scrollTop - sc.clientHeight < 20); upd(); sc.onscroll = upd; }
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
 </script>
 </body>
