@@ -3677,6 +3677,7 @@ function phoneHome() {
     <div class="apps">
       ${app("msgs", "Messages", "linear-gradient(#5fe07a,#2bb673)", "openPhone('msgs')", un)}
       ${app("book", "Burrowbook", "linear-gradient(#7aa7ff,#3a5bd9)", "bookApp()", newPosts)}
+      ${app("gossip", "Gossip Cage", "linear-gradient(#ff5aa8,#6a2a9a)", "gossipApp()", S.gossipSeen !== (S.tday || S.day) ? "!" : "")}
       ${app("photos", "Photos", "linear-gradient(#fff,#e9e3f5)", "photosApp()")}
       ${app("camera", "Camera", "linear-gradient(#777,#333)", "cameraApp()")}
       ${app("jobs", "Jobs", "linear-gradient(#ffd36b,#e8962e)", "jobsApp()")}
@@ -4414,6 +4415,7 @@ const W3_FUR = { fox:[0xe8742a, 0xfff3e6, 0x3a2a22], bunny:[0xeadfd3, 0xffffff, 
   wolf:[0x8e98a8, 0xeef1f5, 0x4a5262], mouse:[0xbdb5ae, 0xf3ece6, 0xffb3c6], badger:[0x5c5c62, 0xf4f4f4, 0x1e1e22], weasel:[0xb07a45, 0xf6e7cf, 0x5a3a1e],
   magpie:[0x1d2230, 0xffffff, 0x3a6fd8], otter:[0x7a5236, 0xd9b892, 0x4a3020], beaver:[0x6e4528, 0xc89a6a, 0x3a2414] };
 // [shirt, trousers, shoes, extra] by personality (same order as VOICES)
+const W3_EYE = { fox:0x8a4a1a, bunny:0x7a4fb8, raccoon:0x4a3226, bear:0x6b3f1a, deer:0x5a3418, hedgehog:0x4a2f45, squirrel:0x7a3f14, owl:0xf2a93b, wolf:0x3d86d6, mouse:0x3f6fb0, badger:0x3a2a22, weasel:0x6b4a2a, magpie:0x2a2a3a, otter:0x5a3a22, beaver:0x5a3a22 };
 const W3_OUTFIT = [[0x8fc1ff, 0x3a4a6a, 0xf4f4f4, "glasses"], [0xff4d4d, 0x2e3440, 0x222228, "bandana"], [0xffd23b, 0x5a6bd8, 0xff5a5a, "cap"], [0xfff1e0, 0x8a5a3a, 0x6b4a2f, "apron"],
   [0xb48cff, 0x2f3a4a, 0xffffff, "beret"], [0x2b2f3a, 0x44506a, 0xffffff, "headphones"], [0x3ddc84, 0xff8a3d, 0x45d0ff, "headband"], [0xff8fb1, 0x5d6b7a, 0xffffff, "scarf"], [0xff5ac8, 0x3a2a55, 0xffd23b, "shades"]];
 const W3_MAT = {}, W3_GEO = {};
@@ -4430,7 +4432,7 @@ function w3Bake(root) {
       for (let i = 0; i < P.count; i++) { pos.push(P.getX(i), P.getY(i), P.getZ(i)); nor.push(N.getX(i), N.getY(i), N.getZ(i)); col.push(c.r, c.g, c.b); }
       if (m.castShadow) shadow = true; gp.remove(m); geo.dispose(); });
     const G = new THREE.BufferGeometry(); G.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); G.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3)); G.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
-    const M = new THREE.Mesh(G, vmat); M.castShadow = shadow; gp.add(M); });
+    const M = new THREE.Mesh(G, gp.userData.gloss ? (W3_MAT.__vg ||= new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .12 })) : vmat); M.castShadow = shadow; gp.add(M); });
 }
 function w3Animal(kind, look, xmas) {
   const [fur, belly, acc] = W3_FUR[kind] || W3_FUR.fox, bird = kind === "owl" || kind === "magpie";
@@ -4467,20 +4469,24 @@ function w3Animal(kind, look, xmas) {
   add(head, SPH, fur, 0, 0, 0, .3, .29, .28, true, furM);
   const owlish = kind === "owl";
   if (owlish) add(head, SPH, belly, 0, -.01, .14, .25, .22, .16);
-  const eyes = new THREE.Group(); head.add(eyes); const er = owlish ? .1 : .082;
-  [-1, 1].forEach(s => { add(eyes, SPH, 0xffffff, s * .11, .04, .235, er, er * 1.15, er * .65, false, w3Mat(0xffffff, { roughness: .3 }));
-    add(eyes, SPH, 0x1b1b22, s * .11, .035, .283, er * .6, er * .7, er * .3, false, w3Mat(0x1b1b22, { roughness: .2 }));
-    add(eyes, SPH, 0xffffff, s * .095 + .018, .07, .305, .018, .018, .01, false, new THREE.MeshBasicMaterial({ color: 0xffffff })); });
-  const browG = new THREE.Group(); head.add(browG); [-1, 1].forEach(sd => { const b2 = add(browG, cap(.014, .07), 0x2a1d1a, sd * .11, .15, .25, 1, 1, 1); b2.rotation.z = Math.PI / 2 + sd * .12; }); const brows = [browG];
+  const eyes = new THREE.Group(); eyes.userData.gloss = true; head.add(eyes); if (owlish) eyes.position.z = .045; const er = (owlish ? .1 : .082) * 1.1, irisC = W3_EYE[kind] || 0x5a3a2a;
+  [-1, 1].forEach(s => { add(eyes, SPH, 0xffffff, s * .11, .04, .235, er, er * 1.15, er * .65);
+    add(eyes, SPH, irisC, s * .108, .036, .235 + er * .42, er * .7, er * .8, er * .32);
+    add(eyes, SPH, 0x120e16, s * .108, .034, .235 + er * .6, er * .4, er * .48, er * .2);
+    add(eyes, SPH, 0xffffff, s * .108 + s * -.022 + .006, .072, .235 + er * .86, .022, .024, .01);
+    add(eyes, SPH, 0xffffff, s * .108 + s * .02, .008, .235 + er * .84, .01, .01, .006);
+    if (!bird) for (let k = 0; k < 3; k++) { const l = add(eyes, cap(.0065, .036), 0x1b1420, s * (.11 + er * .62 + k * .01), .04 + er * 1.02 - k * .022, .262, 1, 1, 1); l.rotation.z = -s * (.55 + k * .42); } });
+  const browG = new THREE.Group(); head.add(browG); [-1, 1].forEach(sd => { const b2 = add(browG, cap(.011, .062), 0x3a2622, sd * .11, .16, .25, 1, 1, 1); b2.rotation.z = Math.PI / 2 + sd * .1; }); const brows = [browG];
+  if (!bird && kind !== "hedgehog") [[-.05, .25, .1, .07], [.03, .27, .08, .08], [.09, .23, .02, .06]].forEach(([x, y, z, r]) => add(head, SPH, fur, x, y, z, r, r * .8, r));
   if (kind === "raccoon") add(head, SPH, acc, 0, .045, .17, .27, .085, .1);
   if (kind === "badger") { add(head, SPH, 0xf4f4f4, 0, .11, .07, .075, .2, .24); [-1, 1].forEach(s => add(head, SPH, 0x1e1e22, s * .13, .05, .12, .07, .13, .16)); }
   // muzzle, nose, mouth
   if (bird) add(head, CONE, kind === "owl" ? 0xf2a93b : 0x2b2b30, 0, -.05, .3, .055, .14, .055).rotation.x = Math.PI / 2;
   else if (kind === "fox" || kind === "wolf") { const sn = add(head, CONE, belly, 0, -.07, .3, .12, .26, .1); sn.rotation.x = Math.PI / 2; add(head, SPH, 0x1b1b22, 0, -.07, .44, .045, .04, .04); }
-  else { add(head, SPH, belly, 0, -.09, .22, .14, .1, .1); add(head, SPH, kind === "mouse" || kind === "bunny" ? 0xff8fab : 0x1b1b22, 0, -.05, .315, .042, .034, .03); }
+  else { add(head, SPH, belly, 0, -.09, .22, .14, .1, .1); add(head, SPH, kind === "mouse" || kind === "bunny" ? 0xff8fab : 0x1b1b22, 0, -.05, .315, .042, .034, .03); add(head, SPH, 0xffffff, -.012, -.04, .342, .012, .008, .006); }
   if (!bird) add(head, tor(.045, .011, Math.PI), 0x4a2a2a, 0, -.13, .29, 1, 1, 1).rotation.z = Math.PI;
   if (kind === "beaver") add(head, BOX, 0xffffff, 0, -.17, .3, .06, .05, .02);
-  [-1, 1].forEach(s => add(head, SPH, 0xff9fb8, s * .19, -.07, .2, .05, .03, .02, false, w3Mat(0xff9fb8, { transparent: true, opacity: .7 })));
+  [-1, 1].forEach(s => { const bl = add(head, SPH, 0xff86a8, s * .175, -.055, .215, .055, .034, .02); bl.rotation.y = s * .55; });
   // ears
   const ear = (x, y, rz, geo, sx, sy, sz, col, inner) => { const e = add(head, geo, col, x, y, -.02, sx, sy, sz); e.rotation.z = rz; if (inner) { const i = add(head, geo, inner, x, y, .005, sx * .6, sy * .75, sz * .5); i.rotation.z = rz; } return e; };
   if (kind === "fox" || kind === "wolf") [-1, 1].forEach(s => { ear(s * .17, .27, -s * .3, CONE, .1, .24, .06, fur, 0x3a2a22); });
@@ -6120,6 +6126,128 @@ function jealousCheck(f, where) {
 
 function phMore() { const sc = document.querySelector("#phone .ph-screen"), b = sc && sc.querySelector(".ph-more"); if (!b) return;
   const upd = () => b.classList.toggle("hide", sc.scrollHeight - sc.scrollTop - sc.clientHeight < 20); upd(); sc.onscroll = upd; }
+// ===== Gossip Cage: the town's gossip app (silly drama, never cruel) =====
+APP_ICON.gossip = `<svg viewBox="0 0 24 24"><path d="M6 3h12M7 3v16M10.3 3v16M13.7 3v16M17 3v16M5 19h14" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M12 7.5c1.6 0 2.8 1 2.8 2.4S13.6 12.3 12 12.3c-.4 0-.8 0-1.1-.2L9.4 13l.4-1.4c-.6-.5-.9-1-.9-1.7C8.9 8.5 10.4 7.5 12 7.5Z" fill="#fff"/></svg>`;
+const GOSSIP_ABOUT = [
+  "{A} wore the SAME scarf three days in a row. 👀 Is it glued on??",
+  "{A} thinks they're SO good at football. They missed four goals today. 🙄⚽",
+  "Not me hearing {A} sing in the bath. The WHOLE street heard. 🎤😬",
+  "{A} said they're on a diet and then ate six cupcakes. SIX. 🧁",
+  "Is it just me or does {A} brag about their hair ALL the time? 💅",
+  "{A} tripped at the Lake and pretended it was a dance move. We all saw. 💃",
+  "{A} took 47 selfies at the Flower Garden. I counted. 📸",
+  "Somebody tell {A} their jokes are NOT funny. ...Okay, one was funny. 😒",
+  "{A} borrowed my book a MONTH ago. Still waiting. 📚⏰",
+  "Did {A} really think nobody would notice they cheated at hide and seek?? 🙈"
+];
+const GOSSIP_PAIR = [
+  "Okay so I saw {A} and {B} at the cafe sharing ONE milkshake. 👀🥤",
+  "{A} has a crush on {B}. I'm not saying who told me. (It was everyone.) 😳",
+  "{A} and {B} had a HUGE fight about whose turn it was on the swing. 😤",
+  "{A} said {B}'s cookies taste like cardboard. DRAMA. 🍪😱",
+  "{A} and {B} stopped talking and nobody knows why. 🤐 Theories below."
+];
+const GOSSIP_ME = {
+  dating: ["{ME} and {P} were holding paws at the Lake. So cute it's actually annoying. 🙄💕", "{ME} and {P}... how long until the wedding? Asking for the whole town. 💍👀"],
+  married: ["I heard {ME} and {P} argue about whose turn it is to do the dishes. 🍽️😂", "{ME} and {P} are SO in love it's honestly a bit much. 💕🙄"],
+  kids: ["{K} drew on the wall at {ME}'s house. With CRAYONS. 🖍️😱", "{ME}'s kid {K} is the cutest in town and I'm SO jealous. 🍼"],
+  caught: ["EVERYBODY saw {ME} with {B}. Does {P} know?? 😱😱", "{P} was SO mad at {ME}. You could hear it from the bakery. 😬"],
+  ex: ["Remember when {ME} and {X} went to DIVORCE COURT? Judge Hootsworth is still talking about it. ⚖️😂"],
+  plain: ["{ME} is new-ish in town and EVERYONE wants to be their friend. Kind of jealous. 😤", "Has anyone seen {ME}'s house? I heard it's super fancy. 🏡✨"]
+};
+const GOSSIP_MINE = [
+  "{A} snores like a leaf blower. 😴",
+  "{A} secretly sleeps with a teddy bear. 🧸",
+  "{A} ate the last slice of cake and blamed the cat. 🍰",
+  "{A} has a crush on someone in this town. 👀",
+  "{A} can't whistle. They just spit. 😂"
+];
+function gossipSeed(n) { let x = hashStr("gossip" + (S.tday || S.day || 1) + "_" + n); return () => (x = (x * 16807) % 2147483647) / 2147483647; }
+function gossipPosts() {
+  const fr = friends(), out = [], me = esc(S.name), sp = (typeof spouse === "function" && spouse()) || null;
+  const sweet = fr.find(f => relOf(f) >= 1 && relOf(f) < 4);
+  for (let n = 0; n < 6; n++) {
+    const r = gossipSeed(n), by = fr[(hashStr("gby" + (S.tday || S.day || 1)) + n * 4) % fr.length], others = fr.filter(x => x.name !== by.name);
+    const a = others[Math.floor(r() * others.length)], b = others.filter(x => x.name !== a.name)[Math.floor(r() * (others.length - 1))];
+    const pairPost = r() < .35;
+    const t = (pairPost ? GOSSIP_PAIR[Math.floor(r() * GOSSIP_PAIR.length)] : GOSSIP_ABOUT[Math.floor(r() * GOSSIP_ABOUT.length)]).replaceAll("{A}", a.name).replaceAll("{B}", b.name);
+    out.push({ id: "d" + n, by, about: a.name, t });
+  }
+  const P = sp || sweet, K = (S.kids || [])[0], X = (S.exes || []).slice(-1)[0];
+  const mine = S.caught && P ? ["caught", { B: S.caught.with }] : X ? ["ex", { X }] : K && sp ? ["kids", { K: esc(K.name) }] : sp ? ["married", {}] : sweet ? ["dating", {}] : ["plain", {}];
+  const by = pickOne(fr.filter(x => !P || x.name !== P.name)), r0 = gossipSeed(99);
+  let t = GOSSIP_ME[mine[0]][Math.floor(r0() * GOSSIP_ME[mine[0]].length)].replaceAll("{ME}", me).replaceAll("{P}", P ? P.name : "");
+  Object.entries(mine[1]).forEach(([k, v]) => t = t.replaceAll("{" + k + "}", v));
+  out.splice(1, 0, { id: "me", by, about: "me", t });
+  return out.concat((S.gossipMine || []).filter(g => g.day === (S.tday || S.day)).map((g, i) => ({ id: "y" + i, by: null, about: g.about, t: g.t })));
+}
+function gossipApp() {
+  S.gossipSeen = S.tday || S.day;
+  const ph = document.getElementById("phone"); ph.style.display = "flex"; ph.dataset.thread = "";
+  S.gossipReact = S.gossipReact || {}; const day = S.tday || S.day;
+  const posts = gossipPosts();
+  ph.innerHTML = `<div class="ph-screen gossip">${appTop("Gossip Cage")}
+    <div class="gc-hero">The Gossip Cage<small>What everyone in ${VILLAGE} is REALLY saying</small></div>
+    <button class="gc-post-btn" onclick="gossipWrite()">Spill some tea</button>
+    ${posts.map(p => { const key = day + p.id, re = S.gossipReact[key] || {};
+      return `<div class="gc-post">
+        <div class="gc-who">${p.by ? `${face(p.by)}<b>${p.by.name}</b>` : `<b>You (secretly)</b>`}<small>${p.by ? "whispered" : "posted"}</small></div>
+        <p>${p.t}</p>
+        <div class="gc-acts">
+          <button class="${re.omg ? "on" : ""}" onclick="gossipReact('${key}','omg')">OMG ${re.omg ? 1 : ""}</button>
+          <button class="${re.tea ? "on" : ""}" onclick="gossipReact('${key}','tea')">Spill</button>
+          ${p.about !== "me" && p.by ? `<button class="${re.def ? "on" : ""}" onclick="gossipDefend('${key}','${p.about}','${p.by.name}')">Stick up for ${p.about}</button>` : ""}
+          ${p.about === "me" ? `<button class="${re.def ? "on" : ""}" onclick="gossipClapBack('${key}','${p.by.name}')">Clap back</button>` : ""}
+        </div></div>`; }).join("")}
+    <p class="gc-foot">Gossip is fun... until it's about YOU. 😉</p>
+  </div>`;
+  noEmoji(ph);
+}
+function gossipReact(key, k) { S.gossipReact = S.gossipReact || {}; const r = S.gossipReact[key] = S.gossipReact[key] || {}; r[k] = !r[k]; chime(); gossipApp(); }
+function gossipDefend(key, about, by) {
+  S.gossipReact = S.gossipReact || {}; const r = S.gossipReact[key] = S.gossipReact[key] || {}; if (r.def) return; r.def = true;
+  const a = fName(about), b = fName(by); if (a) addHearts(a, 1); if (b) addHearts(b, -1); chime(); floatHearts(2);
+  setTimeout(() => textFrom(about, pickOne([`I saw you stick up for me in the Gossip Cage. 🥺 You're a REAL friend.`, `Thank you for defending me!! ${by} is SO dramatic. 💕`])), 1500);
+  setTimeout(() => textFrom(by, pickOne([`Okay, okay, it was just a JOKE. Calm down. 🙄`, `Wow, you're taking THEIR side?? 😤`])), 4000);
+  gossipApp();
+}
+function gossipClapBack(key, by) {
+  S.gossipReact = S.gossipReact || {}; const r = S.gossipReact[key] = S.gossipReact[key] || {}; if (r.def) return; r.def = true;
+  chime(); setTimeout(() => textFrom(by, pickOne(["Okay that clap back was actually iconic. I'm deleting my post. 😳", "HOW did you know it was me?! 😱 ...Sorry. 😅", "Fine. FINE. You win this round. 😤"])), 1500);
+  gossipApp();
+}
+function gossipWrite(pick) {
+  const ph = document.getElementById("phone"), fr = friends();
+  ph.innerHTML = `<div class="ph-screen gossip">${appTop("Spill some tea")}
+    <div class="gc-hero">Who's the gossip about?</div>
+    ${pick === undefined ? fr.map((f, i) => `<div class="ph-contact" onclick="gossipWrite(${i})">${face(f)}<div><b>${f.name}</b></div></div>`).join("")
+      : `<div class="gc-hero"><small>Pick what to post about ${fr[pick].name}. They might find out...</small></div>` + GOSSIP_MINE.map((t, k) => `<button class="gc-post-btn" onclick="gossipSend(${pick},${k})">${t.replaceAll("{A}", fr[pick].name)}</button>`).join("")}
+    <button class="ph-meet" onclick="gossipApp()">Back to the Gossip Cage</button>
+  </div>`;
+  noEmoji(ph); setTimeout(phMore, 30);
+}
+function gossipSend(i, k) {
+  const f = friends()[i], t = GOSSIP_MINE[k].replaceAll("{A}", f.name);
+  S.gossipMine = S.gossipMine || []; S.gossipMine.push({ about: f.name, t, day: S.tday || S.day });
+  chime();
+  if (Math.random() < .5) { addHearts(f, -1); setTimeout(() => textFrom(f.name, pickOne([`Um. I saw what you posted about me in the Gossip Cage. 😤 Not cool.`, `Everybody knows it was YOU who posted that about me. 😢 Why??`])), 3000); }
+  else setTimeout(() => textFrom(pickOne(friends().filter(x => x.name !== f.name)).name, `OMG did you see the new post about ${f.name} in the Gossip Cage?? 😱🍵`), 3000);
+  gossipApp();
+}
+document.head.insertAdjacentHTML("beforeend", `<style>
+.ph-screen.gossip{background:linear-gradient(#2a1840,#4a2466)}
+.ph-screen.gossip .ph-top{background:#ff5aa8;color:#fff}
+.gc-hero{color:#fff;text-align:center;font-weight:900;font-size:24px;padding:12px 10px 4px;flex-shrink:0}
+.gc-hero small{display:block;font-weight:600;font-size:13px;opacity:.85}
+.gc-post-btn{flex-shrink:0;margin:6px 14px;padding:10px;border-radius:16px;background:linear-gradient(90deg,#ff5aa8,#ffb35a);color:#fff;font-weight:800}
+.gc-post{flex-shrink:0;background:#fff;margin:8px 12px;border-radius:16px;padding:10px 12px;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.gc-who{display:flex;align-items:center;gap:8px}.gc-who img{width:40px;height:40px;object-fit:contain}.gc-who small{margin-left:auto;color:#a07ab8}
+.gc-post p{margin:6px 0;font-size:16px}
+.gc-acts{display:flex;flex-wrap:wrap;gap:6px}.gc-acts button{font-size:13px;padding:5px 10px;border-radius:14px;background:#f3e6fa;color:#5a2a7a}
+.gc-acts button.on{background:#ff5aa8;color:#fff}
+.gc-foot{color:#fff;text-align:center;opacity:.7;font-size:13px;flex-shrink:0}
+</style>`);
+
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
 </script>
 </body>
