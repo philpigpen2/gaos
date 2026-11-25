@@ -556,6 +556,25 @@
   body.look-game .has-sheet img, body.look-game .has-sheet .t-body img { visibility:visible !important; } body.look-game .has-sheet .sheet, body.look-game .has-sheet .t-sheet { display:none !important; }
   .job-chip { display:inline-block; background:#ffe3a8; color:#8a5200; font-size:12px; font-weight:700; padding:2px 9px; border-radius:10px; vertical-align:middle; margin-left:4px; }
   .job-list { display:grid; gap:8px; margin-top:10px; } .job-pick { text-align:left; width:100%; margin:0; } .job-pick.on { outline:3px solid #e8962e; }
+  #w3 { position:fixed; inset:0; z-index:50; background:#9fd0ff; touch-action:none; user-select:none; -webkit-user-select:none; }
+  #w3c { width:100%; height:100%; display:block; touch-action:none; }
+  .w3-load { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:700 22px inherit; color:#fff; text-shadow:0 2px 8px #0006; }
+  .w3-top { position:absolute; left:12px; top:112px; } .w3-top b { background:rgba(30,20,50,.55); color:#fff; padding:5px 14px; border-radius:14px; font-size:15px; }
+  .w3-exit, .w3-map, .w3-view { position:absolute; top:58px; right:12px; padding:7px 14px; font-size:15px; border-radius:14px; border:0; background:rgba(30,20,50,.6); color:#fff; font-weight:700; margin:0; top:62px !important; }
+  .w3-exit { top:108px !important; } .w3-map { right:12px; top:150px !important; } .w3-view { right:12px; top:192px !important; }
+  #w3joy { position:absolute; left:26px; bottom:34px; width:124px; height:124px; border-radius:50%; background:rgba(255,255,255,.22); border:3px solid rgba(255,255,255,.55); touch-action:none; }
+  #w3joy i { position:absolute; left:37px; top:37px; width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,.85); box-shadow:0 4px 12px #0004; pointer-events:none; }
+  .w3-jump, .w3-run { position:absolute; right:26px; bottom:44px; width:84px; height:84px; border-radius:50%; border:3px solid #fff; background:rgba(255,120,170,.75); color:#fff; font:800 17px inherit; touch-action:none; }
+  .w3-run { right:120px; bottom:30px; width:66px; height:66px; font-size:14px; background:rgba(60,170,255,.6); } .w3-run.on { background:rgba(60,170,255,.95); box-shadow:0 0 14px #3bb7ff; }
+  .w3-hint { position:absolute; left:50%; top:240px; transform:translateX(-50%); background:rgba(30,20,50,.55); color:#fff; padding:6px 14px; border-radius:14px; font-size:14px; transition:opacity 1s; white-space:nowrap; pointer-events:none; }
+  #w3act { position:absolute; left:50%; bottom:150px; transform:translateX(-50%); display:flex; flex-direction:column; gap:8px; align-items:center; }
+  #w3act button { margin:0; font-size:17px; padding:10px 18px; }
+  #w3say { position:absolute; transform:translate(-50%,-100%); background:#fff; padding:7px 12px; border-radius:16px; font-size:15px; max-width:220px; text-align:center; box-shadow:0 4px 14px #0004; pointer-events:none; opacity:0; transition:opacity .2s; }
+  #w3talk { position:absolute; left:8px; right:8px; bottom:8px; background:rgba(255,255,255,.96); border-radius:22px; padding:10px; display:none; box-shadow:0 8px 30px #0005; z-index:5; }
+  #w3talk.on { display:block; } .w3t-head { display:flex; align-items:center; gap:6px; flex-wrap:wrap; } .w3t-head img { height:40px; width:40px; object-fit:contain; } .w3t-head .ph-x { margin-left:auto; }
+  .w3t-row { display:flex; gap:6px; margin:8px 0; } .w3t-row input { flex:1; font-size:16px; padding:9px 12px; border-radius:14px; border:2px solid #f0d0e0; min-width:0; } .w3t-row button { margin:0; }
+  #w3talk .tt-acts { display:flex; flex-wrap:wrap; gap:6px; } #w3talk .tt-acts button { margin:0; padding:7px 10px; font-size:14px; }
+  body.w3mode #snow, body.w3mode #xlights, body.w3mode #sky { display:none !important; }
   #snow { position:fixed; inset:0; pointer-events:none; z-index:900; }
   #xlights { position:fixed; left:0; right:0; top:0; height:16px; display:flex; justify-content:space-around; pointer-events:none; z-index:901; border-top:2px solid #2d4a2d; }
   #xlights i { width:9px; height:13px; border-radius:50% 50% 50% 50% / 40% 40% 60% 60%; margin-top:1px; animation:twinkle 1.4s var(--d) infinite alternate; }
@@ -935,7 +954,8 @@ window.addEventListener("scroll", scrollButtons, { passive:true });
 window.addEventListener("resize", scrollButtons);
 setInterval(scrollButtons, 700);
 function show(html) {
-  document.body.classList.remove("immersive", "world", "meet", "house", "gshow", "walking", "townmode"); WALK = null; TOWN = null;
+  if (typeof W3 !== "undefined" && W3 && !/id="w3"/.test(html)) w3Stop();
+  document.body.classList.remove("immersive", "world", "meet", "house", "gshow", "walking", "townmode", "w3mode"); WALK = null; TOWN = null;
   app.innerHTML = html;
   app.classList.remove("enter"); void app.offsetWidth; app.classList.add("enter");
   const m = html.match(/url\(art\/(\w+)\.png\)/); if (m) setBg(m[1]);
@@ -3937,6 +3957,302 @@ if (LOOK_GAME()) {
   if (typeof MutationObserver !== "undefined") new MutationObserver(ms => ms.forEach(m => { if (m.type === "attributes") { const v = m.target.getAttribute(m.attributeName); if (v && v.includes("art/")) gFixOne(m.target); } else m.addedNodes.forEach(n => n.nodeType === 1 && gSwap(n)); }))
     .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["src", "style"] });
 }
+// ===== Real 3D walking world (three.js): walk around Animal Burrow in first person =====
+// Town map pixels / 20 = world units. x -> X, y -> Z. The fronts of buildings face +Z (south).
+let W3 = null, THREE_P = null;
+function loadThree() {
+  if (window.THREE) return Promise.resolve();
+  return THREE_P = THREE_P || new Promise((res, rej) => { const s = document.createElement("script"); s.src = "lib/three.min.js"; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+}
+function hasWebGL() { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch (e) { return false; } }
+const W3_ROADS = [[[1000, 960], [1000, 170]], [[1000, 960], [1000, 1480]], [[1000, 960], [1630, 960]], [[1000, 960], [360, 960]], [[360, 960], [420, 1330]], [[1000, 1240], [690, 1280]],
+  [[1000, 1240], [1330, 1290]], [[1630, 960], [1760, 1260]], [[1630, 960], [1720, 560]], [[1000, 560], [620, 620]], [[620, 620], [260, 520]], [[1000, 400], [640, 300]], [[1000, 400], [1420, 300]], [[1330, 1290], [1600, 1480]]];
+const W3_COL = { home:[0xffd9a0, 0x3f7fe0], cafe:[0xe8c48f, 0x2f9a5b], bakery:[0xffd36b, 0xe0502a], icecream:[0xff9cc6, 0x8fd3ff], flowers:[0xb6e6a0, 0xb35fd1], cinema:[0x37305a, 0xffc84a],
+  arcade:[0x2c3e66, 0x45d0ff], shows:[0xa98bff, 0xff5a8a], library:[0xd8b98a, 0x3f9f3a], house:[0xf7c98a, 0xc0503a] };
+function w3HeightAt(x, z) {
+  // flat town in the middle, hills rising all around the edge
+  const dx = Math.max(0, Math.abs(x - 50) - 46), dz = Math.max(0, Math.abs(z - 45) - 41), d = Math.hypot(dx, dz);
+  return Math.min(16, d * d * .04) + (d > 0 ? Math.sin(x * .3) * Math.cos(z * .27) * Math.min(1, d / 6) * 1.5 : 0);
+}
+function eyesScreen(k, cont) {
+  if (!hasWebGL()) return eyesScreen2D(k, cont);
+  S.outside = "world"; S.wasWalking = true;
+  const spot = k && TOWN_SPOT[k] ? TOWN_SPOT[k] : null;
+  const start = spot ? [spot[0] / 20, spot[1] / 20 + (k === "village" ? 8.5 : 4)] : S.w3pos || [50, 56.5];
+  if (k) S.worldAt = k;
+  show(`<div id="w3"><div class="w3-load">Loading the 3D world...</div></div>`);
+  document.body.classList.add("immersive", "w3mode");
+  loadThree().then(() => w3Start(start)).catch(() => { document.body.classList.remove("w3mode"); eyesScreen2D(k, cont); });
+}
+function w3Tex(url, rep) {
+  const t = new THREE.TextureLoader().load(url); t.encoding = THREE.sRGBEncoding;
+  if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.anisotropy = 4; }
+  return t;
+}
+function w3Label(text, big) {
+  const c = document.createElement("canvas"), g = c.getContext("2d"); c.width = 512; c.height = 128;
+  g.font = `bold ${big ? 64 : 54}px Fredoka, Arial Rounded MT Bold, sans-serif`; const w = Math.min(500, g.measureText(text).width + 50);
+  g.fillStyle = "rgba(40,25,60,.72)"; g.beginPath(); g.roundRect((512 - w) / 2, 18, w, 92, 46); g.fill();
+  g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(text, 256, 66);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true }));
+  sp.scale.set(big ? 5 : 3.2, big ? 1.25 : .8, 1); sp.renderOrder = 10; return sp;
+}
+function w3Start(start) {
+  if (!document.getElementById("w3")) return;
+  const xmas = XMAS(), root = document.getElementById("w3");
+  if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+  root.innerHTML = `<canvas id="w3c"></canvas>
+    <div class="w3-top"><b id="w3place"></b></div>
+    <button class="w3-exit" onclick="w3Exit()">Exit</button><button class="w3-map" onclick="w3Stop(); townScreen()">Town map</button>
+    <div id="w3joy"><i></i></div><button class="w3-jump" onpointerdown="w3Jump(event)">Jump</button><button class="w3-run" id="w3run" onclick="W3.run=!W3.run;this.classList.toggle('on')">Run</button>
+    <button class="w3-view" onclick="w3View()">Camera</button><div class="w3-hint" id="w3hint">Left thumb: walk. Swipe anywhere else: look around.</div>
+    <div id="w3act"></div><div id="w3say"></div><div id="w3talk"></div>`;
+  const cv = document.getElementById("w3c");
+  const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+  R.setPixelRatio(Math.min(devicePixelRatio || 1, 1.6)); R.outputEncoding = THREE.sRGBEncoding; R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+  R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1;
+  const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(70, 1, .1, 400);
+  sc.fog = new THREE.Fog(0xcfe6ff, 60, 190);
+  const hemi = new THREE.HemisphereLight(0xcfe8ff, xmas ? 0x9aa7b8 : 0x5d7a3a, .6); sc.add(hemi);
+  const sun = new THREE.DirectionalLight(0xfff2d8, 1.2); sun.position.set(30, 60, 20); sun.castShadow = true;
+  Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 160 }); sun.shadow.mapSize.set(1536, 1536); sun.shadow.bias = -.0005; sc.add(sun, sun.target);
+  // ground with hills
+  const gg = new THREE.PlaneGeometry(220, 210, 110, 105); gg.rotateX(-Math.PI / 2); gg.translate(50, 0, 45);
+  const pos = gg.attributes.position; for (let i = 0; i < pos.count; i++) pos.setY(i, w3HeightAt(pos.getX(i), pos.getZ(i)));
+  gg.computeVertexNormals();
+  const ground = new THREE.Mesh(gg, new THREE.MeshStandardMaterial({ map: w3Tex(xmas ? "art/r_snow.png" : "art/r_grass.png", 40), color: xmas ? 0xf4f8ff : 0x9fd46a, roughness: .95 }));
+  ground.receiveShadow = true; sc.add(ground);
+  // dirt (or snowy) paths
+  const dirt = new THREE.MeshStandardMaterial({ map: w3Tex("art/r_dirt.png", 1), color: xmas ? 0xd8cfc4 : 0xffffff, roughness: 1 });
+  W3_ROADS.forEach(([a, b]) => { const ax = a[0] / 20, az = a[1] / 20, bx = b[0] / 20, bz = b[1] / 20, L = Math.hypot(bx - ax, bz - az);
+    const g = new THREE.PlaneGeometry(3.3, L + 3.3); g.rotateX(-Math.PI / 2); const m = new THREE.Mesh(g, dirt.clone()); m.material.map = w3Tex("art/r_dirt.png", 1); m.material.map.repeat.set(1, (L + 3.3) / 3.3);
+    m.position.set((ax + bx) / 2, .02, (az + bz) / 2); m.rotation.y = Math.atan2(bx - ax, bz - az); m.receiveShadow = true; sc.add(m); });
+  const sq = new THREE.Mesh(new THREE.CircleGeometry(8, 48).rotateX(-Math.PI / 2), dirt); sq.position.set(50, .03, 48); sq.receiveShadow = true; sc.add(sq);
+  // water
+  const lake = new THREE.Mesh(new THREE.CircleGeometry(1, 64).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: w3Tex("art/r_water.png", 4), color: 0x9fd4ff, roughness: .15, metalness: .2, transparent: true, opacity: .92 }));
+  lake.scale.set(15.8, 1, 7.9); lake.position.set(50, .05, 77.8); sc.add(lake);
+  const pond = new THREE.Mesh(new THREE.CircleGeometry(1, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xdff3ff, roughness: .08, metalness: .3 }));
+  pond.scale.set(7, 1, 4.1); pond.position.set(80, .05, 75.8); sc.add(pond);
+  // trees: instanced so lots of them stay fast on phones
+  const trees = { pine: [], oak: [], birch: [] };
+  TOWN_DECOR.forEach(d => { const k = d.sp.replace("t_", ""); if (trees[k]) trees[k].push([d.x / 20, d.y / 20, d.w / 110]); });
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 260; i++) { const a = rnd() * 6.283, r = 52 + rnd() * 40, x = 50 + Math.cos(a) * r * 1.1, z = 45 + Math.sin(a) * r; trees[rnd() < .6 ? "pine" : rnd() < .7 ? "oak" : "birch"].push([x, z, .9 + rnd() * .9]); }
+  const inst = (geo, mat, list, place) => { const m = new THREE.InstancedMesh(geo, mat, list.length), o = new THREE.Object3D(); m.castShadow = true; m.receiveShadow = true;
+    list.forEach((t, i) => { place(o, t); o.updateMatrix(); m.setMatrixAt(i, o.matrix); }); sc.add(m); };
+  const at = (o, [x, z, s], y, sy) => { o.position.set(x, w3HeightAt(x, z) + y * s, z); o.scale.set(s, (sy || 1) * s, s); o.rotation.set(0, x * 7 % 6.28, 0); };
+  const trunk = new THREE.MeshStandardMaterial({ color: 0x6b4a2f, roughness: 1 }), birchT = new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: .9 });
+  const pineM = new THREE.MeshStandardMaterial({ color: 0x2e8b4a, roughness: .9, flatShading: true }), snowM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .8, flatShading: true });
+  const oakM = new THREE.MeshStandardMaterial({ color: 0x55b83a, roughness: .9, flatShading: true }), birchM = new THREE.MeshStandardMaterial({ color: 0x9bc45a, roughness: .9, flatShading: true });
+  const all = [...trees.pine, ...trees.oak, ...trees.birch];
+  inst(new THREE.CylinderGeometry(.25, .35, 2, 7), trunk, [...trees.pine, ...trees.oak], (o, t) => at(o, t, 1));
+  inst(new THREE.CylinderGeometry(.18, .22, 3, 7), birchT, trees.birch, (o, t) => at(o, t, 1.5));
+  [[2.2, 2.6, 2], [1.7, 2.2, 3.3], [1.15, 1.8, 4.5]].forEach(([r, h, y], n) => { inst(new THREE.ConeGeometry(r, h, 8), pineM, trees.pine, (o, t) => at(o, t, y));
+    if (xmas) inst(new THREE.ConeGeometry(r * .62, h * .45, 8), snowM, trees.pine, (o, t) => at(o, t, y + h * .3)); });
+  inst(new THREE.IcosahedronGeometry(2, 0), oakM, trees.oak, (o, t) => at(o, t, 3.2, .85));
+  inst(new THREE.IcosahedronGeometry(1.4, 0), oakM, trees.oak, (o, t) => { at(o, t, 4.3); o.position.x += .9 * t[2]; });
+  inst(new THREE.IcosahedronGeometry(1.3, 0), birchM, trees.birch, (o, t) => at(o, t, 3.6, 1.3));
+  // buildings
+  const blds = [];
+  TOWN_BLD.forEach(b => { const [sp, px, py, pw, what, label] = b, kind = what.startsWith("shop:") ? what.slice(5) : what === "home" ? "home" : what === "shows" ? "shows" : what === "eyes:library" ? "library" : what ? "" : "house";
+    const x = px / 20, z = py / 20;
+    if (what === "eyes:village") { // fountain
+      const st = new THREE.MeshStandardMaterial({ color: 0xbdb6ab, roughness: .8 });
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.4, .8, 32), st); base.position.set(50, .4, 48); base.castShadow = base.receiveShadow = true;
+      const wat = new THREE.Mesh(new THREE.CylinderGeometry(2.9, 2.9, .1, 32), new THREE.MeshStandardMaterial({ color: 0x7fc8ff, roughness: .1, metalness: .2 })); wat.position.set(50, .8, 48);
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(.35, .5, 2.2, 16), st); col.position.set(50, 1.6, 48); col.castShadow = true;
+      sc.add(base, wat, col); blds.push({ x: 50, z: 48, hw: 3.4, hd: 3.4, round: true }); return; }
+    if (what === "eyes:campfire") {
+      const logs = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.2, .4, 10), trunk); logs.position.set(x, .2, z - 1);
+      const fire = new THREE.Mesh(new THREE.ConeGeometry(.6, 1.6, 8), new THREE.MeshBasicMaterial({ color: 0xffa53a })); fire.position.set(x, 1.1, z - 1);
+      const fl = new THREE.PointLight(0xff9a3a, 1.6, 14); fl.position.set(x, 2, z - 1); sc.add(logs, fire, fl); W3_FIRE = { fire, fl }; return; }
+    if (what === "eyes:treehouse") {
+      const tr = new THREE.Mesh(new THREE.CylinderGeometry(.8, 1.1, 7, 9), trunk); tr.position.set(x, 3.5, z - 2); tr.castShadow = true;
+      const top = new THREE.Mesh(new THREE.IcosahedronGeometry(4, 0), oakM); top.position.set(x, 8.5, z - 2); top.castShadow = true;
+      const hut = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.4, 3), new THREE.MeshStandardMaterial({ color: 0xa8774a })); hut.position.set(x, 6, z - 1.5); hut.castShadow = true;
+      const lab = w3Label(label || "Treehouse"); lab.position.set(x, 11.5, z - 2); sc.add(tr, top, hut, lab); blds.push({ x, z: z - 2, hw: 1.3, hd: 1.3 }); return; }
+    const [wallC, roofC] = W3_COL[kind] || W3_COL.house;
+    const w = pw * .036, d = w * .8, h = w * (kind === "shows" ? .75 : .62), cz = z - d / 2;
+    const g = new THREE.Group(); g.position.set(x, 0, cz);
+    const walls = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: wallC, roughness: .85 })); walls.position.y = h / 2; walls.castShadow = walls.receiveShadow = true;
+    const roofG = new THREE.ConeGeometry(Math.hypot(w, d) * .58, h * .7, 4); roofG.rotateY(Math.PI / 4);
+    const roof = new THREE.Mesh(roofG, new THREE.MeshStandardMaterial({ color: roofC, roughness: .7, flatShading: true })); roof.scale.set(1, 1, d / w); roof.position.y = h + h * .35; roof.castShadow = true;
+    const door = new THREE.Mesh(new THREE.BoxGeometry(w * .2, h * .5, .12), new THREE.MeshStandardMaterial({ color: kind === "home" ? 0x3a7bd5 : 0x6b4228 })); door.position.set(0, h * .25, d / 2 + .03);
+    const winM = new THREE.MeshStandardMaterial({ color: 0xfff3b8, emissive: 0xffc860, emissiveIntensity: .15 }); W3_WIN.push(winM);
+    [-1, 1].forEach(s => { const wi = new THREE.Mesh(new THREE.BoxGeometry(w * .18, h * .22, .1), winM); wi.position.set(s * w * .3, h * .58, d / 2 + .03); g.add(wi); });
+    g.add(walls, roof, door);
+    if (xmas) { const cap = new THREE.Mesh(roofG.clone(), snowM); cap.scale.set(.75, .4, .75 * d / w); cap.position.y = h + h * .62; g.add(cap); }
+    if (kind === "shows") { for (let i = 0; i < 12; i++) { const bulb = new THREE.Mesh(new THREE.SphereGeometry(.13, 8, 8), new THREE.MeshBasicMaterial({ color: [0xff5a8a, 0xffd23b, 0x45d0ff][i % 3] })); bulb.position.set(-w / 2 + .4 + i * (w - .8) / 11, h * .9, d / 2 + .1); g.add(bulb); } }
+    if (label) { const lab = w3Label(label); lab.position.set(0, h * 1.75 + 1, 0); g.add(lab); }
+    sc.add(g); blds.push({ x, z: cz, hw: w / 2 + .4, hd: d / 2 + .4, what, label, door: [x, z + .8] }); });
+  // little things: lamps, benches, rocks, flowers
+  TOWN_DECOR.forEach(d => { const x = d.x / 20, z = d.y / 20;
+    if (d.sp === "t_lantern") { const post = new THREE.Mesh(new THREE.CylinderGeometry(.07, .09, 2.4, 6), new THREE.MeshStandardMaterial({ color: 0x2f2a28 })); post.position.set(x, 1.2, z); post.castShadow = true;
+      const lampM = new THREE.MeshStandardMaterial({ color: 0xfff1b0, emissive: 0xffc860, emissiveIntensity: .2 }); W3_WIN.push(lampM); const lamp = new THREE.Mesh(new THREE.SphereGeometry(.25, 10, 10), lampM); lamp.position.set(x, 2.5, z); sc.add(post, lamp); }
+    if (d.sp === "t_bench") { const b = new THREE.Mesh(new THREE.BoxGeometry(2, .5, .7), trunk); b.position.set(x, .4, z); b.castShadow = true; sc.add(b); }
+    if (d.sp === "t_rock") { const r = new THREE.Mesh(new THREE.DodecahedronGeometry(.9, 0), new THREE.MeshStandardMaterial({ color: 0x8d8a86, flatShading: true })); r.position.set(x, .4, z); r.castShadow = true; sc.add(r); }
+    if (d.sp === "t_flowerbed" || d.sp === "t_berrybush") for (let i = 0; i < 6; i++) { const f = new THREE.Mesh(new THREE.SphereGeometry(.28, 8, 8), new THREE.MeshStandardMaterial({ color: d.sp === "t_berrybush" ? [0x2f6b3f, 0xc2185b][i % 2] : [0xff6fae, 0xffd23b, 0x9775fa, 0xffffff][i % 4] }));
+      f.position.set(x + Math.cos(i) * .9, .3, z + Math.sin(i * 1.7) * .6); sc.add(f); } });
+  // Christmas: the big tree in the square, snowmen and presents
+  if (xmas) {
+    const tx = 50, tz = 40.2; [[3.2, 3.4, 1.8], [2.5, 3, 3.6], [1.7, 2.6, 5.2]].forEach(([r, h, y]) => { const c = new THREE.Mesh(new THREE.ConeGeometry(r, h, 10), pineM); c.position.set(tx, y, tz); c.castShadow = true; sc.add(c); });
+    for (let i = 0; i < 40; i++) { const a = i * 2.4, y = 1 + (i / 40) * 5, r = 3 * (1 - (y - 1) / 6.2) + .1;
+      const bl = new THREE.Mesh(new THREE.SphereGeometry(.14, 8, 8), new THREE.MeshBasicMaterial({ color: [0xff3b3b, 0x3bd16f, 0xffd23b, 0x3bb7ff][i % 4] })); bl.position.set(tx + Math.cos(a) * r, y, tz + Math.sin(a) * r); sc.add(bl); }
+    const star = new THREE.Mesh(new THREE.OctahedronGeometry(.5, 0), new THREE.MeshBasicMaterial({ color: 0xffe066 })); star.position.set(tx, 6.8, tz); sc.add(star); W3_STAR = star;
+    [[57.5, 54], [28, 50], [75, 56]].forEach(([x, z]) => { [[.9, .9], [.65, 2.2], [.45, 3.15]].forEach(([r, y]) => { const s = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), snowM); s.position.set(x, y, z); s.castShadow = true; sc.add(s); });
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(.08, .4, 6), new THREE.MeshStandardMaterial({ color: 0xff7a1a })); nose.rotation.x = Math.PI / 2; nose.position.set(x, 3.15, z + .55); sc.add(nose); });
+    [[52.4, 42.6, 0xc62828], [47.8, 42.8, 0x2e7d32], [51, 43.4, 0xffd23b]].forEach(([x, z, c]) => { const p = new THREE.Mesh(new THREE.BoxGeometry(.8, .7, .8), new THREE.MeshStandardMaterial({ color: c })); p.position.set(x, .35, z); p.castShadow = true; sc.add(p); });
+  }
+  // falling snow
+  let snow = null;
+  if (xmas) { const n = 1800, sg = new THREE.BufferGeometry(), arr = new Float32Array(n * 3); for (let i = 0; i < n; i++) { arr[i * 3] = (Math.random() - .5) * 60; arr[i * 3 + 1] = Math.random() * 25; arr[i * 3 + 2] = (Math.random() - .5) * 60; }
+    sg.setAttribute("position", new THREE.BufferAttribute(arr, 3)); snow = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: .14, transparent: true, opacity: .9, depthWrite: false })); sc.add(snow); }
+  // stars at night
+  const stg = new THREE.BufferGeometry(), sa = new Float32Array(900); for (let i = 0; i < 300; i++) { const a = Math.random() * 6.28, e = .15 + Math.random() * 1.2; sa[i * 3] = Math.cos(a) * Math.cos(e) * 300; sa[i * 3 + 1] = Math.sin(e) * 300; sa[i * 3 + 2] = Math.sin(a) * Math.cos(e) * 300; }
+  stg.setAttribute("position", new THREE.BufferAttribute(sa, 3)); const stars = new THREE.Points(stg, new THREE.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false })); sc.add(stars);
+  // the animals: 3D cartoon characters that always turn to face you, walking with a bounce
+  const people = friends().map((f, i) => {
+    const a = ART[f.emo], hgt = 1.15 * Math.max(.55, REAL_SIZE[a] || 1), tex = w3Tex(`art/${gName(a)}.png`);
+    const geo = new THREE.PlaneGeometry(hgt, hgt); geo.translate(0, hgt / 2, 0);
+    const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: .45, side: THREE.DoubleSide, roughness: 1 });
+    const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = true; mesh.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: tex, alphaTest: .45 });
+    const blob = new THREE.Mesh(new THREE.CircleGeometry(hgt * .3, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: .22, depthWrite: false }));
+    const lab = w3Label(f.name); lab.scale.set(2.4, .6, 1); lab.position.y = hgt + .45; lab.visible = false;
+    const grp = new THREE.Group(); grp.add(mesh, blob, lab); sc.add(grp);
+    const w = whereNow(f), sp = w ? spotFor(i, w) : ANIMAL_HOME(i);
+    return { f, i, grp, mesh, lab, hgt, x: sp[0] / 20 + (Math.random() - .5) * 3, z: sp[1] / 20 + (Math.random() - .5) * 3, tx: null, tz: null, wait: Math.random() * 4, face: 1, moving: false, talkUntil: 0 };
+  });
+  const ma = ART[S.animal[0]], mh = 1.15 * Math.max(.7, REAL_SIZE[ma] || 1), mtex = w3Tex(`art/${gName(ma)}.png`), mgeo = new THREE.PlaneGeometry(mh, mh); mgeo.translate(0, mh / 2, 0);
+  const meMesh = new THREE.Mesh(mgeo, new THREE.MeshStandardMaterial({ map: mtex, transparent: true, alphaTest: .45, side: THREE.DoubleSide, roughness: 1 }));
+  meMesh.castShadow = true; meMesh.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: mtex, alphaTest: .45 });
+  const meBlob = new THREE.Mesh(new THREE.CircleGeometry(mh * .3, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: .25, depthWrite: false }));
+  const me = new THREE.Group(); me.add(meMesh, meBlob); sc.add(me);
+  start = w3CollideRaw(blds, start[0], start[1]);
+  W3 = { me, meMesh, meFace: 1, jy: 0, vy: 0, view: S.w3view || "third", R, sc, cam, sun, hemi, stars, snow, ground, people, blds, x: start[0], z: start[1], yaw: 0, pitch: -.12, keys: {}, joy: { x: 0, y: 0 }, t: 0, last: performance.now(), bob: 0, talk: null, near: null };
+  w3Controls(); w3Resize(); addEventListener("resize", w3Resize);
+  const loop = () => { if (!W3) return; w3Tick(); W3.raf = requestAnimationFrame(loop); }; loop();
+  W3.dog = setInterval(() => { if (W3 && performance.now() - W3.last > 200) w3Tick(); }, 100);
+  setTimeout(() => { const h = document.getElementById("w3hint"); if (h) h.style.opacity = 0; }, 6000);
+}
+let W3_WIN = [], W3_FIRE = null, W3_STAR = null;
+function w3Resize() { if (!W3) return; const w = innerWidth, h = innerHeight; W3.R.setSize(w, h, false); W3.cam.aspect = w / h; W3.cam.updateProjectionMatrix(); }
+function w3Controls() {
+  const joy = document.getElementById("w3joy"), knob = joy.querySelector("i"), cv = document.getElementById("w3c"); let jid = null, jc = null, lid = null, lp = null;
+  joy.addEventListener("pointerdown", e => { e.preventDefault(); jid = e.pointerId; const r = joy.getBoundingClientRect(); jc = [r.left + r.width / 2, r.top + r.height / 2]; joy.setPointerCapture(jid); move(e); });
+  const move = e => { if (e.pointerId !== jid) return; let dx = e.clientX - jc[0], dy = e.clientY - jc[1]; const m = Math.hypot(dx, dy), R = 46; if (m > R) { dx *= R / m; dy *= R / m; }
+    knob.style.transform = `translate(${dx}px,${dy}px)`; W3.joy = { x: dx / R, y: dy / R }; };
+  joy.addEventListener("pointermove", move);
+  const up = e => { if (e.pointerId !== jid) return; jid = null; knob.style.transform = ""; W3.joy = { x: 0, y: 0 }; };
+  joy.addEventListener("pointerup", up); joy.addEventListener("pointercancel", up);
+  cv.addEventListener("pointerdown", e => { lid = e.pointerId; lp = [e.clientX, e.clientY]; cv.setPointerCapture(lid); });
+  cv.addEventListener("pointermove", e => { if (e.pointerId !== lid || !W3) return; W3.yaw -= (e.clientX - lp[0]) * .006; W3.pitch = Math.max(-1.1, Math.min(.9, W3.pitch - (e.clientY - lp[1]) * .005)); lp = [e.clientX, e.clientY]; });
+  const lup = e => { if (e.pointerId === lid) lid = null; }; cv.addEventListener("pointerup", lup); cv.addEventListener("pointercancel", lup);
+  W3.kd = e => { if (document.activeElement && document.activeElement.tagName === "INPUT") return; W3.keys[e.key.toLowerCase()] = true; }; W3.ku = e => { W3.keys[e.key.toLowerCase()] = false; };
+  addEventListener("keydown", W3.kd); addEventListener("keyup", W3.ku);
+}
+function w3CollideRaw(blds, x, z) { const keep = W3; W3 = { blds }; try { return w3Collide(x, z); } finally { W3 = keep; } }
+function w3Collide(x, z) {
+  for (const b of W3.blds) {
+    if (b.round) { const d = Math.hypot(x - b.x, z - b.z); if (d < b.hw + .4) { x = b.x + (x - b.x) / d * (b.hw + .4); z = b.z + (z - b.z) / d * (b.hw + .4); } continue; }
+    const dx = x - b.x, dz = z - b.z;
+    if (Math.abs(dx) < b.hw && Math.abs(dz) < b.hd) { if (b.hw - Math.abs(dx) < b.hd - Math.abs(dz)) x = b.x + Math.sign(dx) * b.hw; else z = b.z + Math.sign(dz) * b.hd; }
+  }
+  const lx = (x - 50) / 15.8, lz = (z - 77.8) / 7.9, ld = Math.hypot(lx, lz); if (ld < 1) { x = 50 + lx / ld * 15.8; z = 77.8 + lz / ld * 7.9; }
+  return [Math.max(-8, Math.min(108, x)), Math.max(-8, Math.min(98, z))];
+}
+function w3Tick() {
+  const W = W3, now = performance.now(), dt = Math.min(.1, (now - W.last) / 1000); W.last = now; W.t += dt;
+  // walking
+  const k = W.keys; let fwd = -W.joy.y + ((k.w || k.arrowup) ? 1 : 0) - ((k.s || k.arrowdown) ? 1 : 0), side = W.joy.x + ((k.d) ? 1 : 0) - ((k.a) ? 1 : 0);
+  if (k.arrowleft) W.yaw += dt * 2; if (k.arrowright) W.yaw -= dt * 2;
+  if (W.talk) fwd = side = 0;
+  const mag = Math.min(1, Math.hypot(fwd, side));
+  if (mag > .05) { const sp = (W.run || k.shift ? 10.5 : 6) * dt, fx = -Math.sin(W.yaw), fz = -Math.cos(W.yaw), rx = Math.cos(W.yaw), rz = -Math.sin(W.yaw);
+    [W.x, W.z] = w3Collide(W.x + (fx * fwd + rx * side) * sp, W.z + (fz * fwd + rz * side) * sp); W.bob += dt * 9 * mag;
+    if (Math.floor(W.bob / Math.PI) !== W.stepN) { W.stepN = Math.floor(W.bob / Math.PI); try { footstep(); } catch (e) {} } }
+  // jumping
+  if (k[" "] && !W.jy && !W.vy) w3Jump();
+  if (W.vy || W.jy > 0) { W.vy -= 22 * dt; W.jy = Math.max(0, W.jy + W.vy * dt); if (!W.jy) W.vy = 0; }
+  const gy = w3HeightAt(W.x, W.z), moving = mag > .05;
+  if (moving && side) W.meFace = side > 0 ? 1 : -1; else if (moving) W.meFace = W.meFace || 1;
+  W.me.position.set(W.x, gy, W.z); W.me.rotation.y = W.yaw; W.meMesh.position.y = W.jy + (moving && !W.jy ? Math.abs(Math.sin(W.bob)) * .16 : 0);
+  W.meMesh.rotation.z = moving && !W.jy ? Math.sin(W.bob) * .07 : 0; W.meMesh.scale.x = W.meFace; W.me.children[1].scale.setScalar(1 / (1 + W.jy * .4));
+  if (W.view === "third") { W.me.visible = true; const dist = 5.2, fx = -Math.sin(W.yaw), fz = -Math.cos(W.yaw), ph = Math.max(-.6, Math.min(.7, W.pitch));
+    const cx = W.x - fx * dist * Math.cos(ph) + Math.cos(W.yaw) * .9, cz = W.z - fz * dist * Math.cos(ph) - Math.sin(W.yaw) * .9, cy = Math.max(w3HeightAt(cx, cz) + .5, gy + 2.1 - Math.sin(ph) * dist);
+    W.cam.position.lerp(new THREE.Vector3(cx, cy, cz), Math.min(1, dt * 12)); W.cam.lookAt(W.x + Math.cos(W.yaw) * .9 + fx * 4, gy + 1.5 + W.jy * .5, W.z - Math.sin(W.yaw) * .9 + fz * 4); }
+  else { W.me.visible = false; const eye = gy + 1.35 + W.jy + Math.sin(W.bob * 2) * .06 * (moving ? 1 : 0); W.cam.position.set(W.x, eye, W.z); W.cam.rotation.set(W.pitch, W.yaw, 0, "YXZ"); }
+  W.sun.position.set(W.x + 30, 60, W.z + 20); W.sun.target.position.set(W.x, 0, W.z);
+  // sky and time of day
+  const { c } = skyLook(), night = isNight(), sky = new THREE.Color(`rgb(${c.map(v => Math.round(v)).join(",")})`);
+  const day = night ? .18 : Math.max(.35, Math.min(1, 1 - (Math.abs((S.clock ?? 720) - 780) / 600) ** 2));
+  W.sc.background = sky.clone().lerp(new THREE.Color(night ? 0x0b1030 : 0x6fb8ff), night ? .7 : .75); W.sc.fog.color.copy(W.sc.background);
+  W.sun.intensity = 1.25 * day; W.hemi.intensity = .35 + .45 * day; W.stars.material.opacity = night ? .9 : 0;
+  W3_WIN.forEach(m => m.emissiveIntensity = night ? 1.4 : .12);
+  if (W3_FIRE) { W3_FIRE.fl.intensity = 1.3 + Math.sin(W.t * 13) * .25 + Math.sin(W.t * 7) * .2; W3_FIRE.fire.scale.y = 1 + Math.sin(W.t * 11) * .12; }
+  if (W3_STAR) W3_STAR.rotation.y += dt * 1.5;
+  if (W.snow) { const p = W.snow.geometry.attributes.position; for (let i = 0; i < p.count; i++) { let y = p.getY(i) - dt * (1.2 + (i % 5) * .25); if (y < 0) y += 25; p.setY(i, y); p.setX(i, p.getX(i) + Math.sin(W.t + i) * dt * .3); }
+    p.needsUpdate = true; W.snow.position.set(W.x, w3HeightAt(W.x, W.z), W.z); }
+  // animals
+  let near = null, nd = 1e9;
+  W.people.forEach(p => {
+    const w = whereNow(p.f); p.grp.visible = !!w; if (!w) return;
+    if (W.talk === p) { p.moving = false; p.face = (W.x - p.x) * Math.cos(W.yaw) - (W.z - p.z) * Math.sin(W.yaw) > 0 ? -1 : 1; }
+    else if (p.tx !== null) { const dx = p.tx - p.x, dz = p.tz - p.z, d = Math.hypot(dx, dz), sp = (d > 12 ? 3.2 : 1.6) * dt;
+      if (d < .2) { p.tx = null; p.wait = 2 + Math.random() * 6; p.moving = false; } else { p.x += dx / d * sp; p.z += dz / d * sp; p.moving = true; p.dx = dx; p.dz = dz; } }
+    else { p.wait -= dt; if (p.wait <= 0) { const sp = spotFor(p.i, w); p.tx = sp[0] / 20 + (Math.random() - .5) * 5; p.tz = sp[1] / 20 + (Math.random() - .5) * 5; [p.tx, p.tz] = w3Collide(p.tx, p.tz); } }
+    if (p.moving) { const rx = Math.cos(W.yaw), rz = -Math.sin(W.yaw); p.face = p.dx * rx + p.dz * rz >= 0 ? 1 : -1; }
+    const hop = p.moving ? Math.abs(Math.sin(W.t * 9 + p.i)) * .14 : Math.sin(W.t * 2 + p.i) * .015;
+    p.grp.position.set(p.x, w3HeightAt(p.x, p.z), p.z); p.mesh.position.y = hop; p.mesh.rotation.z = p.moving ? Math.sin(W.t * 9 + p.i) * .06 : 0;
+    p.grp.rotation.y = Math.atan2(W.x - p.x, W.z - p.z); p.mesh.scale.x = p.face;
+    const d = Math.hypot(W.x - p.x, W.z - p.z); p.lab.visible = d < 16 && d > 2.5;
+    if (d < 4.2 && d < nd) { nd = d; near = p; }
+    if (d < 6 && !W.talk && W.t > p.talkUntil && Math.random() < dt * .08) { p.talkUntil = W.t + 8; w3Say(p, pickOne([...MEET_HELLO[stageOf(p.f)], ...(atWork(p.f) ? JOBS[jobOf(p.f)].say : [])])); }
+  });
+  // place name + what you can do here
+  let best = "village", bd = 1e9; Object.entries(TOWN_SPOT).forEach(([k2, [x, y]]) => { const d = Math.hypot(x / 20 - W.x, y / 20 - W.z); if (d < bd) { bd = d; best = k2; } });
+  if (W.place !== best) { W.place = best; S.worldAt = best; const pl = document.getElementById("w3place"); if (pl) pl.textContent = WORLD_NAMES[best] || "Animal Burrow"; }
+  let door = null; W.blds.forEach(b => { if (b.door && b.what && Math.hypot(W.x - b.door[0], W.z - b.door[1]) < 3.2) door = b; });
+  const key = (near ? "p" + near.i : "") + "|" + (door ? door.label : "");
+  if (key !== W.actKey && !W.talk) { W.actKey = key; const act = document.getElementById("w3act");
+    if (act) act.innerHTML = (near ? `<button class="rainbow" onclick="w3TalkOpen(${near.i})">Talk to ${near.f.name}</button>` : "") + (door ? `<button class="green" onclick="w3Enter('${door.what}')">Go into ${door.label}</button>` : ""); }
+  if (W.say && W.say.p) { const p = W.say.p, v = new THREE.Vector3(p.x, w3HeightAt(p.x, p.z) + p.hgt + .9, p.z).project(W.cam), el = document.getElementById("w3say");
+    if (el) { if (W.t > W.say.until || v.z > 1) { el.style.opacity = 0; if (W.t > W.say.until) W.say = null; } else { el.style.opacity = 1; el.style.left = (v.x + 1) / 2 * innerWidth + "px"; el.style.top = (1 - v.y) / 2 * innerHeight + "px"; } } }
+  W.R.render(W.sc, W.cam);
+}
+function w3Jump(e) { if (e) e.preventDefault(); if (W3 && !W3.jy && !W3.vy) { W3.vy = 8.5; W3.jy = .001; } }
+function w3View() { if (!W3) return; W3.view = S.w3view = W3.view === "third" ? "first" : "third"; }
+function w3Say(p, txt, secs = 4) { const el = document.getElementById("w3say"); if (!el || !W3) return; el.textContent = txt; noEmoji(el); W3.say = { p, until: W3.t + secs }; }
+function w3TalkOpen(i) {
+  const p = W3.people.find(q => q.i === i), f = p.f; W3.talk = p; W3.actKey = null; document.getElementById("w3act").innerHTML = "";
+  const isAdm = S.admirer === f.name && !S.admirerGone && !S.admirerOk;
+  w3Say(p, isAdm ? "Oh! Um. I wasn't following you! I was just... walking. The same way. 😳" : pickOne(MEET_HELLO[stageOf(f)]), 6);
+  const box = document.getElementById("w3talk");
+  box.innerHTML = `<div class="w3t-head">${face(f)}<b>${f.name}</b> <span class="rel-chip">${relLabel(f)}</span> <span class="job-chip">${jobTitle(f)}</span><small>${heartBar(S.hearts[f.name])}</small><button class="ph-x" onclick="w3TalkClose()">Bye</button></div>
+    <div class="w3t-row"><input id="w3in" maxlength="140" placeholder="Say something to ${f.name}..." onkeydown="if(event.key==='Enter')w3Send()"><button class="green" onclick="w3Send()">Say</button></div>
+    <div class="tt-acts"><button class="soft" onclick="w3Hug()">Hug</button><button class="soft" onclick="w3TalkClose(); activityMenu(${i}, 'map')">Do something together</button>
+      <button class="soft" onclick="w3TalkClose(); planScreen('${f.name}')">Make plans</button><button class="soft" onclick="picTogether('${f.name}', W3 && W3.place)">Take a picture together</button>
+      ${XMAS() ? `<button class="soft" onclick="giveGift('${f.name}')">Give a present</button>` : ""}<button class="soft" onclick="w3TalkClose(); houseScreen(); setTimeout(() => { try { inviteOver('${f.name}'); } catch (e) {} }, 50)">Come to my house</button></div>`;
+  box.classList.add("on"); noEmoji(box);
+}
+function w3Send() {
+  const inp = document.getElementById("w3in"), said = inp.value.trim(); if (!said || !W3 || !W3.talk) return; inp.value = "";
+  const f = W3.talk.f, r = chatReply(f, said); S.w3TalkDay = S.w3TalkDay || {};
+  addHearts(f, Math.max(-1, Math.min(r.pts, S.w3TalkDay[f.name] === S.tday ? 0 : 1))); if (r.pts > 0) S.w3TalkDay[f.name] = S.tday;
+  w3Say(W3.talk, r.say, Math.max(4, r.say.length / 12));
+  const hb = document.querySelector("#w3talk small"); if (hb) hb.innerHTML = heartBar(S.hearts[f.name]);
+}
+function w3Hug() { const p = W3.talk, f = p.f, st = stageOf(f); S.townHugDay = S.townHugDay || {};
+  if (S.townHugDay[f.name] !== S.tday) { S.townHugDay[f.name] = S.tday; addHearts(f, 1); chime(); floatHearts(1); }
+  w3Say(p, st === 0 ? pickOne(["Oh! A hug! Okay, hi! Haha.", "*awkward pat pat* Hehe."]) : st === 1 ? pickOne(["*hugs back, a little shy* Hi...", "Aww. *blushes*"]) : pickOne(["*squeezes you tight* Best hug EVER.", "*doesn't let go* Five more seconds."]), 5); }
+function w3TalkClose() { if (!W3) return; const p = W3.talk; W3.talk = null; W3.actKey = null; const box = document.getElementById("w3talk"); if (box) box.classList.remove("on"); if (p) { w3Say(p, pickOne(["Bye! See you around!", "Byeee! 👋", "Okay, see you later!"]), 3); p.wait = 3; } }
+function w3Enter(what) { if (!W3) return; S.w3pos = [W3.x, W3.z + 1.5]; w3Stop(); townEnter(what); }
+function w3Exit() { w3Stop(); S.outside = ""; S.wasWalking = false; mapScreen(); }
+function w3Stop() {
+  if (!W3) return; const W = W3; W3 = null; S.w3pos = [W.x, W.z];
+  cancelAnimationFrame(W.raf); clearInterval(W.dog); removeEventListener("resize", w3Resize); removeEventListener("keydown", W.kd); removeEventListener("keyup", W.ku);
+  try { W.R.dispose(); W.R.forceContextLoss(); } catch (e) {}
+  W3_WIN = []; W3_FIRE = null; W3_STAR = null; document.body.classList.remove("w3mode");
+}
 // ===== Christmas time! (switch it off on the title screen) =====
 const XMAS = () => { try { return localStorage.getItem("gaosXmas") !== "0"; } catch (e) { return true; } };
 function xmasToggle() { try { localStorage.setItem("gaosXmas", XMAS() ? "0" : "1"); } catch (e) {} xmasDecor(); titleScreen(); }
@@ -4102,7 +4418,7 @@ function fillOf(im, frames = 1) {
   const st = new Image(); st.onload = () => { FILL[n] = fillOf(st) || { top:.08, bot:.94 }; }; st.src = `art/${n}.png`;
 });
 let WALK = null;
-function eyesScreen(k, cont) {
+function eyesScreen2D(k, cont) {
   try { closePhone(); } catch (e) {}
   k = k || S.worldAt || "forest"; S.worldAt = k; S.guest = null; S.meetPlace = null;
   const nightOut = ["stars", "campfire", "lanterns", "library"].includes(k), all = friends();
