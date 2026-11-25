@@ -2479,7 +2479,7 @@ function calmFor(f, said, r, o = {}) {
     && !["sad", "worry", "cheer", "private", "real"].includes(o.prevAsk);
 }
 function soapLines(f, said, r, o = {}) {
-  if (!calmFor(f, said, r, o) || Math.random() < 0.5) return [];
+  if (!calmFor(f, said, r, o) || Math.random() < 0.3) return [];
   const others = friends().filter(x => x.name !== f.name).sort(() => Math.random() - .5);
   const fill = x => x.replaceAll("{O}", others[0].name).replaceAll("{O2}", others[1].name);
   const st = stageOf(f), ok = e => !e.some(x => loveyFor(st, x));
@@ -2582,7 +2582,8 @@ function tryRing() {
   const callers = ok ? friends().filter(x => !quiet(x.name)) : [];
   if (callers.length) {
     const who = pickOne(callers);
-    if (Math.random() < 0.2 && !S.rumor) { sendRumor(who); chime(); }
+    if (Math.random() < 0.35 && dramaStory()) chime();
+    else if (Math.random() < 0.2 && !S.rumor) { sendRumor(who); chime(); }
     else if (Math.random() < 0.45) { const others = friends().filter(x => x.name !== who.name).sort(() => Math.random() - .5);
       textFrom(who.name, pickOne([...SOAP.gossip, ...SOAP.drama]).replaceAll("{O}", others[0].name).replaceAll("{O2}", others[1].name)); chime(); }
     else ring(who.name);
@@ -3136,6 +3137,30 @@ function gossipReply(f, said) {
   // sometimes it gets back to them...
   if (Math.random() < .25) setTimeout(() => textFrom(who.name, pickOne([`Soooo I heard you and ${f.name} were talking about me. 😒 Cool. Cool cool cool.`, `Funny how ${f.name} thinks my jokes are 'a lot.' I heard EVERYTHING. 😤`, `Wow. Gossiping about me with ${f.name}?? I'm not mad. I'm just... taking notes. 📝`])), 40000);
   return out;
+}
+// ===== MORE DRAMA: everyone is a little bit extra, and friends have feuds that play out over the day =====
+SOAP.drama.push("I am LIVID. Absolutely LIVID. ...Someone took my favorite bench. 😤", "Do NOT talk to me right now. I'm being dramatic. Okay you can talk to me. 🙄",
+  "I just found out something HUGE. Like, village-changing huge. 😱 I can't say yet.", "This is a CRISIS. I lost my lucky acorn. 😭", "*slams door* *opens door* Sorry, wrong house. *slams it again* 😤",
+  "Everyone is acting SO weird today. Is it me? Is it THEM? I need answers. 🕵️", "I'm writing about today in my diary and it is THREE pages long. 📖😤", "Not me crying over a sad leaf. It fell. It was its time. 😭🍂",
+  "I have never been so betrayed in my LIFE. {O} ate the last cupcake. In FRONT of me. 🧁😱", "Breaking news: {O} and {O2} are NOT speaking. I repeat. NOT. SPEAKING. 😱", "If one more animal says 'calm down' I will SCREAM into a pillow. 😤");
+SOAP.sass.push("Oh, so NOW you text me. Interesting. Very interesting. 💅", "I'm not saying I'm the main character. But I'm the main character. 💅", "The audacity. The AUDACITY. 😤", "I could say something. But I won't. ...Okay I will. 💅");
+const FEUD_WHY = ["said my tail looks like a mop", "called my singing 'interesting'", "copied my EXACT hairstyle", "didn't save me a seat at the picnic", "laughed when I fell in the pond", "told everyone I'm scared of moths", "ate the cookie I was saving", "said my cake was 'a little dry'"];
+function dramaStory() {
+  const fr = friends();
+  if (!S.feud || S.feud.step > 4) { if (S.feud && S.feud.day === S.tday) return false;
+    const [a, b] = fr.slice().sort(() => Math.random() - .5); S.feud = { a: a.name, b: b.name, why: pickOne(FEUD_WHY), step: 0, day: S.tday }; }
+  const F = S.feud, A = F.a, B = F.b;
+  if (F.step === 0) { textFrom(A, pickOne([`Okay. I need to tell you something. ${B} ${F.why}. 😤`, `${B} ${F.why}. In front of EVERYONE. 😱`, `I can't even. ${B} ${F.why}!! 😤`]));
+    setTimeout(() => textFrom(A, pickOne([`So. We are DONE. Done done. Whose side are you on?? 👀`, `I'm never speaking to ${B} again. Ever. Well, maybe Tuesday. But NOT before. 😤`])), 2500); }
+  if (F.step === 1) { textFrom(B, pickOne([`Okay, before ${A} tells you their side... I said it was UNIQUE. That's a compliment!! 😭`, `Has ${A} been texting you about me?? Because that is NOT what happened. 😤`]));
+    setTimeout(() => textFrom(B, pickOne([`Anyway I'm not mad. I'm FURIOUS. There's a difference. 💅`, `Tell ${A} I said hi. Actually don't. Actually DO. Ugh. 😩`])), 2500); }
+  if (F.step === 2) { const p = makePost(fName(A), pickOne(["Some people know EXACTLY what they did. 🙄", "Wow. Just... wow. You know who you are. 😤", "Lesson learned: not everyone is your friend. 💅"]));
+    p.comments = [{ who: B, t: pickOne(["Is this about me?? 😒", "Okay, we ALL know this is about me. 🙄"]) }, { who: pickOne(fr.filter(x => x.name !== A && x.name !== B)).name, t: "*grabs popcorn* 🍿" }];
+    S.feed = S.feed || []; S.feed.unshift(p); textFrom(pickOne(fr.filter(x => x.name !== A && x.name !== B)).name, `Did you SEE ${A}'s post?! 😱 This is better than TV. 🍿`); }
+  if (F.step === 3) textFrom(pickOne(fr.filter(x => x.name !== A && x.name !== B)).name, pickOne([`${A} and ${B} just walked past each other and BOTH said "hmph." At the SAME time. 😂`, `Update: ${A} sat as far away from ${B} as possible at the cafe. Like, outside. In the rain. 😂🌧️`]));
+  if (F.step === 4) { textFrom(A, pickOne([`Okay so... ${B} and I made up. We hugged it out. It was very emotional. 😭💕`, `Plot twist: ${B} said sorry and I said sorry and now we're besties again. 💅 ...But I'm watching them.`]));
+    postFeed(B, pickOne([`Me and ${A}: friends again!! 💕 The drama is OVER. (For now.)`, `Besties forever. Ignore everything from this week. 🙈💕`])); }
+  F.step++; return true;
 }
 // ===== Gossip behind your back =====
 const RUMORS = ["snore like a leaf blower", "dance like a flapping penguin", "sing in the bath SUPER loud", "ate ALL the cookies at the party", "text like a grandma", "have a secret crush on somebody", "tripped in front of everyone and pretended it was a dance move", "think you're the best at everything", "still sleep with a teddy bear", "talk to your plants"];
@@ -3707,6 +3732,11 @@ function townStep(now) {
     const nf = S.npcFollow && T.people.find(p => p.f.name === S.npcFollow[0]), tgt = S.npcFollow && T.people.find(p => p.f.name === S.npcFollow[1]);
     if (nf && tgt && !nf.asleep && !tgt.asleep && T.chatWith !== nf.i) { nf.follow = true; if (Math.hypot(nf.x - tgt.x, nf.y - tgt.y) > 150) { nf.tx = tgt.x - 110; nf.ty = tgt.y - 30; nf.travel = true; }
       if (Math.random() < .06) townSay(tgt, pickOne([`${nf.f.name}, why are you following me?! 😤`, "Is someone behind me?? 👀", `${nf.f.name}! I can SEE you!`]), 3); }
+    // feuding friends make a scene when they get close
+    if (S.feud && S.feud.step >= 1 && S.feud.step <= 4) { const fa = T.people.find(p => p.f.name === S.feud.a), fb = T.people.find(p => p.f.name === S.feud.b);
+      if (fa && fb && !fa.asleep && !fb.asleep && Math.hypot(fa.x - fb.x, fa.y - fb.y) < 200 && T.t > fa.talkUntil + 3 && Math.random() < .2) {
+        townSay(fa, pickOne(["Hmph! 😤", `Oh. It's YOU, ${fb.f.name}.`, "*turns away dramatically*", "I'm not talking to you!"]), 3);
+        setTimeout(() => TOWN && townSay(fb, pickOne(["Well I'M not talking to YOU! 😤", "*flips tail* Hmph!", "Fine!", "FINE!"]), 3), 2200); } }
     // two friends standing close chat
     const idle = T.people.filter(p => p.tx === null && !p.asleep && T.chatWith !== p.i && T.t > p.talkUntil + 4);
     for (let a = 0; a < idle.length; a++) for (let b = a + 1; b < idle.length; b++) { const A = idle[a], B = idle[b];
@@ -4029,6 +4059,9 @@ const whereWord = f => { const w = whereNow(f); return w ? "At " + (WORLD_NAMES[
 const CHITCHAT = [["Did you see {ME}'s post?", "Obviously. 👀"], ["I'm SO hungry.", "Cafe? Cafe."], ["Race you to the lake!", "You're ON!"], ["Is it true about {O}??", "I can't say... 😶"], ["Nice scarf!", "Thanks, I made it! 💕"],
   ["Have you seen {ME} today?", "Shh, they're right there! 😳"], ["Ugh, {O} is SO annoying.", "Right?! ...Wait, don't tell them I said that."], ["Want ice cream later?", "Only if it's strawberry! 🍓"], ["Did you hear thunder?", "That was my tummy. 😂"],
   ["{ME} is so cool.", "I know, right? 🥰"], ["Where are you going?", "Secret mission. 🤫"], ["I saw {O} and {O2} holding paws!", "NO WAY. 😱"], ["Your fur looks nice today.", "Aww, stop it! 😊"], ["I'm going to win the quiz show.", "In your dreams. 💅"]];
+CHITCHAT.push(["*gasps* You did WHAT?!", "I KNOW! 😱"], ["I'm never speaking to {O} again.", "You said that yesterday. 🙄"], ["Did you hear what {O} said?!", "*gasps* NO. Tell me EVERYTHING. 😱"],
+  ["I can't BELIEVE this!", "Me neither!! Wait, what happened?"], ["{O} looked at me weird.", "How weird? Like, FRIENDSHIP-ENDING weird? 😱"], ["This is the worst day EVER.", "You said that about Tuesday. 🙄"],
+  ["{ME} is SO lucky they don't know what I know.", "Shhh!! They're right there! 😳"], ["*dramatic sigh*", "*even MORE dramatic sigh*"]);
 function addWalker(p) {
   const cam = document.getElementById("walkCam"), haze = cam && cam.querySelector(".walk-haze"); if (!haze) return;
   const a = ART[p.f.emo], n = WALK.people.length; WALK.people.push(p);
