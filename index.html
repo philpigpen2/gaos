@@ -361,6 +361,16 @@
   .pov-stage .fly { z-index:6; }
   .pov-label { position:absolute; left:12px; top:12px; z-index:8; background:rgba(255,255,255,.88); color:var(--ink); border-radius:14px; padding:4px 12px; font-weight:700; font-size:15px; }
   .pov-eye { position:absolute; right:12px; top:12px; z-index:8; font-size:14px; padding:6px 10px; border-radius:12px; background:rgba(255,255,255,.88); color:var(--ink); box-shadow:none; }
+  .eyes-btn { bottom:170px; background:linear-gradient(135deg,#ff6fae,#9775fa); box-shadow:0 5px 0 #6a3fb0; }
+  .ph-meet { display:block; width:calc(100% - 20px); margin:8px 10px 0; font-size:16px; padding:10px; background:linear-gradient(90deg,#ff6fae,#9775fa); color:#fff; box-shadow:0 4px 0 #6a3fb0; }
+  .world-animal { position:absolute; z-index:3; background:none; box-shadow:none; padding:0; display:flex; flex-direction:column; align-items:center; transform:translateX(-50%); animation:idle 3s ease-in-out infinite; }
+  .world-animal:hover, .world-animal:active { transform:translateX(-50%) scale(1.06); }
+  .world-animal img { height:100%; filter:drop-shadow(0 6px 8px rgba(0,0,0,.4)); }
+  .world-animal img.flip { transform:scaleX(-1); }
+  .world-animal span { position:absolute; top:-6px; background:rgba(255,255,255,.92); color:var(--ink); font-size:14px; font-weight:700; border-radius:12px; padding:2px 10px; white-space:nowrap; box-shadow:0 2px 6px #0003; }
+  @keyframes idle { 0%,100% { margin-bottom:0; } 50% { margin-bottom:4px; } }
+  .walk-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; }
+  .walk-grid .act-btn { height:74px; font-size:15px; }
   .act-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
   .act-btn { position:relative; height:96px; border-radius:18px; padding:0; overflow:hidden; background-size:cover; background-position:center; box-shadow:0 4px 0 #c9a2b8; color:#fff; font-size:17px; display:flex; align-items:flex-end; justify-content:center; }
   .act-btn span { width:100%; padding:6px 6px 8px; background:linear-gradient(transparent, rgba(0,0,0,.65)); text-shadow:0 1px 3px #000; }
@@ -391,6 +401,7 @@
     .scroll-btns { display:none; }
     .phone-btn { width:50px; height:50px; left:10px; bottom:10px; border-radius:15px; }
     .srv-btn { bottom:68px; }
+    .eyes-btn { bottom:126px; }
     input { font-size:18px; padding:10px 12px; }
     .ph-type input { font-size:16px; }
     .phone { align-items:stretch !important; justify-content:stretch !important; }
@@ -417,6 +428,7 @@
   <button id="scrDown" class="scr-btn" onclick="window.scrollBy({top:window.innerHeight*0.7,behavior:'smooth'})" aria-label="Scroll down">
     <svg viewBox="0 0 24 24" width="38" height="38"><path d="M5 9l7 7 7-7" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 </div>
+<button id="eyesBtn" class="phone-btn eyes-btn" onclick="eyesScreen()" style="display:none" aria-label="Look through your eyes"><svg viewBox="0 0 24 24" width="34" height="34"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" fill="#fff"/><circle cx="12" cy="12" r="4.6" fill="#7b4bd6"/><circle cx="12" cy="12" r="2" fill="#20102e"/><circle cx="13.6" cy="10.4" r="1" fill="#fff"/></svg></button>
 <button id="srvBtn" class="phone-btn srv-btn" onclick="openServers()" style="display:none" aria-label="Servers">
   <svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18" fill="none" stroke="#fff" stroke-width="2"/></svg>
 </button>
@@ -1035,7 +1047,7 @@ function mapScreen() {
   show(`
     <div class="center"><span class="day">☀️ Day ${S.day} of ${DAYS}</span></div>
     <div class="banner"><h1 style="font-size:44px;margin:0">${VILLAGE}</h1></div>
-    <div class="center"><button class="green" onclick="houseScreen()">My House</button><button class="green" onclick="profileScreen()">My Dating Profile</button><button class="rainbow" onclick="swipeScreen()">Paw Match</button></div>
+    <div class="center"><button class="green" onclick="houseScreen()">My House</button><button class="green" onclick="profileScreen()">My Dating Profile</button><button class="rainbow" onclick="swipeScreen()">Paw Match</button><button class="rainbow" onclick="eyesScreen()">Look through my eyes</button></div>
     ${MODE === 2 ? `<p class="sub"><b>${S.animal[0]} ${esc(S.name)}'s turn 🎮</b></p>` : ""}
     <p class="sub">Who do you want to hang out with today?</p>
     <div class="box">
@@ -2050,6 +2062,7 @@ function openPhone(thread) {
   if (!thread) {
     ph.innerHTML = `<div class="ph-screen">
       <div class="ph-top"><b>Messages</b><button class="ph-x" onclick="closePhone()">Close</button></div>
+      <button class="ph-meet" onclick="closePhone(); eyesScreen()">Put the phone down and look around</button>
       ${friends().map(f => { const th = texts(f.name), last = th[th.length - 1], un = th.filter(m => m.from === "them" && !m.read).length;
         return `<div class="ph-contact" onclick="openPhone('${f.name}')">${face(f)}<div><b>${f.name}</b><br><small>${last ? esc(preview(last.t)).slice(0, 34) : "Say hi!"}</small></div>${un ? `<span class="badge">${un}</span>` : ""}</div>`; }).join("")}
     </div>`;
@@ -2058,6 +2071,7 @@ function openPhone(thread) {
     texts(thread).forEach(m => m.read = true);
     ph.innerHTML = `<div class="ph-screen">
       <div class="ph-top"><button class="ph-x" onclick="openPhone()">Back</button>${face(f)}<b>${f.name}</b></div>
+      <button class="ph-meet" onclick="putPhoneDown('${f.name}')">Put the phone down and go see ${f.name}</button>
       <div class="ph-msgs" id="phMsgs">${texts(thread).map(msgHTML).join("")}</div>
       <div class="emoji-bar">${TEXT_EMOJI.map(e => `<button class="emo-btn" onclick="addEmoji('${e}')">${e}</button>`).join("")}</div>
       <div class="ph-type"><input id="phIn" maxlength="140" autocomplete="off" placeholder="Text ${f.name}..." onkeydown="if(event.key==='Enter')sendText('${f.name}')"><button onclick="sendText('${f.name}')">Send</button></div>
@@ -2248,6 +2262,7 @@ let BOT_TIMER = null;
 function srvButton() {
   const on = !!(S && S.hearts && Object.keys(S.hearts).length);
   document.getElementById("srvBtn").style.display = on ? "flex" : "none";
+  document.getElementById("eyesBtn").style.display = on ? "flex" : "none";
 }
 function botPic(b) { const n = ART[b.a]; return HAVE.has(n) ? `<img src="art/${n}.png" alt="">` : ""; }
 function openServers() {
@@ -2409,6 +2424,7 @@ function actSleepover() { const f = friends()[S.act.i]; S.guest = f.name; S.visi
 function actBack() {
   const a = S.act || {}; const f = friends()[a.i];
   if (a.from === "house") return houseScreen();
+  if (a.from === "meet") return renderMeet();
   if (a.from === "date") { S.lastHang = f.name; return endDay(); }
   return mapScreen();
 }
@@ -2445,6 +2461,76 @@ function activity(key, step, pick = -1) {
   app.classList.remove("enter");
 }
 
+// ===== The real world, through your eyes: walk around, see everyone, go up and talk to them =====
+const WORLD_NAMES = { village:"Animal Burrow", picnic:"Picnic Meadow", stars:"Starry Hill", pond:"Frozen Pond", garden:"Flower Garden", lake:"The Lake", berries:"Berry Patch", campfire:"Campfire Clearing", lanterns:"Lantern Meadow", rain:"Rainy Path", treehouse:"The Big Oak Treehouse", library:"The Tree Library" };
+const worldBg = k => ACT_BG[k] || `url(art/${k}.png) center/cover, linear-gradient(#9fdcff,#4fa65e)`;
+const hashStr = x => [...x].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+function whoIsAt(k) {
+  const all = friends();
+  let here = all.filter(f => f.place === k || hashStr(f.name + k + S.day) % 4 === 0);
+  if (here.length < 2) here = [...here, ...all.filter(f => !here.includes(f)).sort((a, b) => hashStr(a.name + k) - hashStr(b.name + k))].slice(0, 2);
+  return here.slice(0, 4);
+}
+function visitRedraw() { return S.meetPlace ? renderMeet() : houseScreen(); }
+function eyesScreen(k) {
+  try { closePhone(); } catch (e) {}
+  k = k || S.worldAt || "village"; S.worldAt = k; S.guest = null; S.meetPlace = null;
+  const here = whoIsAt(k), spots = [[20, 3, 50], [78, 4, 46], [40, 30, 24], [62, 33, 20]];
+  const people = here.map((f, n) => { const [x, y, h] = spots[n], a = ART[f.emo];
+    return `<button class="world-animal" style="left:${x}%;bottom:${y}%;height:${h}%;z-index:${10 - n};animation-delay:${-n * 0.7}s" onclick="meetScreen('${f.name}')"><img class="${x > 50 ? "flip" : ""}" src="art/${a}.png" alt=""><span>${f.name}</span></button>`; }).join("");
+  const bye = S.worldBye || ""; S.worldBye = "";
+  const fresh = S.povKey !== "world" + k; S.povKey = "world" + k;
+  show(`<h1 style="font-size:34px">Through your eyes</h1>
+    <div class="scene pov" style="padding:var(--pad)"><div class="pov-stage" style="background:${worldBg(k)}">
+      ${fresh ? `<div class="lids"></div>` : ""}<div class="pov-label">${WORLD_NAMES[k] || k}</div>${people}
+    </div>
+    ${bye ? `<div class="bubble">${bye}</div>` : `<p class="sub" style="margin:6px 0;color:var(--ink);text-shadow:none">Tap someone to walk up and say hi!</p>`}</div>
+    <div class="box center"><h2>Walk somewhere else</h2><div class="walk-grid">
+      ${Object.keys(WORLD_NAMES).filter(x => x !== k).map(x => `<button class="act-btn" style="background:${worldBg(x)}" onclick="eyesScreen('${x}')"><span>${WORLD_NAMES[x]}</span></button>`).join("")}
+    </div>
+    <div style="margin-top:12px"><button class="green" onclick="houseScreen()">Go home</button><button class="soft" onclick="mapScreen()">Village map</button></div></div>`);
+  app.classList.remove("enter");
+}
+const MEET_HELLO = {
+  0: ["Oh, hi! I didn't see you there. What's up?", "Hey! Fancy meeting you here!", "Hi! Nice to see you. What are you up to?"],
+  1: ["Oh! Hi! *fixes fur quickly* I was hoping I'd see you.", "Hey you! *smiles shyly* This is a nice surprise.", "Hi! You came to find me? That's so sweet."],
+  2: ["*runs over and hugs you* You're here! Best surprise ever!", "There you are! I missed you SO much.", "Hi! I was literally just thinking about you."]
+};
+function meetScreen(name) {
+  const f = friends().find(x => x.name === name); if (!f) return eyesScreen();
+  S.guest = name; S.meetPlace = S.worldAt || f.place || "village";
+  S.visitSaid = ""; S.visitReply = pickOne(MEET_HELLO[stageOf(f)]); S.visitMood = "happy";
+  maybeCaught(name, 0.2, WORLD_NAMES[S.meetPlace] || "the forest");
+  chime(); renderMeet();
+}
+function putPhoneDown(name) {
+  const f = friends().find(x => x.name === name);
+  try { closePhone(); } catch (e) {}
+  S.worldAt = (f && PLACES[f.place]) ? f.place : "village";
+  meetScreen(name);
+}
+function renderMeet() {
+  const f = friends().find(x => x.name === S.guest); if (!f) return eyesScreen();
+  const k = S.meetPlace, i = friends().indexOf(f), said = S.visitSaid || "";
+  show(`<h1 style="font-size:34px">With ${f.name}</h1>
+    <div class="scene pov" style="padding:var(--pad)">${povStage(f, worldBg(k), WORLD_NAMES[k] || k, S.visitMood || "happy", "meet" + f.name + k)}</div>
+    <div class="box">
+      ${said ? `<div class="bubble you"><b>${esc(S.name)}:</b> "${esc(said)}"</div>` : ""}
+      <div class="bubble"><b>${f.name}:</b> "${S.visitReply || ""}"</div>
+      <div class="type-row"><input id="houseSay" maxlength="140" autocomplete="off" placeholder="Talk to ${f.name}..." onkeydown="if(event.key==='Enter')houseTalk()"><button onclick="houseTalk()">Say it</button></div>
+      <div class="center visit-actions">
+        <button class="soft" onclick="visitDo('hug')">Give a hug</button>
+        <button class="soft" onclick="visitDo('kiss')">Give a kiss</button>
+        <button class="soft" onclick="visitDo('snack')">Share a snack</button>
+        <button class="rainbow" onclick="activityMenu(${i},'meet')">Play together</button>
+        <button class="rainbow" onclick="S.meetPlace=null; inviteOver('${f.name}')">Come to my house</button>
+        <button class="soft" onclick="visitDo('bye')">Say goodbye</button>
+      </div>
+      <p class="sub" style="margin:4px 0 0">${heartBar(S.hearts[f.name])}</p>
+    </div>`);
+  app.classList.remove("enter");
+  const box = document.getElementById("houseSay"); if (box && said) box.focus();
+}
 // ===== Visits: invite an animal over to your house, give kisses, have sleepovers (all in the game) =====
 function visitBox(guest, partner) {
   if (!guest) {
@@ -2489,7 +2575,7 @@ function houseTalk() {
   addHearts(f, Math.min(r.pts, 1));
   S.visitSaid = said; S.visitReply = r.say; S.visitMood = r.mood;
   if (r.pts > 0) { chime(); floatHearts(1); } else chime(false);
-  houseScreen();
+  visitRedraw();
   const box = document.getElementById("houseSay"); if (box) box.focus();
 }
 function visitDo(what) {
@@ -2509,6 +2595,10 @@ function visitDo(what) {
     }
   } else if (what === "snack") {
     say = pickOne([`Ooh, ${pickOne(["strawberries", "honey on toast", "cookies", "popcorn", "warm muffins"])}! Yum! Thank you!`, "You share your snacks with me? That's true friendship.", "Mmm, best snack ever. Okay, you pick the next one!"]);
+  } else if (what === "bye" && S.meetPlace) {
+    S.worldBye = `<b>${f.name}:</b> "${st === 0 ? "See you around! Bye!" : st === 1 ? "Bye! That was really nice. *waves shyly*" : "Bye bye! I'll miss you already. Text me!"}"`;
+    S.guest = null; S.meetPlace = null; S.byeAt = S.byeAt || {}; S.byeAt[f.name] = Date.now();
+    chime(); return eyesScreen();
   } else if (what === "bye") {
     say = st === 0 ? "Thanks for having me! See you around!" : st === 1 ? "Bye! That was really fun. *waves shyly at the door*" : "Bye bye! Text me later, okay? I'll miss you already!";
     S.guest = null; S.visitReply = ""; S.byeAt = S.byeAt || {}; S.byeAt[f.name] = Date.now();
@@ -2519,7 +2609,7 @@ function visitDo(what) {
   S.visitMood = what === "kiss" ? (st === 0 ? "confused" : "blush") : what === "hug" ? (st === 0 ? "happy" : "close") : "happy";
   addHearts(f, pts); S.visitReply = say + (pts ? `  <b>+${pts} ❤️</b>` : "");
   if (pts) { chime(); floatHearts(pts); }
-  houseScreen();
+  visitRedraw();
 }
 const SLEEP_ACTS = [
   ["fort", "Build a pillow fort", ["You stack every pillow in the house. The fort is HUGE. {N} adds a little flag on top.", "{N} insists on a secret door. The fort now has a secret door."]],
