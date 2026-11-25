@@ -3037,7 +3037,7 @@ const SHOWS = [
   { k:"date",   name:"Mystery Date Doors",  bg:"tvstudio",    blurb:"Three doors, three secret animals. Pick one for a date!", prize:"Rose Ribbon" },
   { k:"bake",   name:"Bake Battle",         bg:"bakestage",     blurb:"Out-bake your rival before the timer runs out.", prize:"Golden Whisk" }
 ];
-const SHOW_BG = k => ({ tvstudio:"url(art/tvstudio.png) center/cover, radial-gradient(circle at 50% 30%, #ffd86b, #c2185b 45%, #2a0f45)",
+const SHOW_BG = k => I3D[k.replace("in_", "")] ? `url(${I3D[k.replace("in_", "")]}) center/cover` : ({ tvstudio:"url(art/tvstudio.png) center/cover, radial-gradient(circle at 50% 30%, #ffd86b, #c2185b 45%, #2a0f45)",
   talentstage:"url(art/talentstage.png) center/cover, radial-gradient(circle at 50% 40%, #fff3b0, #8e1b3a 50%, #1a0a24)", kitchen:ACT_BG.kitchen, bakestage: LOOK_GAME() && G_HAVE.has("bakestage") ? "url(art/bakestage.png) center/cover, linear-gradient(#ffe2b8,#d9a066)" : ACT_BG.kitchen })[k] || ACT_BG[k.replace("in_", "")] || `url(art/${k}.png) center/cover, #3a2a20`;
 const HOST = "Hoot";
 const showOf = k => SHOWS.find(s => s.k === k);
@@ -4116,8 +4116,79 @@ function w3Portraits() {
       const box = new THREE.Box3().setFromObject(c.g), ctr = box.getCenter(new THREE.Vector3()), h = box.max.y - box.min.y, dist = h / 2 / Math.tan(14 * Math.PI / 180) * 1.04;
       cam.position.set(ctr.x, ctr.y + h * .04, ctr.z + dist); cam.lookAt(ctr.x, ctr.y, ctr.z); R.render(sc, cam); P3D[k] = cv.toDataURL("image/png");
       const hp = new THREE.Vector3(); c.head.getWorldPosition(hp); const fd = h * .42 / 2 / Math.tan(14 * Math.PI / 180); cam.position.set(hp.x + .05, hp.y, hp.z + fd); cam.lookAt(hp.x, hp.y - h * .04, hp.z); R.render(sc, cam); P3D_FACE[k] = cv.toDataURL("image/png"); sc.remove(c.g); });
-    R.dispose(); R.forceContextLoss(); document.body.classList.add("p3d"); gSwap(document.body);
+    R.dispose(); R.forceContextLoss(); document.body.classList.add("p3d"); gSwap(document.body); setTimeout(i3dAll, 200);
   }).catch(() => {});
+}
+// ===== 3D insides of shops and studios (drawn once, then used as the background picture) =====
+const I3D = {};
+const I3D_ROOMS = {
+  cafe: { wall: 0xf3dcc0, floor: 0x9a6a42, trim: 0x2f9a5b }, bakery: { wall: 0xffe7b0, floor: 0xb07a4a, trim: 0xe0502a }, icecream: { wall: 0xffd6e8, floor: 0xf4f4f4, trim: 0x8fd3ff },
+  flowers: { wall: 0xe4f6d8, floor: 0xa8845a, trim: 0xb35fd1 }, cinema: { wall: 0x3a1230, floor: 0x5a1a2a, trim: 0xffc84a, dark: true }, arcade: { wall: 0x241a4d, floor: 0x1d1640, trim: 0x45d0ff, dark: true },
+  tvstudio: { wall: 0x2a0f45, floor: 0x3a2a5a, trim: 0xff5a8a, dark: true }, talentstage: { wall: 0x1a0a24, floor: 0x5a3a22, trim: 0xffd23b, dark: true }, bakestage: { wall: 0xffe9c9, floor: 0xd9c2a0, trim: 0xff8fb1 },
+  restaurant: { wall: 0xf1e0c8, floor: 0x7a4a2a, trim: 0xc0392b }, pizza: { wall: 0xfff0d8, floor: 0xa0603a, trim: 0x2e7d32 }, burger: { wall: 0xfff2c2, floor: 0x9a9aa6, trim: 0xd35400 },
+  sweets: { wall: 0xffd6ea, floor: 0xffffff, trim: 0xff6fa8 }, toys: { wall: 0xdff0ff, floor: 0xd8b48a, trim: 0x3a6fd8 }, pets: { wall: 0xe8ffe0, floor: 0xc8a878, trim: 0x3f8f5a }, clothes: { wall: 0xf5e8ff, floor: 0xe8e0f0, trim: 0x7a4fd1 }
+};
+function i3dRender(k) {
+  const o = I3D_ROOMS[k]; if (!o) return null;
+  const cv = document.createElement("canvas"); cv.width = 900; cv.height = 1200;
+  const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true }); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(o.wall);
+  const M = (c, x = {}) => w3Mat(c, x), add = (geo, mat, x, y, z, sh = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = sh; m.receiveShadow = true; sc.add(m); return m; };
+  const B = (w, h, d) => new THREE.BoxGeometry(w, h, d), C = (r1, r2, h, n = 20) => new THREE.CylinderGeometry(r1, r2, h, n), Sp = r => new THREE.SphereGeometry(r, 16, 12);
+  sc.add(new THREE.HemisphereLight(o.dark ? 0x8a7aff : 0xfff6e8, o.dark ? 0x201030 : 0x9a7a5a, o.dark ? .35 : .75));
+  const key = new THREE.SpotLight(o.dark ? 0xffe0f0 : 0xfff0d8, o.dark ? 2.2 : 1.6, 30, .9, .5); key.position.set(2, 7, 6); key.target.position.set(0, 0, -1); key.castShadow = true; key.shadow.mapSize.set(1024, 1024); sc.add(key, key.target);
+  // room: wood floor, papered walls, skirting, window or poster
+  const plank = w3Canvas("plank", 256, 256, (g) => { for (let i = 0; i < 8; i++) { const v = 200 + Math.random() * 40; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(0, i * 32, 256, 32); g.fillStyle = "rgba(0,0,0,.25)"; g.fillRect(0, i * 32 + 30, 256, 2); g.fillRect((i * 97) % 256, i * 32, 2, 32); } w3Noise(g, 256, 256, 800, .05); }, true).clone(); plank.needsUpdate = true; plank.repeat.set(3, 3);
+  add(new THREE.PlaneGeometry(14, 12).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: plank, color: o.floor, roughness: .55 }), 0, 0, 0, false);
+  const paper = w3Canvas("paper", 128, 128, (g) => { g.fillStyle = "#eee"; g.fillRect(0, 0, 128, 128); g.fillStyle = "rgba(255,255,255,.7)"; for (let i = 0; i < 4; i++) g.fillRect(i * 32, 0, 14, 128); w3Noise(g, 128, 128, 300, .04); }, true).clone(); paper.needsUpdate = true; paper.repeat.set(5, 2);
+  const wallM = new THREE.MeshStandardMaterial({ map: paper, color: o.wall, roughness: .9 });
+  add(new THREE.PlaneGeometry(14, 6), wallM, 0, 3, -4, false); [-1, 1].forEach(s => { const w = add(new THREE.PlaneGeometry(10, 6), wallM, s * 6, 3, 1, false); w.rotation.y = -s * Math.PI / 2; });
+  add(B(14, .3, .1), M(o.trim), 0, .15, -3.95); add(B(14, .12, .1), M(0xffffff), 0, 1.3, -3.95, false);
+  if (!o.dark) { const win = add(new THREE.PlaneGeometry(3.4, 2.2), new THREE.MeshBasicMaterial({ map: w3Canvas("winview", 256, 160, (g) => { const gr = g.createLinearGradient(0, 0, 0, 160); gr.addColorStop(0, "#8fc8ff"); gr.addColorStop(1, XMAS() ? "#ffffff" : "#d8f5c0"); g.fillStyle = gr; g.fillRect(0, 0, 256, 160);
+      g.fillStyle = XMAS() ? "#e8f0ff" : "#5cb847"; g.beginPath(); g.ellipse(70, 170, 120, 50, 0, 0, 6.3); g.fill(); g.beginPath(); g.ellipse(210, 175, 110, 45, 0, 0, 6.3); g.fill(); g.fillStyle = "#2e7d4a"; for (let i = 0; i < 6; i++) { g.beginPath(); g.moveTo(20 + i * 45, 120); g.lineTo(35 + i * 45, 70); g.lineTo(50 + i * 45, 120); g.fill(); } }) }), 0, 3, -3.97, false);
+    add(B(3.6, .14, .14), M(0xffffff), 0, 1.86, -3.9); add(B(3.6, .14, .14), M(0xffffff), 0, 4.14, -3.9); [-1.75, 0, 1.75].forEach(x => add(B(.12, 2.3, .12), M(0xffffff), x, 3, -3.9)); }
+  // hanging lamps
+  for (let i = -1; i <= 1; i++) { add(C(.01, .01, 1.2, 4), M(0x222222), i * 3, 5.4, -1.5, false); const sh = add(new THREE.ConeGeometry(.35, .3, 16, 1, true), M(o.trim, { side: THREE.DoubleSide }), i * 3, 4.75, -1.5, false);
+    const bulb = add(Sp(.1), new THREE.MeshBasicMaterial({ color: 0xfff2c0 }), i * 3, 4.62, -1.5, false); const pl = new THREE.PointLight(0xffd8a0, o.dark ? .9 : .5, 7); pl.position.set(i * 3, 4.4, -1.5); sc.add(pl); }
+  const counter = (x, z, w, col) => { add(B(w, 1.05, .9), M(col, { roughness: .7 }), x, .52, z); add(B(w + .1, .08, 1), M(0xf4f0e8, { roughness: .3 }), x, 1.08, z); };
+  const table = (x, z, col) => { add(C(.6, .6, .07, 28), M(col, { roughness: .5 }), x, .78, z); add(C(.06, .06, .75, 8), M(0x333333), x, .39, z); add(C(.3, .3, .03, 16), M(0x333333), x, .02, z);
+    [-1, 1].forEach(s => { add(B(.42, .06, .42), M(o.trim), x + s * .85, .48, z); add(B(.42, .5, .06), M(o.trim), x + s * .85, .75, z - .2); [-1, 1].forEach(a => [-1, 1].forEach(b => add(C(.025, .025, .46, 6), M(0x333333), x + s * .85 + a * .17, .23, z + b * .17, false))); }); };
+  const cup = (x, y, z, col) => { add(C(.07, .055, .12, 12), M(col || 0xffffff, { roughness: .3 }), x, y + .06, z); };
+  const cake = (x, y, z, col) => { add(C(.22, .22, .16, 24), M(col), x, y + .08, z); add(C(.16, .16, .14, 24), M(0xfff6f0), x, y + .23, z); add(Sp(.04), M(0xd62828), x, y + .33, z); };
+  const shelf = (x, z, w, items) => { for (let r = 0; r < 3; r++) { add(B(w, .06, .35), M(0x8a5a3a), x, 1.6 + r * .7, z); for (let i = 0; i < items; i++) { const c = [0xff6fae, 0xffd23b, 0x3bb7ff, 0x3ddc84, 0x9b6bff, 0xff9f1c][(i + r) % 6]; add(C(.1, .1, .28, 10), M(c, { roughness: .35 }), x - w / 2 + .3 + i * (w - .6) / Math.max(1, items - 1), 1.78 + r * .7, z, false); } } };
+  const flowersAt = (x, z, n) => { add(C(.25, .2, .45, 14), M(0x7a8a9a, { metalness: .4, roughness: .4 }), x, .23, z); for (let i = 0; i < n; i++) { const a = i * 2.4, r = .08 + (i % 3) * .06; add(C(.01, .01, .5, 4), M(0x3f8f3a), x + Math.cos(a) * r, .65, z + Math.sin(a) * r, false); add(Sp(.07), M([0xff6fae, 0xffd23b, 0xffffff, 0xff3b3b, 0x9775fa][i % 5]), x + Math.cos(a) * r, .92, z + Math.sin(a) * r, false); } };
+  const screenTex = (txt, a, b) => w3Canvas("scr" + txt, 256, 160, (g) => { const gr = g.createLinearGradient(0, 0, 256, 160); gr.addColorStop(0, a); gr.addColorStop(1, b); g.fillStyle = gr; g.fillRect(0, 0, 256, 160); g.fillStyle = "#fff"; g.font = "bold 34px Fredoka, Arial Rounded MT Bold, sans-serif"; g.textAlign = "center"; g.fillText(txt, 128, 92); });
+  const glowPlane = (w, h, tex, x, y, z) => add(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex }), x, y, z, false);
+  if (["cafe", "restaurant", "pizza", "burger"].includes(k)) { counter(-3.6, -2.9, 3.4, o.trim); for (let i = 0; i < 4; i++) cup(-4.8 + i * .6, 1.12, -2.8, [0xffffff, 0xff8fb1, 0xffffff, 0x8fd3ff][i]); table(3.4, -1.4, 0xffffff); table(-3.8, .4, 0xffffff); shelf(-3.6, -3.75, 3, 5);
+    if (k === "pizza") { add(B(1.6, 1.6, 1), M(0xa04a2a), 3.8, .8, -3.4); add(new THREE.CircleGeometry(.45, 20), new THREE.MeshBasicMaterial({ color: 0xff7a2a }), 3.8, .9, -2.89, false); cake(3.4, .82, -1.4, 0xffcf6b); }
+    if (k === "burger") { add(B(2.2, .1, .8), M(0x555555, { metalness: .6, roughness: .3 }), 3.6, 1.1, -3.3); for (let i = 0; i < 3; i++) add(C(.18, .18, .1, 16), M(0x8a4a2a), 3 + i * .6, 1.2, -3.3); } }
+  if (k === "bakery" || k === "bakestage" || k === "sweets") { counter(-3.4, -2.9, 3.6, o.trim); counter(3.4, -2.9, 3.6, o.trim); [-4.6, -3.4, -2.2].forEach((x, i) => cake(x, 1.12, -2.8, [0xff8fb1, 0xffd23b, 0x8fd3ff][i])); [2.4, 3.6, 4.6].forEach((x, i) => cake(x, 1.12, -2.8, [0x9b6bff, 0xff8fb1, 0x3ddc84][i]));
+    shelf(0, -3.75, 4, 7); if (k === "bakestage") { add(C(1.6, 1.6, .25, 40), M(0xffffff), 0, .12, -1); glowPlane(3, 1, screenTex("BAKE BATTLE", "#ff8fb1", "#ffb21e"), 0, 4.6, -3.95); } }
+  if (k === "icecream") { counter(0, -2.8, 6, 0xffffff); for (let i = 0; i < 8; i++) add(B(.55, .08, .4), M([0xff8fb1, 0xfff1c0, 0x8b4a2a, 0x8fe0b0, 0xffd23b, 0xb48cff, 0xff6f6f, 0x8fd3ff][i]), -2.6 + i * .74, 1.12, -2.8); table(3.6, .2, 0xff8fb1); }
+  if (k === "flowers" || k === "pets" || k === "clothes" || k === "toys") { counter(0, -3, 3, o.trim); shelf(-3.8, -3.75, 2.6, 4); shelf(3.8, -3.75, 2.6, 4);
+    if (k === "flowers") [[-4.2, -1.5], [-3.2, -.4], [4, -1.3], [3.2, -.2], [-4.6, .8], [4.6, .9]].forEach(([x, z]) => flowersAt(x, z, 9));
+    if (k === "pets") { [[-4, -1], [4, -1]].forEach(([x, z]) => { add(B(1.4, 1, 1), new THREE.MeshStandardMaterial({ color: 0x9fd8ff, transparent: true, opacity: .5, roughness: .1 }), x, .5, z); add(Sp(.12), M(0xff9f1c), x - .2, .6, z); add(Sp(.1), M(0xffd23b), x + .3, .4, z); }); add(C(.5, .5, .15, 24), M(0xff8fb1), 0, .08, .6); }
+    if (k === "clothes") [-4, -2.6, 2.6, 4].forEach((x, i) => { add(C(.02, .02, 1.6, 6), M(0x888888, { metalness: .7 }), x, .8, -1); add(B(.5, .7, .1), M([0xff5ac8, 0x45d0ff, 0xffd23b, 0x3ddc84][i]), x, 1.1, -1); add(Sp(.22), M(0xf0d8c0), x, 1.75, -1); });
+    if (k === "toys") { [[-4, -.8, 0xff3b3b], [-3.2, .3, 0x3bb7ff], [3.6, -.6, 0xffd23b], [4.3, .5, 0x3ddc84]].forEach(([x, z, c]) => { add(B(.5, .5, .5), M(c), x, .25, z); add(Sp(.25), M(c), x + .6, .25, z + .2); }); add(Sp(.5), M(0xb07a45), -1.8, .5, -2.4); add(Sp(.3), M(0xb07a45), -1.8, 1.15, -2.4); } }
+  if (k === "cinema") { glowPlane(9, 4, screenTex("NOW SHOWING", "#2a1a5a", "#ff5ac8"), 0, 3.2, -3.95); for (let r = 0; r < 2; r++) for (let i = -4; i <= 4; i++) { if (Math.abs(i) < 2 && r === 1) continue; add(B(.7, .5, .6), M(0xa01a2a), i * .9, .45 + r * .2, 1.5 + r * 1.2); add(B(.7, .8, .15), M(0xa01a2a), i * .9, .85 + r * .2, 1.85 + r * 1.2); } }
+  if (k === "arcade") { for (let i = 0; i < 5; i++) { const x = -4.6 + i * 2.3; if (Math.abs(x) < 1.2) continue; add(B(1, 2, .9), M([0xff3b8a, 0x3bb7ff, 0xffd23b, 0x3ddc84, 0x9b6bff][i]), x, 1, -3.2); glowPlane(.75, .6, screenTex(["WIN!", "GO!", "1UP", "WOW", "PLAY"][i], "#120a2a", ["#ff3b8a", "#3bb7ff", "#ffd23b", "#3ddc84", "#9b6bff"][i]), x, 1.45, -2.74); }
+    add(B(1.4, 1.8, 1.2), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: .35 }), 3.8, .9, .3); add(Sp(.25), M(0xff8fb1), 3.7, .3, .3); }
+  if (k === "tvstudio" || k === "talentstage") { add(C(3.4, 3.6, .35, 48), M(0xffffff, { roughness: .3 }), 0, .17, -1.2); glowPlane(6, 2.2, screenTex(k === "tvstudio" ? "LOVE SHOW" : "TALENT SHOW", "#ff5a8a", "#7b4fd6"), 0, 4, -3.95);
+    if (k === "talentstage") [-1, 1].forEach(s => { for (let i = 0; i < 8; i++) add(C(.18, .18, 6, 10), M(0xb0182a, { roughness: .8 }), s * (4.4 + (i % 2) * .1) - s * i * .32, 3, -3.6, false); });
+    for (let i = 0; i < 6; i++) { const sp = new THREE.SpotLight([0xff5ac8, 0x45d0ff, 0xffd23b][i % 3], 1.6, 14, .35, .6); sp.position.set(-5 + i * 2, 5.6, 1); sp.target.position.set(-2 + i * .8, 0, -1); sc.add(sp, sp.target); add(C(.2, .3, .4, 10), M(0x222222), -5 + i * 2, 5.6, 1, false); } }
+  const cam = new THREE.PerspectiveCamera(64, cv.width / cv.height, .1, 60); cam.position.set(0, 2.4, 6.6); cam.lookAt(0, 1.6, -2);
+  R.render(sc, cam); const url = cv.toDataURL("image/jpeg", .86); R.dispose(); R.forceContextLoss();
+  sc.traverse(m => { if (m.geometry) m.geometry.dispose(); }); return url;
+}
+function i3dAll() {
+  const keys = Object.keys(I3D_ROOMS); let n = 0;
+  const step = () => { if (n >= keys.length) return; const k = keys[n++]; try { I3D[k] = i3dRender(k); i3dApply(k); } catch (e) {} setTimeout(step, 60); };
+  step();
+}
+function i3dApply(k) {
+  const u = I3D[k]; if (!u) return; const bg = `url(${u}) center/cover`;
+  if (ACT_BG[k] !== undefined || ["cafe", "bakery", "icecream", "flowers", "cinema", "arcade"].includes(k)) ACT_BG[k] = bg;
+  if (typeof S !== "undefined" && S && S.myPlaces) Object.entries(S.myPlaces).forEach(([i, ty]) => { if (ty === k) ACT_BG["my" + i] = bg; });
 }
 setTimeout(w3Portraits, 300);
 // ===== Real 3D walking world (three.js): walk around Animal Burrow in first person =====
@@ -4584,7 +4655,7 @@ function applyPlaceNames() {
       if (!T) { b[0] = "t_lot"; b[4] = "lot:" + i; b[5] = "For sale"; return; }
       const k = "my" + i, nm = S.placeNames["shop:" + k] || T.def; b[0] = T.spr; b[4] = "shop:" + k; b[5] = nm;
       SHOPS[k] = { name: nm, keeper: T.keeper, art: T.art, kind: T.art, hi: `Welcome back, boss! ${nm} is all yours.`, bg: "in_" + ty, mine: ty };
-      ACT_BG[k] = `url(art/in_${ty}.png) center/cover, ${ACT_BG[T.base]}`;
+      ACT_BG[k] = I3D[ty] ? `url(${I3D[ty]}) center/cover` : `url(art/in_${ty}.png) center/cover, ${ACT_BG[T.base]}`;
       const A = [k, nm, k, ["shy", "funny", "adventure", "baker"], T.intro, T.qs, `${T.keeper} waves. "Bye, boss! Come back soon!"`, k], j = ACTS.findIndex(a => a[0] === k);
       if (j >= 0) ACTS[j] = A; else ACTS.push(A); return; }
     const k = placeKey(b, n); if (!(k in PLACE_DEF)) PLACE_DEF[k] = b[5]; const nm = S.placeNames[k]; b[5] = nm || PLACE_DEF[k];
