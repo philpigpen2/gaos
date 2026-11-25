@@ -975,6 +975,7 @@ setInterval(scrollButtons, 700);
 function show(html) {
   if (typeof W3 !== "undefined" && W3 && !/id="w3"/.test(html)) w3Stop();
   if (typeof LOBBY !== "undefined" && LOBBY && !/id="lobby"/.test(html)) lobbyStop();
+  if (typeof H3 !== "undefined" && H3) h3Stop();
   try { if (typeof S !== "undefined" && S) applyPlaceNames(); } catch (e) {}
   document.body.classList.remove("immersive", "world", "meet", "house", "gshow", "walking", "townmode", "w3mode", "lobbymode"); WALK = null; TOWN = null;
   app.innerHTML = html;
@@ -4850,6 +4851,78 @@ function w3Stop() {
   try { W.R.dispose(); W.R.forceContextLoss(); } catch (e) {}
   W3_WIN = []; W3_FIRE = null; W3_STAR = null; document.body.classList.remove("w3mode");
 }
+// ===== Decorate your house in 3D: drag furniture on the floor, turn it, change walls and floor =====
+const FURN_3D_EXTRA = [["tv", "TV"], ["beanbag", "Bean bag"], ["piano", "Piano"], ["fishtank", "Fish tank"], ["desk", "Desk"], ["xmastree", "Christmas tree"], ["fairylights", "Fairy lights"], ["cushions", "Cushions"]];
+const H3_WALLS = [0xfff1e0, 0xffd6e8, 0xd8ecff, 0xe4f6d8, 0xefe2ff, 0xfff5b8, 0x3a3060];
+const H3_FLOORS = [0xb07a4a, 0x7a4a2a, 0xe8d8c0, 0x9aa0b0, 0xffc4dd];
+let H3 = null;
+function h3Furn(k) {
+  const g = new THREE.Group(), M = (c, x = {}) => w3Mat(c, x), add = (geo, col, x, y, z, opt) => { const m = new THREE.Mesh(geo, typeof col === "number" ? M(col, opt) : col); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; g.add(m); return m; };
+  const B = (w, h, d) => new THREE.BoxGeometry(w, h, d), C = (a, b, h, n = 20) => new THREE.CylinderGeometry(a, b, h, n), Sp = (r, s = 16) => new THREE.SphereGeometry(r, s, s * .75 | 0);
+  const legs = (w, d, h, col) => [-1, 1].forEach(a => [-1, 1].forEach(b => add(C(.04, .04, h, 8), col, a * (w / 2 - .08), h / 2, b * (d / 2 - .08))));
+  if (k === "bed") { add(B(1.5, .35, 2.1), 0x8a5a3a, 0, .25, 0); add(B(1.4, .22, 2), 0xffffff, 0, .52, 0); add(B(1.42, .12, 1.3), 0xff8fb1, 0, .66, .35); add(B(.55, .16, .35), 0xffffff, -.35, .7, -.75); add(B(.55, .16, .35), 0xffffff, .35, .7, -.75); add(B(1.5, 1, .12), 0x8a5a3a, 0, .6, -1.05); }
+  if (k === "sofa") { add(B(2, .4, .85), 0x7b4fd6, 0, .3, 0); add(B(2, .6, .25), 0x7b4fd6, 0, .7, -.32); [-1, 1].forEach(s => add(B(.22, .55, .85), 0x6a3fc6, s * .95, .45, 0)); [-1, 0, 1].forEach(s => add(B(.58, .14, .6), 0x9b6bff, s * .6, .56, .05)); }
+  if (k === "armchair") { add(B(.9, .4, .85), 0xff8fb1, 0, .3, 0); add(B(.9, .65, .22), 0xff8fb1, 0, .72, -.32); [-1, 1].forEach(s => add(B(.18, .5, .85), 0xff6fa0, s * .42, .45, 0)); }
+  if (k === "rug") { const t = w3Canvas("rugtex", 256, 128, (c) => { ["#ff3b3b", "#ff9f1c", "#ffd23b", "#3ddc84", "#3bb7ff", "#9b6bff"].forEach((col, i) => { c.fillStyle = col; c.fillRect(0, i * 128 / 6, 256, 128 / 6 + 1); }); }); const m = new THREE.Mesh(new THREE.CircleGeometry(1, 40), new THREE.MeshStandardMaterial({ map: t, roughness: 1 })); m.rotation.x = -Math.PI / 2; m.scale.set(1.5, 1, 1); m.position.y = .015; m.receiveShadow = true; g.add(m); }
+  if (k === "table") { add(C(.5, .5, .06, 28), 0xd9b48a, 0, .5, 0); add(C(.06, .08, .48, 10), 0x8a5a3a, 0, .25, 0); add(C(.06, .05, .1, 12), 0xffffff, .15, .58, 0); add(C(.12, .12, .02, 16), 0xffffff, -.12, .54, .1); }
+  if (k === "bookshelf") { add(B(1.2, 1.9, .4), 0x8a5a3a, 0, .95, 0); for (let r = 0; r < 4; r++) for (let i = 0; i < 7; i++) add(B(.1 + (i % 3) * .02, .32 - (i % 2) * .05, .28), [0xff3b3b, 0x3bb7ff, 0xffd23b, 0x3ddc84, 0x9b6bff, 0xff9f1c][(i + r) % 6], -.45 + i * .14, .3 + r * .45, .04); }
+  if (k === "fireplace") { add(B(1.6, 1.2, .5), 0xb0a090, 0, .6, 0); add(B(.9, .7, .2), 0x2a1a14, 0, .45, .17); add(B(1.8, .12, .6), 0x8a5a3a, 0, 1.25, 0); const f = add(new THREE.ConeGeometry(.2, .5, 8), new THREE.MeshBasicMaterial({ color: 0xffa53a }), 0, .4, .2); g.userData.fire = f; }
+  if (k === "lamp") { add(C(.15, .2, .05, 16), 0x333333, 0, .03, 0); add(C(.025, .025, 1.4, 8), 0x333333, 0, .72, 0); add(C(.18, .3, .35, 20, 1), M(0xfff1c0, { emissive: 0xffc860, emissiveIntensity: .6 }), 0, 1.5, 0); }
+  if (k === "plant") { add(C(.22, .17, .35, 16), 0xd0603a, 0, .18, 0); for (let i = 0; i < 9; i++) { const l = add(Sp(.16, 10), 0x3f9f4a, Math.cos(i * 2.4) * .14, .5 + (i % 3) * .14, Math.sin(i * 2.4) * .14); l.scale.set(1, 1.6, .5); l.rotation.z = Math.cos(i) * .5; } }
+  if (k === "vase") { add(C(.1, .14, .35, 16), 0x8fd3ff, 0, .18, 0, { roughness: .2 }); for (let i = 0; i < 7; i++) { add(C(.01, .01, .3, 4), 0x3f8f3a, Math.cos(i * 2.4) * .06, .45, Math.sin(i * 2.4) * .06); add(Sp(.06, 10), [0xff6fae, 0xffd23b, 0xffffff, 0xff3b3b][i % 4], Math.cos(i * 2.4) * .08, .62, Math.sin(i * 2.4) * .08); } }
+  if (k === "painting") { add(B(1.1, .8, .05), 0xc9a227, 0, 1.6, 0); const t = w3Canvas("paint", 128, 96, (c) => { const gr = c.createLinearGradient(0, 0, 0, 96); gr.addColorStop(0, "#ffb38a"); gr.addColorStop(1, "#ff5ac8"); c.fillStyle = gr; c.fillRect(0, 0, 128, 96); c.fillStyle = "#ffe066"; c.beginPath(); c.arc(64, 60, 18, 0, 6.3); c.fill(); c.fillStyle = "#3a6f4a"; c.fillRect(0, 70, 128, 26); }); add(new THREE.PlaneGeometry(.95, .65), new THREE.MeshBasicMaterial({ map: t }), 0, 1.6, .03); g.userData.wall = true; }
+  if (k === "flag") { add(C(.02, .02, 1.6, 8), 0xdddddd, -.45, .8, 0); ["#ff3b3b", "#ff9f1c", "#ffd23b", "#3ddc84", "#3bb7ff", "#9b6bff"].forEach((c, i) => add(B(.9, .09, .02), new THREE.Color(c).getHex(), 0, 1.55 - i * .09, 0)); }
+  if (k === "tv") { add(B(1.6, .5, .45), 0x5a4a3a, 0, .25, 0); add(B(1.5, .85, .06), 0x111111, 0, .95, 0); add(new THREE.PlaneGeometry(1.4, .76), new THREE.MeshBasicMaterial({ map: w3Canvas("tvscr", 128, 72, (c) => { const gr = c.createLinearGradient(0, 0, 128, 72); gr.addColorStop(0, "#45d0ff"); gr.addColorStop(1, "#ff5ac8"); c.fillStyle = gr; c.fillRect(0, 0, 128, 72); c.fillStyle = "#fff"; c.font = "bold 16px sans-serif"; c.textAlign = "center"; c.fillText("Animal TV", 64, 42); }) }), 0, .95, .035); }
+  if (k === "beanbag") { const b = add(Sp(.45, 18), 0xff9f1c, 0, .3, 0); b.scale.set(1, .65, 1); }
+  if (k === "piano") { add(B(1.4, 1.1, .6), 0x1a1a22, 0, .55, 0, { roughness: .2 }); add(B(1.3, .05, .25), 0xffffff, 0, .78, .38); for (let i = 0; i < 9; i++) add(B(.05, .04, .14), 0x111111, -.55 + i * .14, .81, .33); add(B(.8, .45, .35), 0x1a1a22, 0, .22, .85); }
+  if (k === "fishtank") { add(B(1.1, .6, .5), 0x5a4a3a, 0, .3, 0); add(B(1, .6, .45), new THREE.MeshStandardMaterial({ color: 0x8fd3ff, transparent: true, opacity: .45, roughness: .05 }), 0, .9, 0); [[-.2, .9, 0xff9f1c], [.25, 1, 0xffd23b], [0, .8, 0xff5ac8]].forEach(([x, y, c]) => { const f = add(Sp(.06, 10), c, x, y, 0); f.scale.set(1.5, 1, .6); }); }
+  if (k === "desk") { add(B(1.3, .06, .65), 0xd9b48a, 0, .75, 0); legs(1.3, .65, .74, 0x8a5a3a); add(B(.5, .35, .03), 0x222222, 0, .98, -.15); add(C(.1, .1, .14, 12), 0xff8fb1, .45, .85, .1); }
+  if (k === "xmastree") { [[.7, .8, .6], [.55, .7, 1.1], [.38, .6, 1.55]].forEach(([r, h, y]) => add(new THREE.ConeGeometry(r, h, 10), 0x2e8b4a, 0, y, 0, { flatShading: true })); add(C(.08, .1, .3, 8), 0x6b4a2f, 0, .15, 0); add(new THREE.OctahedronGeometry(.12), new THREE.MeshBasicMaterial({ color: 0xffe066 }), 0, 1.95, 0); for (let i = 0; i < 14; i++) { const a = i * 2.4, y = .45 + i * .09, r = .62 - i * .035; add(Sp(.04, 8), new THREE.MeshBasicMaterial({ color: [0xff3b3b, 0xffd23b, 0x3bb7ff, 0x3ddc84][i % 4] }), Math.cos(a) * r, y, Math.sin(a) * r); } }
+  if (k === "fairylights") { for (let i = 0; i < 16; i++) add(Sp(.05, 8), new THREE.MeshBasicMaterial({ color: [0xffe066, 0xff8fb1, 0x8fd3ff][i % 3] }), -1.2 + i * .16, 2.1 - Math.sin(i / 15 * Math.PI) * .25, 0); g.userData.wall = true; }
+  if (k === "cushions") { [[0xff5ac8, -.25], [0x45d0ff, .25], [0xffd23b, 0]].forEach(([c, x], i) => { const m = add(Sp(.22, 14), c, x, .12 + (i === 2 ? .16 : 0), i === 2 ? -.05 : 0); m.scale.set(1, .5, 1); }); }
+  return g;
+}
+const h3Pos = it => [(it.x - 45) / 100 * 9, -3.2 + Math.min(95, it.y) / 95 * 6.2];
+function h3Start(partner, guest) {
+  const cv = document.getElementById("roomC"); if (!cv || !window.THREE) return; h3Stop();
+  if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+  const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true }); R.setPixelRatio(Math.min(devicePixelRatio || 1, 1.6)); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+  const sc = new THREE.Scene(), wallC = H3_WALLS[S.houseWall || 0], floorC = H3_FLOORS[S.houseFloor || 0]; sc.background = new THREE.Color(wallC);
+  sc.add(new THREE.HemisphereLight(0xfff6e8, 0x9a7a5a, .7)); const key = new THREE.DirectionalLight(0xfff0d8, 1.3); key.position.set(3, 7, 5); key.castShadow = true; Object.assign(key.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7 }); key.shadow.mapSize.set(1024, 1024); sc.add(key);
+  const warm = new THREE.PointLight(0xffd8a0, .6, 12); warm.position.set(0, 3.6, 0); sc.add(warm);
+  const plank = w3Canvas("plank2", 256, 256, (g) => { for (let i = 0; i < 8; i++) { const v = 200 + Math.random() * 40; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(0, i * 32, 256, 32); g.fillStyle = "rgba(0,0,0,.25)"; g.fillRect(0, i * 32 + 30, 256, 2); g.fillRect((i * 97) % 256, i * 32, 2, 32); } }, true).clone(); plank.needsUpdate = true; plank.repeat.set(3, 3);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 8).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: plank, color: floorC, roughness: .6 })); floor.position.z = -.2; floor.receiveShadow = true; sc.add(floor);
+  const wallM = new THREE.MeshStandardMaterial({ color: wallC, roughness: .95 }); const back = new THREE.Mesh(new THREE.PlaneGeometry(10, 4.5), wallM); back.position.set(0, 2.25, -4.2); back.receiveShadow = true; sc.add(back);
+  [-1, 1].forEach(s => { const w = new THREE.Mesh(new THREE.PlaneGeometry(8, 4.5), wallM); w.rotation.y = -s * Math.PI / 2; w.position.set(s * 5, 2.25, -.2); w.receiveShadow = true; sc.add(w); });
+  const trim = new THREE.Mesh(new THREE.BoxGeometry(10, .25, .08), w3Mat(0xffffff)); trim.position.set(0, .12, -4.16); sc.add(trim);
+  const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.5), new THREE.MeshBasicMaterial({ map: w3Canvas("winview", 256, 160, () => {}) })); win.position.set(2.2, 2.6, -4.18); sc.add(win);
+  const items = (S.house || []).map((it, i) => { const m = h3Furn(it.k); const [x, z] = h3Pos(it); m.position.set(x, 0, m.userData.wall ? -4.1 : z); m.rotation.y = it.r || 0; m.scale.setScalar(Math.max(.4, Math.min(2.5, (it.w || FURN_BIG[it.k] || 16) / (FURN_BIG[it.k] || 16)))); m.userData.i = i; sc.add(m); return m; });
+  const people = [partner, guest].filter(Boolean).map((f, n) => { const c = w3Animal(ART[f.emo], W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], XMAS()); c.g.scale.setScalar(w3Size(ART[f.emo]) / 2); c.g.position.set(n ? 1.3 : -.4, 0, .3); sc.add(c.g); c.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return c; });
+  const cam = new THREE.PerspectiveCamera(50, 1, .1, 60);
+  const resize = () => { const w = cv.clientWidth, h = cv.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.fov = w < h ? 62 : 48; cam.updateProjectionMatrix(); }; resize();
+  cam.position.set(0, 7.2, 7.4); cam.lookAt(0, -1.6, -.4);
+  const ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), v2 = new THREE.Vector2(), hit = new THREE.Vector3();
+  const pick = e => { const r = cv.getBoundingClientRect(); v2.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1); ray.setFromCamera(v2, cam); };
+  let drag = null;
+  cv.addEventListener("pointerdown", e => { pick(e); const hits = ray.intersectObjects(items, true); if (!hits.length) { if (SEL !== -1) { SEL = -1; houseScreen(); } return; }
+    let o = hits[0].object; while (o && o.userData.i === undefined) o = o.parent; const i = o.userData.i; cv.setPointerCapture(e.pointerId); drag = { i, m: o };
+    if (SEL !== i) { SEL = i; h3Sel(); } e.preventDefault(); });
+  cv.addEventListener("pointermove", e => { if (!drag) return; pick(e); if (!ray.ray.intersectPlane(plane, hit)) return; const it = S.house[drag.i];
+    const x = Math.max(-4.6, Math.min(4.6, hit.x)), z = Math.max(-3.9, Math.min(3.4, hit.z)); drag.m.position.x = x; if (!drag.m.userData.wall) drag.m.position.z = z;
+    it.x = x / 9 * 100 + 45; it.y = (z + 3.2) / 6.2 * 95; });
+  const up = () => { drag = null; }; cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  H3 = { R, sc, cam, items, people, resize, t: 0, last: performance.now() }; addEventListener("resize", resize); h3Sel();
+  const loop = () => { if (!H3 || !document.getElementById("roomC")) return h3Stop(); const now = performance.now(), dt = Math.min(.05, (now - H3.last) / 1000); H3.last = now; H3.t += dt;
+    H3.people.forEach((c, n) => { w3Anim(c, dt, 0, false, H3.t + n * 2); c.g.rotation.y = Math.sin(H3.t * .4 + n) * .25; });
+    H3.items.forEach(m => { if (m.userData.fire) m.userData.fire.scale.y = 1 + Math.sin(H3.t * 12) * .15; if (m.userData.sel) m.position.y = .04 + Math.abs(Math.sin(H3.t * 4)) * .05; else m.position.y = 0; });
+    R.render(sc, cam); H3.raf = requestAnimationFrame(loop); };
+  loop();
+}
+function h3Sel() { if (!H3) return; H3.items.forEach(m => m.userData.sel = m.userData.i === SEL); const bar = document.getElementById("h3bar"); if (bar) bar.style.display = SEL >= 0 ? "" : "none"; }
+function h3Stop() { if (!H3) return; cancelAnimationFrame(H3.raf); removeEventListener("resize", H3.resize); try { H3.R.dispose(); H3.R.forceContextLoss(); } catch (e) {} H3 = null; }
+function furnTurn() { if (SEL < 0) return; const it = S.house[SEL]; it.r = ((it.r || 0) + Math.PI / 4) % (Math.PI * 2); const m = H3 && H3.items.find(x => x.userData.i === SEL); if (m) m.rotation.y = it.r; }
+function houseWall() { S.houseWall = ((S.houseWall || 0) + 1) % H3_WALLS.length; houseScreen(); }
+function houseFloor() { S.houseFloor = ((S.houseFloor || 0) + 1) % H3_FLOORS.length; houseScreen(); }
 // ===== Christmas time! (switch it off on the title screen) =====
 const XMAS = () => { try { return localStorage.getItem("gaosXmas") !== "0"; } catch (e) { return true; } };
 function xmasToggle() { try { localStorage.setItem("gaosXmas", XMAS() ? "0" : "1"); } catch (e) {} xmasDecor(); titleScreen(); }
@@ -5260,7 +5333,7 @@ function visitBox(guest, partner) {
   return `<div class="scene pov" style="padding:var(--pad)">${povStage(guest, ACT_BG.room, "Your house", S.visitMood || "happy", "visit" + guest.name, "", true)}</div>
     <div class="box">
       ${said ? `<div class="bubble you"><b>${esc(S.name)}:</b> "${esc(said)}"</div>` : ""}
-      <div class="bubble"><b>${guest.name}:</b> "${reply}"</div>
+      ${reply ? `<div class="bubble"><b>${guest.name}:</b> "${reply}"</div>` : ""}
       <div class="type-row"><input id="houseSay" maxlength="140" autocomplete="off" placeholder="Talk to ${guest.name}..." onkeydown="if(event.key==='Enter')houseTalk()"><button onclick="houseTalk()">Say it</button></div>
       <div class="center visit-actions">
         <button class="soft" onclick="visitDo('hug')">Give a hug</button>
@@ -5393,15 +5466,17 @@ function houseScreen() {
       ${S.povKey !== "house" + (S.guest || "") ? `<div class="lids"></div>` : ""}
       <div class="pov-label">${esc(S.name)}'s House</div>
       <button class="pov-exit" onclick="SEL=-1;S.guest=null;mapScreen()">Exit</button>
-      ${S.house.map(furnHTML).join("")}
-      ${guest ? faceImg(guest, S.visitMood || "happy").replace('class="pov-face', 'class="pov-face room-face') : partner ? faceImg(partner, "happy").replace('class="pov-face', 'class="pov-face room-face') : ""}
+      ${hasWebGL() ? `<canvas id="roomC" style="position:absolute;inset:0;width:100%;height:100%;touch-action:none"></canvas>` : S.house.map(furnHTML).join("")}
+      ${hasWebGL() ? "" : guest ? faceImg(guest, S.visitMood || "happy").replace('class="pov-face', 'class="pov-face room-face') : partner ? faceImg(partner, "happy").replace('class="pov-face', 'class="pov-face room-face') : ""}
       ${guest && ["blush", "close"].includes(S.visitMood) ? `<div class="pov-hearts"><span></span><span></span><span></span></div>` : ""}
     </div>
     <div class="house-panel">
     ${visitBox(guest, partner)}
     <div class="box center">
-      ${SEL >= 0 ? `<div style="margin-bottom:8px"><button class="soft" onclick="furnSize(1.2)">Bigger</button><button class="soft" onclick="furnSize(0.83)">Smaller</button><button onclick="furnRemove()">Take away</button></div>` : ""}
-      <div class="grid">${FURN.map(([k, n]) => `<button class="soft furn-pick" onclick="furnAdd('${k}')">${k === "flag" ? `<i class="flag" style="width:60px;height:40px"></i>` : `<img class="itm" src="art/${k}.png" alt="" onerror="this.style.display='none'">`}<span class="lbl">${n}</span></button>`).join("")}</div>
+      ${hasWebGL() ? `<p style="margin:0 0 6px">Tap a thing to pick it, then drag it around the room.</p><div id="h3bar" style="margin-bottom:8px;${SEL >= 0 ? "" : "display:none"}"><button class="soft" onclick="furnSize(1.2)">Bigger</button><button class="soft" onclick="furnSize(0.83)">Smaller</button><button class="soft" onclick="furnTurn()">Turn</button><button onclick="furnRemove()">Take away</button></div>
+        <div style="margin-bottom:8px"><button class="soft" onclick="houseWall()">Wall colour</button><button class="soft" onclick="houseFloor()">Floor</button></div>
+        <div class="grid">${FURN.concat(FURN_3D_EXTRA).filter(([k]) => k !== "xmastree" || XMAS()).map(([k, n]) => `<button class="soft furn-pick" onclick="furnAdd('${k}')">${n}</button>`).join("")}</div>` : SEL >= 0 ? `<div style="margin-bottom:8px"><button class="soft" onclick="furnSize(1.2)">Bigger</button><button class="soft" onclick="furnSize(0.83)">Smaller</button><button onclick="furnRemove()">Take away</button></div>` : ""}
+      <div class="grid" ${hasWebGL() ? 'style="display:none"' : ""}>${FURN.map(([k, n]) => `<button class="soft furn-pick" onclick="furnAdd('${k}')">${k === "flag" ? `<i class="flag" style="width:60px;height:40px"></i>` : `<img class="itm" src="art/${k}.png" alt="" onerror="this.style.display='none'">`}<span class="lbl">${n}</span></button>`).join("")}</div>
     </div>
     <div class="center"><button class="rainbow" onclick="SEL=-1;S.guest=null;mapScreen()">Back to the village</button></div>
     </div>
@@ -5409,6 +5484,7 @@ function houseScreen() {
   app.classList.remove("enter");
   S.povKey = "house" + (S.guest || "");
   document.body.classList.add("immersive", "house"); scrollTo(0, 0);
+  if (hasWebGL()) loadThree().then(() => h3Start(partner, guest)).catch(() => {});
   const hs = document.getElementById("houseSay"); if (hs && S.visitSaid) hs.focus({ preventScroll:true });
   const room = document.getElementById("room");
   room.querySelectorAll(".furn").forEach(el => {
@@ -5428,9 +5504,10 @@ function houseScreen() {
     });
   });
 }
+const FURN_BIG = { bed:30, sofa:30, rug:34, fireplace:26, bookshelf:20, armchair:20, table:18, lamp:11, plant:12, vase:9, painting:16, flag:14 };
 function furnAdd(k) {
   S.house = S.house || [];
-  const big = { bed:30, sofa:30, rug:34, fireplace:26, bookshelf:20, armchair:20, table:18, lamp:11, plant:12, vase:9, painting:16, flag:14 }[k] || 16;
+  const big = FURN_BIG[k] || 16;
   S.house.push({ k, x: 30 + Math.random() * 30, y: 30 + Math.random() * 20, w: big });
   SEL = S.house.length - 1; chime(); houseScreen();
 }
