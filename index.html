@@ -322,6 +322,49 @@
   .rainbow { background:linear-gradient(90deg,#ff5a5a,#ffa94d,#ffe066,#69db7c,#4dabf7,#b197fc); color:#fff; }
   .day { display:inline-block; background:#fff; border-radius:14px; padding:6px 14px; font-weight:700; }
   .story { font-size:21px; line-height:1.5; }
+  /* ===== See through your eyes (first-person view) ===== */
+  .scene.pov { --pad:24px; }
+  body:not(.sideview) .scene.pov { background:rgba(255,250,242,.94) !important; color:var(--ink) !important; }
+  body:not(.sideview) .scene.pov > .amb, body:not(.sideview) .scene.pov > .place-name, body:not(.sideview) .scene.pov > .pair, body:not(.sideview) .scene.pov > .burst, body:not(.sideview) .scene.pov > .giftfly, body:not(.sideview) .scene.pov > .side-only { display:none !important; }
+  body.sideview .pov-stage { display:none; }
+  .side-only { right:12px; top:12px; }
+  .pov-stage { position:relative; height:min(50vh,360px); margin:calc(-1 * var(--pad)) calc(-1 * var(--pad)) 8px; overflow:hidden; border-radius:26px 26px 0 0; }
+  .pov-stage::before { content:""; position:absolute; inset:0; z-index:5; pointer-events:none; background:radial-gradient(ellipse at 50% 55%, transparent 55%, rgba(10,5,20,.55) 100%); }
+  .pov-stage.blush::after { content:""; position:absolute; inset:0; z-index:6; pointer-events:none; background:radial-gradient(circle at 50% 60%, transparent 35%, rgba(255,110,170,.38)); animation:blushIn 1s ease-out both; }
+  @keyframes blushIn { from { opacity:0; } to { opacity:1; } }
+  .pov-face { position:absolute; left:50%; bottom:-7%; height:94%; z-index:3; transform:translateX(-50%); transform-origin:50% 100%; filter:drop-shadow(0 10px 16px rgba(0,0,0,.45)); animation:breathe 3.4s ease-in-out infinite; }
+  .pov-face.side { height:78%; bottom:-2%; }
+  .pov-face.m-happy { animation:hop .55s ease-out 2, breathe 3.4s 1.1s ease-in-out infinite; }
+  .pov-face.m-confused { animation:none; transform:translateX(-50%) rotate(-7deg); filter:drop-shadow(0 10px 16px rgba(0,0,0,.45)) saturate(.8); }
+  .pov-face.m-close, .pov-face.m-blush { height:104%; bottom:-14%; }
+  @keyframes breathe { 0%,100% { transform:translateX(-50%) scale(1); } 50% { transform:translateX(-50%) scale(1.025); } }
+  @keyframes hop { 0%,100% { transform:translateX(-50%) translateY(0); } 40% { transform:translateX(-50%) translateY(-7%); } }
+  .pov-other { position:absolute; bottom:24%; height:20%; z-index:1; filter:blur(.7px) brightness(.92); animation:strollR linear infinite; pointer-events:none; }
+  .pov-other.left { animation-name:strollL; transform:scaleX(-1); }
+  .pov-other.sit { animation:none; }
+  @keyframes strollR { from { left:-30%; } to { left:115%; } }
+  @keyframes strollL { from { left:115%; } to { left:-30%; } }
+  .pov-hearts { position:absolute; left:0; right:0; bottom:38%; z-index:7; display:flex; justify-content:space-between; padding:0 8%; pointer-events:none; }
+  .pov-hearts span { display:inline-block; width:22px; height:20px; margin:0 6px; background:#ff6fae; clip-path:path("M11 19 C-6 8 4 -3 11 5 C18 -3 28 8 11 19Z"); animation:floatUp 2s ease-out infinite; opacity:0; }
+  .pov-hearts span:nth-child(2) { animation-delay:.5s; position:absolute; left:74%; bottom:60px; } .pov-hearts span:nth-child(3) { animation-delay:1s; }
+  @keyframes floatUp { 0% { opacity:0; transform:translateY(20px) scale(.6); } 30% { opacity:1; } 100% { opacity:0; transform:translateY(-120px) scale(1.2); } }
+  .lids::before, .lids::after { content:""; position:absolute; left:-5%; right:-5%; height:52%; background:#140d1a; z-index:10; pointer-events:none; animation:lidTop 1.2s ease-in-out forwards; }
+  .lids::before { top:0; border-radius:0 0 50% 50% / 0 0 40% 40%; }
+  .lids::after { bottom:0; border-radius:50% 50% 0 0 / 40% 40% 0 0; animation-name:lidBot; }
+  @keyframes lidTop { 0% { transform:translateY(0); } 35% { transform:translateY(-55%); } 50% { transform:translateY(-35%); } 100% { transform:translateY(-105%); } }
+  @keyframes lidBot { 0% { transform:translateY(0); } 35% { transform:translateY(55%); } 50% { transform:translateY(35%); } 100% { transform:translateY(105%); } }
+  .pov-stage .night-tint { position:absolute; inset:0; z-index:4; pointer-events:none; background:linear-gradient(rgba(25,20,80,.5), rgba(40,20,70,.35)); }
+  .pov-stage .lights { position:absolute; left:0; right:0; top:4%; height:30px; z-index:6; pointer-events:none;
+    background:radial-gradient(circle, #fff27a 0 4px, transparent 5px) 0 0/34px 30px, radial-gradient(circle, #ff8fd0 0 4px, transparent 5px) 17px 8px/34px 30px; animation:twinkle 1.6s ease-in-out infinite alternate; }
+  .pov-stage .fort { position:absolute; left:-10%; right:-10%; bottom:-30%; height:70%; z-index:2; border-radius:50% 50% 0 0 / 60% 60% 0 0;
+    background:repeating-linear-gradient(90deg,#ff9fc8 0 26px,#ffd3e6 26px 52px); box-shadow:inset 0 -18px 0 #e57aa9; }
+  .pov-stage .fly { z-index:6; }
+  .pov-label { position:absolute; left:12px; top:12px; z-index:8; background:rgba(255,255,255,.88); color:var(--ink); border-radius:14px; padding:4px 12px; font-weight:700; font-size:15px; }
+  .pov-eye { position:absolute; right:12px; top:12px; z-index:8; font-size:14px; padding:6px 10px; border-radius:12px; background:rgba(255,255,255,.88); color:var(--ink); box-shadow:none; }
+  .act-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
+  .act-btn { position:relative; height:96px; border-radius:18px; padding:0; overflow:hidden; background-size:cover; background-position:center; box-shadow:0 4px 0 #c9a2b8; color:#fff; font-size:17px; display:flex; align-items:flex-end; justify-content:center; }
+  .act-btn span { width:100%; padding:6px 6px 8px; background:linear-gradient(transparent, rgba(0,0,0,.65)); text-shadow:0 1px 3px #000; }
+  .act-btn.fav::after { content:"Favorite!"; position:absolute; top:6px; right:6px; background:#ff6fae; color:#fff; font-size:12px; border-radius:10px; padding:2px 7px; }
   /* ===== Phones (most players) ===== */
   html, body { overflow-x:hidden; }
   button, .ph-contact, .furn, .emo-btn { -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
@@ -333,6 +376,8 @@
     h2 { font-size:23px; }
     .box { padding:14px; border-radius:22px; margin:10px 0; }
     .scene { padding:12px; min-height:210px; border-radius:22px; }
+    .scene.pov { --pad:12px; }
+    .pov-stage { height:min(46vh,330px); border-radius:22px 22px 0 0; }
     .scene .pair { font-size:78px; gap:12px; }
     .bubble { font-size:18px; }
     button { font-size:18px; padding:12px 18px; }
@@ -1004,6 +1049,7 @@ function mapScreen() {
             <div class="hearts">${heartBar(S.hearts[f.name])}</div>
           </div>
           <button onclick="placeScreen(${i})">Hang out</button>
+          <button class="soft" onclick="activityMenu(${i},'map')">Activity</button>
         </div>`).join("")}
     </div>
     ${ready.map(f => `<div class="center"><button class="rainbow" onclick="confessScreen('${f.name}')">💌 Ask ${f.name} to be your partner</button></div>`).join("")}
@@ -1040,16 +1086,47 @@ function ambient(place, n = 16) {
 function pair(a, b, mood = "walk") {
   return `<div class="pair ${mood}"><span class="w1"><span class="bob">${a}</span></span><span class="w2"><span class="bob two">${b}</span></span></div>`;
 }
+const FACE_ANIMALS = new Set(["fox","bunny","raccoon","bear","deer","wolf","squirrel","hedgehog","mouse"]);
+function faceImg(f, mood) {
+  const n = ART[f.emo] || "fox";
+  const m = mood === "walk" ? "" : "m-" + mood;
+  return FACE_ANIMALS.has(n)
+    ? `<img class="pov-face ${m}" src="art/${n}_face.png" alt="" onerror="this.onerror=null;this.src='art/${n}.png';this.classList.add('side')">`
+    : `<img class="pov-face side ${m}" src="art/${n}.png" alt="">`;
+}
+function othersAround(f, n = 2) {
+  const pool = [...friends().filter(x => x.name !== f.name && x.emo !== S.animal[0])].sort(() => Math.random() - .5).slice(0, n);
+  return pool.map((o, k) => { const a = ART[o.emo]; if (!a) return "";
+    const left = k % 2 === 1, sit = Math.random() < 0.3;
+    return `<img class="pov-other ${left ? "left" : ""} ${sit ? "sit" : ""}" src="art/${a}.png" alt="" style="${sit ? `left:${left ? 72 : 6}%;` : ""}animation-duration:${18 + Math.random() * 14}s;animation-delay:${-Math.random() * 20}s;bottom:${22 + Math.random() * 8}%;height:${16 + Math.random() * 6}%">`; }).join("");
+}
+function povStage(f, bgCss, label, mood = "walk", key = "", extra = "", indoors = false) {
+  const fresh = S.povKey !== key; S.povKey = key;
+  const loving = mood === "blush" || mood === "close" || (mood === "happy" && stageOf(f) >= 1);
+  return `<div class="pov-stage ${mood === "blush" ? "blush" : ""}" style="background:${bgCss}">
+        ${fresh ? `<div class="lids"></div>` : ""}
+        <div class="pov-label">${label}</div>
+        <button class="pov-eye" onclick="togglePov()">Side view</button>
+        ${indoors ? "" : othersAround(f)}
+        ${faceImg(f, mood)}
+        ${loving ? `<div class="pov-hearts"><span></span><span></span><span></span></div>` : ""}
+        ${extra}
+      </div>`;
+}
+function togglePov() { document.body.classList.toggle("sideview"); try { localStorage.setItem("gaosSide", document.body.classList.contains("sideview") ? "1" : ""); } catch (e) {} }
+try { if (localStorage.getItem("gaosSide")) document.body.classList.add("sideview"); } catch (e) {}
 function sceneTop(f, place, mood = "walk", giftEmo = "") {
   const p = PLACES[place];
   const dark = place === "stars" ? "color:#fff" : "";
-  return `<div class="scene" style="background:${p.bg};${dark}">
+  return `<div class="scene pov" style="background:${p.bg};${dark}">
+      ${povStage(f, p.bg, p.name, mood, f.name + place, giftEmo ? `<div class="giftfly">${itemPic(giftEmo, "itm big-itm")}</div>` : "")}
       ${ambient(place)}
       <div class="place-name" style="color:var(--ink)">${p.icon} ${p.name}</div>
       ${pair(S.animal[0], f.emo, mood)}
       ${mood === "happy" || mood === "close" || mood === "blush" ? `<div class="burst">💖</div>` : ""}
       ${mood === "confused" ? `<div class="burst">❓</div>` : ""}
-      ${giftEmo ? `<div class="giftfly">${itemPic(giftEmo, "itm big-itm")}</div>` : ""}`;
+      ${giftEmo ? `<div class="giftfly">${itemPic(giftEmo, "itm big-itm")}</div>` : ""}
+      <button class="pov-eye side-only" style="position:absolute" onclick="togglePov()">See through my eyes</button>`;
 }
 
 function addHearts(f, n) {
@@ -1080,6 +1157,7 @@ function hangout(i, place) {
         <input id="say" maxlength="140" autocomplete="off" placeholder="...or type what YOU want to say to ${f.name}" onkeydown="if(event.key==='Enter')typed(${i},'${place}')">
         <button onclick="typed(${i},'${place}')">Say it</button>
       </div>
+      <div class="center" style="margin-top:10px"><button class="rainbow" onclick="activityMenu(${i},'date')">Do something together</button></div>
     </div>
   `);
 }
@@ -1768,6 +1846,7 @@ function chatScreen(i, place, said, r, pts) {
       </div>
     </div>
     ${giftBox(i, place, f)}
+    <div class="center"><button class="rainbow" onclick="activityMenu(${i},'date')">Do something together</button></div>
   `);
   const box = document.getElementById("say"); if (box) box.focus();
 }
@@ -2242,6 +2321,130 @@ function furnHTML(it, k) {
   const inner = it.k === "flag" ? `<i class="flag" style="width:100%;height:66%"></i>` : `<img src="art/${it.k}.png" alt="" draggable="false">`;
   return `<div class="furn ${k === SEL ? "sel" : ""}" data-k="${k}" style="left:${it.x}%;top:${it.y}%;width:${it.w}%;z-index:${Math.round(it.y)}">${inner}</div>`;
 }
+// ===== Activities: things to do together, seen through your own eyes =====
+const ACT_BG = {
+  picnic:"url(art/picnic.png) center/cover, linear-gradient(#aee3ff,#c9f0a6)", stars:"url(art/stars.png) center/cover, linear-gradient(#1d2157,#5a3f8c)",
+  pond:"url(art/pond.png) center/cover, linear-gradient(#e8f6ff,#b3d9f2)", garden:"url(art/garden.png) center/cover, linear-gradient(#ffe0ef,#d3f4c0)",
+  kitchen:"url(art/kitchen.png) center/cover, linear-gradient(#ffe2b8,#d9a066)", lake:"url(art/lake.png) center/cover, linear-gradient(#9fdcff,#4fa65e)",
+  campfire:"url(art/campfire.png) center/cover, linear-gradient(#3a2250,#ff8a3d)", boat:"url(art/boat.png) center/cover, linear-gradient(#ffc6a0,#5a8fb8)",
+  lanterns:"url(art/lanterns.png) center/cover, linear-gradient(#1d1640,#ffb347)", berries:"url(art/berries.png) center/cover, linear-gradient(#c9f0a6,#7a3c6e)",
+  treehouse:"url(art/treehouse.png) center/cover, linear-gradient(#bfe6a8,#8a5a3a)", library:"url(art/library.png) center/cover, linear-gradient(#f3d9b1,#7a4b2a)",
+  rain:"url(art/rain.png) center/cover, linear-gradient(#cfd8e0,#7d8f9e)", movienight:"url(art/movienight.png) center/cover, linear-gradient(#2a1f3d,#6b4a8a)",
+  room:"url(art/room.png) center/cover, linear-gradient(#e9c79a,#8a5a3a)"
+};
+// [key, name, background, favorite of these types, intro, [[question, [[choice, reaction], ...]], ...], ending]
+const ACTS = [
+  ["picnic", "Picnic", "picnic", ["baker"], "You spread a blanket in the Picnic Meadow. {N} unpacks a big basket.",
+    [["What do you eat first?", [["Strawberries", "Mmm, so sweet! Here, you have the biggest one."], ["Honey sandwiches", "Sticky paws! Totally worth it."], ["Cookies first", "Dessert first? You're a genius."]]],
+     ["What next?", [["Watch the clouds", "That one looks like a bunny! ...Okay, maybe a potato."], ["Play tag", "*runs off giggling* Bet you can't catch me!"], ["Make daisy chains", "*puts a daisy chain on your head* Perfect."]]]],
+    "The sun goes down over the meadow. Best picnic ever."],
+  ["stargaze", "Stargazing", "stars", ["shy", "adventure"], "You lie on the soft grass on Starry Hill. The sky is full of stars.",
+    [["What do you do?", [["Find star pictures", "That's the Great Bear! And that one... the Little Fox. I just made that up."], ["Wish on a shooting star", "Quick, wish! ...What did you wish for? No, don't tell me!"], ["Count the stars", "...four hundred and six, four hundred and... I lost count. Again?"]]],
+     ["Then...", [["Share a blanket", "*scoots under the blanket with you* Warmer now."], ["Tell a secret", "Okay, my secret: I'm a little scared of the dark. But not right now."], ["Name a star", "Let's name that bright one after you. It's only fair."]]]],
+    "You walk home under the stars, still pointing at them."],
+  ["skate", "Ice skating", "pond", ["adventure", "funny"], "You lace up your skates at the Frozen Pond. The ice is shiny and smooth.",
+    [["How do you skate?", [["Hold paws", "*holds your paw* Don't let go, okay? Whoa!"], ["Race!", "Last one to the big rock is a soggy acorn!"], ["Try a spin", "*tries a spin, lands on tail* I MEANT to do that."]]],
+     ["After skating...", [["Hot cocoa", "Cocoa with tiny marshmallows. The best part of skating."], ["Snow angels", "*flops in the snow* Look, I'm an angel!"], ["Build a snow fort", "Our fort. Only snowballs allowed. And us."]]]],
+    "Your cheeks are pink from the cold, and you can't stop smiling."],
+  ["flowers", "Flower crowns", "garden", ["shy"], "You wander through the Flower Garden together. It smells like honey and rain.",
+    [["What do you do?", [["Make flower crowns", "*places a daisy crown on your head* You look like royalty."], ["Smell every flower", "This one smells like honey! This one smells like... feet? Haha."], ["Plant seeds", "*pats the soil* Grow big, little seeds!"]]],
+     ["Then...", [["Chase butterflies", "A blue one! It landed on your nose!"], ["Pick a bouquet", "For me? *sniffs it* I'm keeping these forever."], ["Sit by the fountain", "It's so peaceful here."]]]],
+    "You both go home with flowers tucked behind your ears."],
+  ["bake", "Baking", "kitchen", ["baker"], "{N} ties on a little apron. \"Time to bake!\"",
+    [["What do you bake?", [["Honey cake", "*licks the spoon* Quality control."], ["Berry pie", "A lattice top! Look how fancy we are."], ["Animal cookies", "This cookie is you! This one's me. They're holding paws."]]],
+     ["While it bakes...", [["Flour fight!", "*throws a pinch of flour* Oops! ...Okay, it's ON."], ["Sprinkles everywhere", "MORE sprinkles. There's no such thing as too many."], ["Taste test", "*takes a bite* Okay, we're real bakers now."]]]],
+    "The whole cottage smells like warm cake. You saved a slice for later."],
+  ["swim", "Swimming", "lake", ["adventure"], "The lake sparkles in the sun. {N} dips a paw in. \"Eep, it's cold!\"",
+    [["How do you jump in?", [["Cannonball!", "SPLASH! You got me soaked, haha!"], ["Float on your back", "Look at the clouds... this is the life."], ["Splash fight", "*splashes you* Revenge!"]]],
+     ["Then...", [["Dive for pebbles", "I found a heart-shaped one! It's for you."], ["Race to the dock", "*panting* You win... this time."], ["Dry off in the sun", "Warm sunshine. Perfect."]]]],
+    "You dry off on the dock, toes dangling in the water."],
+  ["campfire", "Campfire", "campfire", ["funny", "baker"], "The campfire crackles. Sparks float up into the purple sky.",
+    [["What do you do?", [["Roast marshmallows", "Mine's on fire! *blows* ...Crispy is a flavor, right?"], ["Not-too-spooky stories", "...and the ghost just wanted a hug. The end!"], ["Sing songs", "*sings loudly and very off-key* ...Your turn!"]]],
+     ["Then...", [["Make s'mores", "Chocolate everywhere. Worth it."], ["Watch the sparks", "They look like tiny stars flying up."], ["Share a blanket", "*leans on your shoulder* Cozy."]]]],
+    "The fire glows low. You both smell like smoke and marshmallows."],
+  ["boat", "Boat ride", "boat", ["adventure", "shy"], "You row a little boat across the misty lake. {N} sits across from you.",
+    [["What do you do?", [["Row together", "Left paw, right paw... we're going in circles! Haha."], ["Feed the ducks", "Quack! The ducks love us."], ["Look for frogs", "Ribbit! There's one on that lily pad!"]]],
+     ["Then...", [["Trail your paw in the water", "Brrr! Cold, but nice."], ["Watch the sunset", "The whole lake is pink and gold. Like a painting."], ["Sing a rowing song", "Row, row, row your boat... hehe, your turn!"]]]],
+    "You float back to shore as the sun sets."],
+  ["dance", "Lantern dance", "lanterns", ["adventure", "funny"], "Hundreds of lanterns glow in the meadow. Music starts to play.",
+    [["How do you dance?", [["Slow dance", "*takes your paw* I'm not very good at this... but I don't care."], ["Silly dance", "*does the worm* Beat THAT."], ["Twirl!", "*twirls you* Wheee!"]]],
+     ["Then...", [["Let a lantern float up", "Make a wish as it floats away..."], ["Catch fireflies", "*opens paws* Look, it's glowing!"], ["Rest on the grass", "My feet hurt from dancing. Best night ever."]]]],
+    "The lanterns drift up into the sky like little moons."],
+  ["berries", "Berry picking", "berries", ["funny", "baker"], "You find a bramble patch full of ripe berries. {N} grabs a basket.",
+    [["What do you pick?", [["Blackberries", "Purple paws! Haha, look at us."], ["Eat more than you pick", "One for the basket, two for me..."], ["Wild strawberries", "Tiny strawberries! They're so sweet."]]],
+     ["Then...", [["Make berry juice", "*sips* Mmm! Berry good. Get it?"], ["Share the biggest berry", "You saved me the biggest one? Aww."], ["Berry mustaches", "*laughs* You've got a juice mustache!"]]]],
+    "Your basket is full, and so are your tummies."],
+  ["treehouse", "Treehouse", "treehouse", ["adventure", "funny"], "You climb the rope ladder into a treehouse high up in a giant oak.",
+    [["What do you do?", [["Start a secret club", "Rule one: only us. Rule two: snacks."], ["Spy with binoculars", "I see... a squirrel... eating a nut. Thrilling!"], ["Make a sign", "'No grown-ups (except for snack delivery).'"]]],
+     ["Then...", [["Draw pictures", "*shows you a drawing* It's us! That's your tail."], ["Read comics", "This part is SO funny!"], ["Watch the leaves", "The wind makes the whole tree sway. Like a boat."]]]],
+    "You climb down when the sky turns orange, already planning your next club meeting."],
+  ["library", "Library", "library", ["shy"], "You tiptoe into the library inside a giant hollow tree. It's so quiet.",
+    [["What do you read?", [["A love story", "*whispers* This part is so cute..."], ["A mystery", "The butler did it! ...There's no butler? Hmm."], ["A joke book", "*trying not to laugh* Shhh! Hehe."]]],
+     ["Then...", [["Build a book tower", "Taller! Taller! *it falls* Oops."], ["Read aloud with voices", "*does a dragon voice* ROAR, said the dragon!"], ["Get cozy and read", "*yawns* Five more pages... zzz."]]]],
+    "You each borrow a book to read at home."],
+  ["rain", "Puddle jumping", "rain", ["funny"], "It's raining! The forest path is full of big shiny puddles.",
+    [["What do you do?", [["Jump in puddles", "SPLASH! The biggest puddle wins!"], ["Share an umbrella", "*squeezes under the umbrella* There's room for two."], ["Catch raindrops on your tongue", "Ahh! It tastes like... sky?"]]],
+     ["Then...", [["Look for rainbows", "LOOK! A rainbow! Our favorite."], ["Race leaf boats", "Mine's winning! No, yours! GO, LEAF!"], ["Run home for cocoa", "Warm towels and cocoa. The best part of rain."]]]],
+    "You're soaked from head to tail, and it was the best."],
+  ["movie", "Movie night", "movienight", ["funny", "shy"], "You build a nest of blankets and pillows. {N} brings the popcorn.",
+    [["What do you watch?", [["A funny movie", "*laughing so hard* I can't breathe! Haha!"], ["An animal adventure", "The brave little fox... just like you!"], ["A sweet love story", "*sniffles* They found each other. I'm not crying, you're crying."]]],
+     ["During the movie...", [["Popcorn fight", "*throws popcorn* You started it! I'm finishing it!"], ["Blanket burrito", "*wraps up in a blanket* I'm a burrito now."], ["Talk about the best parts", "My favorite part? Watching it with you."]]]],
+    "The credits roll. Neither of you wants to get up."]
+];
+const ACT_FRIENDLY = ["Haha, this is so fun!", "Okay, you're really fun to hang out with.", "This is the best! I'm so glad we came.", "Hehe, I love doing this!"];
+function activityMenu(i, from) {
+  const f = friends()[i];
+  S.act = { i, from };
+  const favs = ACTS.filter(a => a[3].includes(f.type)).map(a => a[0]);
+  show(`<h1 style="font-size:36px">What should we do?</h1>
+    <p class="sub">Pick something to do with ${f.name}! (You'll see it through your own eyes.)</p>
+    <div class="box"><div class="act-grid">
+      ${ACTS.map(a => `<button class="act-btn ${favs.includes(a[0]) ? "fav" : ""}" style="background:${ACT_BG[a[2]]}" onclick="activity('${a[0]}', 0)"><span>${a[1]}</span></button>`).join("")}
+      <button class="act-btn" style="background:${ACT_BG.room}" onclick="actSleepover()"><span>Sleepover</span></button>
+    </div></div>
+    <div class="center"><button class="soft" onclick="actBack()">Back</button></div>`);
+  app.classList.remove("enter");
+}
+function actSleepover() { const f = friends()[S.act.i]; S.guest = f.name; S.visitSaid = ""; sleepover(); }
+function actBack() {
+  const a = S.act || {}; const f = friends()[a.i];
+  if (a.from === "house") return houseScreen();
+  if (a.from === "date") { S.lastHang = f.name; return endDay(); }
+  return mapScreen();
+}
+function activity(key, step, pick = -1) {
+  const f = friends()[S.act.i], A = ACTS.find(a => a[0] === key), st = stageOf(f);
+  const N = x => x.replaceAll("{N}", f.name);
+  let mood = "walk", story = "", say = "", qs = "";
+  if (step === 0) { story = N(A[4]); mood = "happy"; }
+  else {
+    const [, choices] = A[5][step - 1];
+    let r = choices[pick][1];
+    if (st === 0 && (LOVEY_STRONG.test(r) || LOVEY_SOFT.test(r) || /shoulder|holds your paw|takes your paw|blanket with you|umbrella/.test(r))) r = pickOne(ACT_FRIENDLY);
+    say = N(r); mood = /\*.*(laugh|giggl)|Haha|haha|LOL|Wheee|SPLASH|ON\.|worm/.test(r) ? "happy" : st >= 1 && /paw|blanket|shoulder|forever|for you|with you/.test(r) ? "blush" : "happy";
+  }
+  const last = step >= A[5].length;
+  if (!last) { const [q, choices] = A[5][step]; qs = `<h2>${q}</h2><div class="center">${choices.map((c, k) => `<button class="soft" onclick="activity('${key}', ${step + 1}, ${k})">${c[0]}</button>`).join("")}</div>`; }
+  let end = "";
+  if (last) {
+    S.actDay = S.actDay || {};
+    const id = f.name + key, fav = A[3].includes(f.type);
+    let pts = 0;
+    if (S.actDay[id] !== S.day) { pts = fav ? 2 : 1; S.actDay[id] = S.day; addHearts(f, pts); }
+    const bye = st === 0 ? pickOne(["That was really fun! Thanks for asking me.", "Okay, that was awesome. Let's do it again sometime!"]) : st === 1 ? pickOne(["That was SO fun. I'm really glad it was with you.", "*a bit shy* Can we do that again soon?"]) : pickOne(["That was perfect. Everything's better with you.", "Best. Day. Ever. Same time tomorrow?"]);
+    end = `<p class="story">${N(A[6])}</p><div class="bubble"><b>${f.name}:</b> "${bye}" ${pts ? `<b>+${pts} ❤️</b>` : ""}</div>
+      <div class="center"><button class="rainbow" onclick="activityMenu(${S.act.i}, '${S.act.from}')">Do something else</button>
+      <button class="soft" onclick="actBack()">${S.act.from === "date" ? "Finish the date" : "Done"}</button></div>`;
+    if (pts) { chime(); floatHearts(pts); }
+  }
+  show(`<div class="scene pov">${povStage(f, ACT_BG[A[2]], A[1], mood, "act" + key)}
+      ${story ? `<p class="story" style="text-align:center">${story}</p>` : ""}
+      ${say ? `<div class="bubble"><b>${f.name}:</b> "${say}"</div>` : ""}
+    </div>
+    <div class="box center">${qs}${end}</div>`);
+  app.classList.remove("enter");
+}
+
 // ===== Visits: invite an animal over to your house, give kisses, have sleepovers (all in the game) =====
 function visitBox(guest, partner) {
   if (!guest) {
@@ -2250,7 +2453,8 @@ function visitBox(guest, partner) {
       ${list.map(f => `<button class="soft guest-pick" onclick="inviteOver('${f.name}')">${face(f)}<span>${f.name}</span></button>`).join("")}</div>`;
   }
   const st = stageOf(guest), said = S.visitSaid || "", reply = S.visitReply || "";
-  return `<div class="box">
+  return `<div class="scene pov" style="padding:var(--pad)">${povStage(guest, ACT_BG.room, "Your house", S.visitMood || "happy", "visit" + guest.name, "", true)}</div>
+    <div class="box">
       ${said ? `<div class="bubble you"><b>${esc(S.name)}:</b> "${esc(said)}"</div>` : ""}
       <div class="bubble"><b>${guest.name}:</b> "${reply}"</div>
       <div class="type-row"><input id="houseSay" maxlength="140" autocomplete="off" placeholder="Talk to ${guest.name}..." onkeydown="if(event.key==='Enter')houseTalk()"><button onclick="houseTalk()">Say it</button></div>
@@ -2258,6 +2462,7 @@ function visitBox(guest, partner) {
         <button class="soft" onclick="visitDo('hug')">Give a hug</button>
         <button class="soft" onclick="visitDo('kiss')">Give a kiss</button>
         <button class="soft" onclick="visitDo('snack')">Share a snack</button>
+        <button class="rainbow" onclick="activityMenu(friends().findIndex(x => x.name === S.guest),'house')">Do an activity</button>
         <button class="rainbow" onclick="sleepover()">Have a sleepover</button>
         <button class="soft" onclick="visitDo('bye')">Say goodbye</button>
       </div>
@@ -2272,7 +2477,7 @@ const ARRIVE = {
 function inviteOver(name) {
   const f = friends().find(x => x.name === name);
   S.guest = name; S.visitSaid = "";
-  S.visitReply = pickOne(ARRIVE[stageOf(f)]);
+  S.visitReply = pickOne(ARRIVE[stageOf(f)]); S.visitMood = "happy";
   maybeCaught(name, 0.25, "your house");
   chime(); houseScreen();
   setTimeout(() => floatHearts(1), 300);
@@ -2282,7 +2487,7 @@ function houseTalk() {
   const said = (document.getElementById("houseSay").value || "").trim(); if (!said) return;
   const r = chatReply(f, said);
   addHearts(f, Math.min(r.pts, 1));
-  S.visitSaid = said; S.visitReply = r.say;
+  S.visitSaid = said; S.visitReply = r.say; S.visitMood = r.mood;
   if (r.pts > 0) { chime(); floatHearts(1); } else chime(false);
   houseScreen();
   const box = document.getElementById("houseSay"); if (box) box.focus();
@@ -2311,6 +2516,7 @@ function visitDo(what) {
     const b = document.createElement("p"); b.className = "sub center"; b.innerHTML = `<b>${f.name}:</b> "${say}"`; document.getElementById("room").after(b);
     return;
   }
+  S.visitMood = what === "kiss" ? (st === 0 ? "confused" : "blush") : what === "hug" ? (st === 0 ? "happy" : "close") : "happy";
   addHearts(f, pts); S.visitReply = say + (pts ? `  <b>+${pts} ❤️</b>` : "");
   if (pts) { chime(); floatHearts(pts); }
   houseScreen();
@@ -2332,8 +2538,8 @@ function sleepover(step = 0, done = []) {
   if (st === 0) { S.visitSaid = ""; S.visitReply = pickOne(["A sleepover? Haha, maybe once we know each other better!", "Ooh, fun! But let's hang out a few more times first, okay?"]); return houseScreen(); }
   if (S.sleepDay[f.name] === S.day && step === 0) { S.visitSaid = ""; S.visitReply = "We already had a sleepover today! I'm still sleepy, haha. Another day?"; return houseScreen(); }
   setBg("room");
-  const room = `<div class="room night" style="background:url(art/room.png) center/cover">${fireflies(10)}<div class="lights"></div><div class="fort"></div>
-      <div class="me-in-room">${S.animal[0]}</div><div class="guest-in-room" style="animation:none">${f.emo}</div></div>`;
+  const nightMood = step === 0 ? "happy" : step === 3 ? "close" : "happy";
+  const room = `<div class="scene pov" style="padding:var(--pad)">${povStage(f, ACT_BG.room, step >= 3 ? "Lights out" : "Sleepover", nightMood, "sleep" + f.name + step, `<div class="fort"></div><div class="night-tint"></div><div class="lights"></div>${fireflies(10)}`, true)}</div>`;
   const N = s => s.replaceAll("{N}", f.name);
   if (step === 0) {
     show(`<h1 style="font-size:38px">Sleepover!</h1>${room}
@@ -2355,8 +2561,7 @@ function sleepover(step = 0, done = []) {
   } else {
     if (S.sleepDay[f.name] !== S.day) { addHearts(f, 2); S.sleepDay[f.name] = S.day; }
     const kissed = done[0] === "kiss";
-    show(`<h1 style="font-size:38px">Good morning!</h1><div class="room" style="background:url(art/room.png) center/cover"><div class="fort"></div>
-      <div class="me-in-room">${S.animal[0]}</div><div class="guest-in-room" style="animation:none">${f.emo}</div></div>
+    show(`<h1 style="font-size:38px">Good morning!</h1><div class="scene pov" style="padding:var(--pad)">${povStage(f, ACT_BG.room, "Good morning", kissed ? "blush" : "happy", "morning" + f.name, `<div class="fort"></div>`, true)}</div>
       <div class="box center">${kissed ? `<p class="story">*${f.name} goes all pink and smiles in the dark* "...Goodnight." You both fall asleep giggling.</p>` : ""}
       <p class="story">The sun comes through the window. ${f.name} has already made pancakes. Slightly burnt ones. They're perfect.</p>
       <div class="bubble"><b>${f.name}:</b> "${pickOne(["Morning, sleepyhead! Let's do this again soon, okay?", "That was SO fun. Same time next week?", "Best sleepover ever. Thank you for having me!"])}" <b>+2 ❤️</b></div>
