@@ -6831,6 +6831,157 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 .hosp-bar{height:16px;border-radius:10px;background:#ffffff88;margin:8px 30px;overflow:hidden}.hosp-bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd23b,#ff5a8a);transition:width .3s}
 </style>`);
 
+// ===== Jobs in 3D: you stand behind the counter, real customers walk in and order something exact, you put the order in =====
+const JOB_ORD = {
+  cafe: { slots: [["Drink", ["hot cocoa", "acorn latte", "berry smoothie", "mint tea"]], ["Size", ["small", "medium", "large"]], ["Extra", ["whipped cream", "marshmallows", "extra honey", "nothing extra"]]],
+    say: o => `a ${o[1].toUpperCase()} ${o[0]} with ${o[2]}` },
+  bakery: { slots: [["Treat", ["honey cake", "berry muffin", "cinnamon bun", "cookie"]], ["How many", ["one", "two", "three"]], ["Extra", ["sprinkles", "icing", "warmed up", "plain"]]],
+    say: o => `${o[1].toUpperCase()} ${o[0]}${o[1] === "one" ? "" : "s"}, ${o[2] === "warmed up" || o[2] === "plain" ? o[2].toUpperCase() : "with " + o[2].toUpperCase()}` },
+  icecream: { slots: [["Flavor", ["strawberry", "chocolate", "mint", "vanilla"]], ["Scoops", ["one scoop", "two scoops", "three scoops"]], ["In a", ["cone", "cup"]], ["Topping", ["sprinkles", "a cherry", "chocolate sauce", "no topping"]]],
+    say: o => `${o[1].toUpperCase()} of ${o[0].toUpperCase()} in a ${o[2].toUpperCase()}, with ${o[3]}` },
+  flowers: { slots: [["Flowers", ["red roses", "sunflowers", "daisies", "tulips"]], ["How many", ["three", "six", "twelve"]], ["Wrap", ["pink paper", "a ribbon", "a vase"]]],
+    say: o => `${o[1].toUpperCase()} ${o[0]} with ${o[2]}` },
+  cinema: { slots: [["Snack", ["popcorn", "pretzel", "hot dog", "slushie"]], ["Size", ["small", "medium", "large"]], ["Drink", ["lemonade", "cola", "no drink"]]],
+    say: o => `a ${o[1].toUpperCase()} ${o[0]} and ${o[2] === "no drink" ? "NO drink" : "a " + o[2]}` },
+  arcade: { slots: [["Prize", ["giant teddy", "bouncy ball", "sticker pack", "toy robot"]], ["Color", ["pink", "blue", "rainbow"]], ["Bag", ["gift wrapped", "in a bag", "no bag"]]],
+    say: o => `the ${o[1].toUpperCase()} ${o[0]}, ${o[2]}` }
+};
+let J3 = null;
+function job3D() {
+  const J = JOBS[S.myJob], O = JOB_ORD[S.myJob]; if (!J || !O) return;
+  SHIFT = { n: 0, good: 0, tips: 0 };
+  show(`<div id="j3"><canvas id="j3c"></canvas><div id="j3top"></div><div id="j3say"></div><div id="j3pad"></div><button class="soft j3x" onclick="job3DEnd()">Leave work</button></div>`);
+  document.body.classList.add("immersive", "j3mode");
+  loadThree().then(job3DStart).catch(() => { document.body.classList.remove("j3mode"); workShiftOld(); });
+}
+function job3DStart() {
+  const cv = document.getElementById("j3c"); if (!cv || !window.THREE) return;
+  if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+  const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true }); R.setPixelRatio(Math.min(devicePixelRatio || 1, 1.6)); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.shadowMap.enabled = true;
+  const [wallC, trimC] = W3_COL[S.myJob] || [0xe8c48f, 0x2f9a5b], sc = new THREE.Scene(); sc.background = new THREE.Color(wallC);
+  sc.add(new THREE.HemisphereLight(0xfff6e8, 0x8a6a4a, .75));
+  const key = new THREE.DirectionalLight(0xfff0d8, 1.1); key.position.set(2, 6, 3); key.castShadow = true; sc.add(key);
+  [-2, 2].forEach(x => { const l = new THREE.PointLight(0xffd8a0, .7, 9); l.position.set(x, 3.1, -3); sc.add(l);
+    const shade = new THREE.Mesh(new THREE.ConeGeometry(.35, .3, 16, 1, true), new THREE.MeshStandardMaterial({ color: trimC, side: THREE.DoubleSide })); shade.position.set(x, 3.2, -3); sc.add(shade);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(.1, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff2c0 })); bulb.position.set(x, 3.08, -3); sc.add(bulb); });
+  // floor: wooden planks
+  const pc = document.createElement("canvas"); pc.width = pc.height = 256; const pg = pc.getContext("2d");
+  for (let i = 0; i < 8; i++) { const v = 150 + Math.random() * 40; pg.fillStyle = `rgb(${v + 40},${v + 10},${v - 30})`; pg.fillRect(0, i * 32, 256, 32); pg.fillStyle = "rgba(0,0,0,.25)"; pg.fillRect(0, i * 32 + 30, 256, 2); pg.fillRect((i * 97) % 256, i * 32, 2, 32); }
+  const ptex = new THREE.CanvasTexture(pc); ptex.wrapS = ptex.wrapT = THREE.RepeatWrapping; ptex.repeat.set(3, 4); ptex.encoding = THREE.sRGBEncoding;
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(9, 11).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: ptex, roughness: .7 })); floor.position.z = -3.5; floor.receiveShadow = true; sc.add(floor);
+  const wallM = new THREE.MeshStandardMaterial({ color: wallC, roughness: .95 });
+  const front = new THREE.Mesh(new THREE.PlaneGeometry(9, 4), wallM); front.position.set(0, 2, -8.5); sc.add(front);
+  [-1, 1].forEach(s => { const w = new THREE.Mesh(new THREE.PlaneGeometry(11, 4), wallM); w.rotation.y = -s * Math.PI / 2; w.position.set(s * 4.5, 2, -3.5); sc.add(w); });
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(9, 11).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xfff8ee })); ceil.position.set(0, 3.6, -3.5); sc.add(ceil);
+  // the shop door and windows you can see outside through
+  const door = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.3, .1), w3Mat(0x7a4a2a)); door.position.set(-2.6, 1.15, -8.45); sc.add(door);
+  const dwin = new THREE.Mesh(new THREE.PlaneGeometry(.8, .9), new THREE.MeshBasicMaterial({ color: 0xbfe6ff })); dwin.position.set(-2.6, 1.6, -8.39); sc.add(dwin);
+  [0, 2.4].forEach(x => { const w = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.3), new THREE.MeshBasicMaterial({ color: 0xbfe6ff })); w.position.set(x, 1.9, -8.44); sc.add(w);
+    const fr = new THREE.Mesh(new THREE.BoxGeometry(1.95, 1.45, .06), w3Mat(0xffffff)); fr.position.set(x, 1.9, -8.48); sc.add(fr); });
+  // tables and stools for depth
+  [[-2.4, -5], [2.4, -5.6], [2.6, -2.8]].forEach(([x, z]) => { const top = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, .06, 20), w3Mat(0xf4ead8)); top.position.set(x, .75, z); top.castShadow = true;
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(.06, .1, .75, 10), w3Mat(0x4a3a2a)); leg.position.set(x, .37, z); sc.add(top, leg);
+    [-1, 1].forEach(s => { const st = new THREE.Mesh(new THREE.CylinderGeometry(.25, .25, .08, 16), w3Mat(trimC)); st.position.set(x + s * .85, .45, z); sc.add(st); const sl = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .45, 8), w3Mat(0x4a3a2a)); sl.position.set(x + s * .85, .22, z); sc.add(sl); }); });
+  // your counter, right in front of you
+  const counter = new THREE.Mesh(new THREE.BoxGeometry(5.6, .7, .8), w3Mat(0x8a5a36)); counter.position.set(0, .35, .45); counter.castShadow = counter.receiveShadow = true;
+  const ctop = new THREE.Mesh(new THREE.BoxGeometry(5.8, .07, .95), w3Mat(0xf2ede4, { roughness: .35 })); ctop.position.set(0, .73, .45); ctop.receiveShadow = true;
+  const till = new THREE.Group(); const tb = new THREE.Mesh(new THREE.BoxGeometry(.6, .3, .45), w3Mat(0x3a3a44)); tb.position.y = .15; const ts = new THREE.Mesh(new THREE.BoxGeometry(.5, .3, .04), new THREE.MeshBasicMaterial({ color: 0x6fe0a0 })); ts.position.set(0, .45, -.05); ts.rotation.x = -.3; till.add(tb, ts); till.position.set(1.7, .77, .55); till.rotation.y = -.4;
+  const jar = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .25, 14), new THREE.MeshStandardMaterial({ color: 0xcfefff, transparent: true, opacity: .6 })); jar.position.set(-1.8, .9, .5);
+  sc.add(counter, ctop, till, jar);
+  const cam = new THREE.PerspectiveCamera(60, 1, .05, 40); cam.position.set(0, 1.4, 1.45); cam.lookAt(0, .75, -2.5);
+  const resize = () => { const w = cv.clientWidth, h = cv.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.fov = w < h ? 66 : 50; if (w < h) cam.setViewOffset(w, h, 0, h * .2, w, h); else cam.clearViewOffset(); cam.updateProjectionMatrix(); }; resize(); addEventListener("resize", resize);
+  J3 = { R, sc, cam, resize, last: performance.now(), t: 0, cust: null, served: null, raf: 0 };
+  const loop = () => { if (!J3) return; J3.raf = requestAnimationFrame(loop); job3DTick(); R.render(sc, cam); };
+  loop(); job3DNext();
+}
+function job3DNext() {
+  if (!J3) return;
+  if (SHIFT.n >= 5) return job3DDone();
+  const O = JOB_ORD[S.myJob], custs = friends().filter(f => jobOf(f) !== S.myJob), f = pickOne(custs.length ? custs : friends());
+  const kind = ART[f.emo], ch = w3Animal(kind, W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], XMAS()); ch.g.scale.setScalar(w3Size(kind) / 2);
+  ch.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); ch.g.position.set(-2.6, 0, -7.8); J3.sc.add(ch.g);
+  const want = O.slots.map(([, opts]) => pickOne(opts));
+  J3.cust = { f, ch, x: -2.6, z: -7.8, tx: 0, tz: -1.5, state: "in", want, pick: [] };
+  if (J3.served) { J3.sc.remove(J3.served); J3.served = null; }
+  document.getElementById("j3top").innerHTML = `<b>${JOBS[S.myJob].title}</b> · Customer ${SHIFT.n + 1} of 5 · ⭐ ${SHIFT.good}`;
+  document.getElementById("j3say").style.display = "none"; document.getElementById("j3pad").innerHTML = `<p class="j3wait">Here comes a customer...</p>`;
+}
+function job3DTick() {
+  const now = performance.now(), dt = Math.min(.1, (now - J3.last) / 1000); J3.last = now; J3.t += dt;
+  const c = J3.cust; if (!c) return;
+  const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
+  if ((c.state === "in" || c.state === "out") && d > .05) { const sp = Math.min(d, 2.6 * dt); c.x += dx / d * sp; c.z += dz / d * sp; c.ch.heading = w3Turn(c.ch.heading, Math.atan2(dx, dz), dt * 8); w3Anim(c.ch, dt, 2.6, false, J3.t); }
+  else { if (c.state === "in") { c.state = "order"; job3DOrder(); } else if (c.state === "out") { J3.sc.remove(c.ch.g); J3.cust = null; return job3DNext(); }
+    c.ch.heading = w3Turn(c.ch.heading, 0, dt * 6); w3Anim(c.ch, dt, 0, false, J3.t); }
+  c.ch.g.position.set(c.x, 0, c.z); c.ch.g.rotation.y = c.ch.heading;
+}
+function job3DOrder() {
+  const c = J3.cust, O = JOB_ORD[S.myJob], order = O.say(c.want);
+  const line = pickOne([`Hi! Can I please get ${order}?`, `Okay, listen carefully. I want ${order}. Got it?`, `Ummm... I'll have ${order}! Yes. That's it.`, `${order}, please! And don't mess it up. 💅`]);
+  const say = document.getElementById("j3say"); say.style.display = "block"; say.innerHTML = `<b>${c.f.name}:</b> "${voiceLine(c.f, line)}"`;
+  try { chime(); } catch (e) {}
+  job3DPad();
+}
+function job3DPad() {
+  const c = J3.cust, O = JOB_ORD[S.myJob];
+  document.getElementById("j3pad").innerHTML = O.slots.map(([lab, opts], r) => `<div class="j3row"><b>${lab}</b>${opts.map((o, i) => `<button class="soft ${c.pick[r] === o ? "on" : ""}" onclick="job3DPick(${r},${i})">${o}</button>`).join("")}</div>`).join("")
+    + `<button class="rainbow j3serve" ${O.slots.every((_, r) => c.pick[r]) ? "" : "disabled"} onclick="job3DServe()">Put the order in ✅</button>`;
+}
+function job3DPick(r, i) { const c = J3 && J3.cust; if (!c || c.state !== "order") return; c.pick[r] = JOB_ORD[S.myJob].slots[r][1][i]; job3DPad(); }
+function job3DServe() {
+  const c = J3 && J3.cust; if (!c || c.state !== "order") return;
+  const O = JOB_ORD[S.myJob], wrong = O.slots.map(([lab], r) => c.pick[r] !== c.want[r] ? r : -1).filter(r => r >= 0);
+  J3.served = job3DItem(S.myJob, c.pick); J3.sc.add(J3.served);
+  let line;
+  if (!wrong.length) { SHIFT.good++; const tip = 1 + Math.floor(Math.random() * 3); SHIFT.tips += tip; floatHearts(2, "⭐");
+    line = `"${voiceLine(c.f, pickOne(["PERFECT! Exactly what I wanted! 😊", "Yesss! You got it EXACTLY right!", "You're the BEST worker here. Don't tell your boss. 💅", "Ooh, perfect. Here's a tip!"]))}" <small>(+${tip} acorn tip)</small>`; }
+  else { const r = wrong[0]; line = `"${voiceLine(c.f, pickOne([`Um... I said ${c.want[r].toUpperCase()}, not ${c.pick[r]}. 🙄`, `That's NOT what I ordered! I wanted ${c.want[r].toUpperCase()}! 😤`, `${c.pick[r]}?? Do I LOOK like I want ${c.pick[r]}? I said ${c.want[r]}! 💅`]))}"`; }
+  document.getElementById("j3say").innerHTML = `<b>${c.f.name}:</b> ${line}`; document.getElementById("j3pad").innerHTML = "";
+  SHIFT.n++; c.state = "leaving";
+  setTimeout(() => { if (!J3 || J3.cust !== c) return; c.state = "out"; c.tx = -2.6; c.tz = -7.8; if (J3.served) { J3.sc.remove(J3.served); J3.served = null; } }, 2300);
+}
+// what you hand over sits on the counter
+function job3DItem(job, pick) {
+  const g = new THREE.Group(), M = c => w3Mat(c), add = (geo, col, x, y, z) => { const m = new THREE.Mesh(geo, M(col)); m.position.set(x, y, z); g.add(m); return m; };
+  if (job === "cafe") { add(new THREE.CylinderGeometry(.13, .1, .3, 16), 0xffffff, 0, .15, 0); add(new THREE.CylinderGeometry(.12, .12, .02, 16), 0x6b3f22, 0, .3, 0); if (pick[2] !== "nothing extra") add(new THREE.SphereGeometry(.1, 12, 8), pick[2] === "extra honey" ? 0xffc23b : 0xffffff, 0, .33, 0); }
+  else if (job === "bakery") { const n = ["one", "two", "three"].indexOf(pick[1]) + 1; for (let i = 0; i < n; i++) { add(new THREE.CylinderGeometry(.1, .08, .12, 14), 0xc98a4a, (i - (n - 1) / 2) * .24, .06, 0); add(new THREE.SphereGeometry(.11, 12, 8), pick[2] === "icing" ? 0xffffff : pick[2] === "sprinkles" ? 0xff8fc0 : 0xa8642e, (i - (n - 1) / 2) * .24, .14, 0); } }
+  else if (job === "icecream") { const n = ["one scoop", "two scoops", "three scoops"].indexOf(pick[1]) + 1, col = { strawberry: 0xff9cc0, chocolate: 0x6b3f22, mint: 0x9ff0c8, vanilla: 0xfff4d8 }[pick[0]];
+    if (pick[2] === "cone") { const cn = add(new THREE.ConeGeometry(.1, .3, 14), 0xd9a35a, 0, .15, 0); cn.rotation.x = Math.PI; } else add(new THREE.CylinderGeometry(.14, .1, .14, 14), 0xffffff, 0, .07, 0);
+    for (let i = 0; i < n; i++) add(new THREE.SphereGeometry(.11, 14, 10), col, 0, .33 + i * .15, 0); if (pick[3] === "a cherry") add(new THREE.SphereGeometry(.04, 10, 8), 0xe0202a, 0, .37 + n * .15, 0); }
+  else if (job === "flowers") { const col = { "red roses": 0xe02a3a, sunflowers: 0xffcf2a, daisies: 0xffffff, tulips: 0xff6fa8 }[pick[0]]; const n = { three: 3, six: 6, twelve: 12 }[pick[1]];
+    if (pick[2] === "a vase") add(new THREE.CylinderGeometry(.1, .08, .25, 14), 0x9fd4ff, 0, .12, 0); else add(new THREE.ConeGeometry(.15, .35, 14), pick[2] === "pink paper" ? 0xffb3d1 : 0x8fd36b, 0, .17, 0).rotation.x = Math.PI;
+    for (let i = 0; i < n; i++) { const a = i * 2.4, r = .03 + (i % 4) * .03; add(new THREE.SphereGeometry(.05, 10, 8), col, Math.cos(a) * r, .38 + (i % 3) * .03, Math.sin(a) * r); } }
+  else if (job === "cinema") { const s = 1 + ["small", "medium", "large"].indexOf(pick[1]) * .25; add(new THREE.CylinderGeometry(.14 * s, .1 * s, .3 * s, 14), 0xe8403a, -.1, .15 * s, 0); add(new THREE.SphereGeometry(.13 * s, 12, 8), 0xfff2c0, -.1, .3 * s, 0); if (pick[2] !== "no drink") add(new THREE.CylinderGeometry(.08, .07, .28, 12), pick[2] === "cola" ? 0x5a2a1a : 0xfff27a, .2, .14, 0); }
+  else { const col = { pink: 0xff8fc0, blue: 0x5aa8ff, rainbow: 0xffd23b }[pick[1]]; if (pick[2] === "gift wrapped") { add(new THREE.BoxGeometry(.3, .25, .3), col, 0, .13, 0); add(new THREE.BoxGeometry(.32, .04, .06), 0xffffff, 0, .26, 0); } else add(new THREE.SphereGeometry(.15, 14, 10), col, 0, .15, 0); }
+  g.position.set(.2, .77, .25); return g;
+}
+function job3DDone() {
+  const J = JOBS[S.myJob], pay = 5 + SHIFT.good * 2 + SHIFT.tips; S.acorns = (S.acorns || 0) + pay; try { chime(); floatHearts(3, "⭐"); } catch (e) {}
+  const co = friends().find(f => jobOf(f) === S.myJob);
+  if (co) setTimeout(() => textFrom(co.name, SHIFT.good >= 4 ? pickOne(["Okay you were SO good at work today. Employee of the month?? 👀", "Best shift EVER with you. 💅"]) : pickOne(["Work was chaos today. 😂 You gave someone the wrong order like 3 times.", "Rough shift, huh? It's okay. Tomorrow will be better. 😅"])), 4000);
+  try { postFeed(pickOne(friends()).name, `Just saw ${S.name} working at ${J.place}. 👀 Get that money! 💰`); } catch (e) {}
+  document.getElementById("j3say").style.display = "none";
+  document.getElementById("j3pad").innerHTML = `<h2>Shift over!</h2><p>You got <b>${SHIFT.good} of 5</b> orders exactly right.</p><h2>You earned ${pay} acorns!</h2><p>You have ${S.acorns} acorns.</p>
+    <button class="rainbow" onclick="job3DStop(); job3D()">Work another shift</button><button class="soft" onclick="job3DEnd()">Leave work</button>`;
+}
+function job3DStop() {
+  if (!J3) return; const K = J3; J3 = null; cancelAnimationFrame(K.raf); removeEventListener("resize", K.resize);
+  try { K.R.dispose(); K.R.forceContextLoss(); } catch (e) {} document.body.classList.remove("j3mode");
+}
+function job3DEnd() { job3DStop(); goOutside(); }
+const workShiftOld = workShift;
+workShift = function (pick) { if (pick === undefined && JOB_ORD[S.myJob] && hasWebGL()) return job3D(); return workShiftOld(pick); };
+document.head.insertAdjacentHTML("beforeend", `<style>
+#j3{position:fixed;inset:0;z-index:50;background:#2a2220;overflow:hidden}#j3c{position:absolute;inset:0;width:100%;height:100%;display:block}
+#j3top{position:absolute;top:10px;left:10px;background:#000a;color:#fff;padding:6px 14px;border-radius:20px;font-size:14px;white-space:nowrap}
+#j3say{display:none;position:absolute;top:52px;left:12px;right:12px;background:#fff;color:#2a1f3d;border-radius:18px;padding:10px 14px;font-size:17px;box-shadow:0 4px 14px #0005;text-align:center}
+#j3pad{position:absolute;left:0;right:0;bottom:0;max-height:52%;overflow-y:auto;background:linear-gradient(#fff0,#fffe 18%);padding:22px 10px 12px;text-align:center}
+.j3row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px;margin:3px 0}.j3row b{width:100%;font-size:13px;color:#6a5a7a}.j3row button{margin:0;padding:7px 10px;font-size:14px}
+.j3row button.on{background:#ffd23b;box-shadow:0 0 0 3px #ff9f1c inset;font-weight:700}.j3serve{margin-top:6px}.j3serve[disabled]{opacity:.45}
+.j3x{position:absolute;top:8px;right:8px;margin:0;padding:6px 10px;font-size:13px}.j3wait{color:#6a5a7a;font-weight:700}
+body.j3mode #snow,body.j3mode #xlights,body.j3mode #sky,body.j3mode #clock,body.j3mode #treeBtn,body.j3mode #phoneBtn,body.j3mode #eyesBtn{display:none !important}
+</style>`);
+
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
 </script>
 </body>
