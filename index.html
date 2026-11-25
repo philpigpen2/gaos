@@ -112,7 +112,7 @@
   .hopin .pic { height:80px; }
   .scene { background-size:cover; }
   .scene p.story, .scene .story { text-shadow:0 2px 6px rgba(0,0,0,.6); }
-  .banner { background:url(art/village.png) center/cover, linear-gradient(#bde6ff,#a6d98f); border-radius:26px; height:220px;
+  .banner { background:linear-gradient(135deg, #7b4fd6, #c04fd6 50%, #ff5ac8); border-radius:26px; height:220px;
             display:flex; align-items:flex-end; justify-content:center; padding-bottom:14px; box-shadow:0 8px 24px rgba(0,0,0,.15); margin:10px 0; }
   .hs { width:1em; height:1em; vertical-align:-0.12em; display:inline-block; }
   .floaty .hs { width:44px; height:44px; }
@@ -561,7 +561,7 @@
   .w3-load { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:700 22px inherit; color:#fff; text-shadow:0 2px 8px #0006; }
   .w3-top { position:absolute; left:12px; top:112px; } .w3-top b { background:rgba(30,20,50,.55); color:#fff; padding:5px 14px; border-radius:14px; font-size:15px; }
   .w3-exit, .w3-map, .w3-view { position:absolute; top:58px; right:12px; padding:7px 14px; font-size:15px; border-radius:14px; border:0; background:rgba(30,20,50,.6); color:#fff; font-weight:700; margin:0; top:62px !important; }
-  .w3-exit { top:108px !important; } .w3-map { right:12px; top:150px !important; } .w3-view { right:12px; top:192px !important; }
+  .w3-exit { top:108px !important; } .w3-map { right:12px; top:150px !important; } .w3-view { right:12px; top:150px !important; }
   #w3pad { position:absolute; left:14px; bottom:22px; width:168px; height:168px; touch-action:none; user-select:none; -webkit-user-select:none; }
   #w3pad button { position:absolute; width:58px; height:58px; margin:0; padding:0; border-radius:16px; background:rgba(255,255,255,.82); border:3px solid rgba(255,255,255,.95); box-shadow:0 5px 14px #0005; touch-action:none; display:flex; align-items:center; justify-content:center; }
   #w3pad button.on { background:#ffd23b; transform:scale(.94); }
@@ -957,7 +957,7 @@ function setBg(name) {
   if (!name || name === BG_NOW) return;
   BG_NOW = name;
   const next = document.getElementById(BG_ON === 1 ? "bg2" : "bg1"), cur = document.getElementById(BG_ON === 1 ? "bg1" : "bg2");
-  next.style.backgroundImage = `url(art/${name}.png)`;
+  next.style.backgroundImage = XMAS() ? "radial-gradient(circle at 50% 0%, #ffffff 0%, transparent 55%), linear-gradient(#8fbef0, #dcecff 60%, #ffffff)" : "radial-gradient(circle at 50% 0%, #ffffff 0%, transparent 55%), linear-gradient(#7fc4ff, #c9ecff 60%, #e9ffd9)"; // one clean game look behind every menu
   next.classList.add("on"); cur.classList.remove("on");
   BG_ON = BG_ON === 1 ? 2 : 1;
 }
@@ -1019,7 +1019,7 @@ function titleScreen() {
     <div class="lb-bottom">
       ${save ? `<button class="lb-play" onclick="lobbyStop(); continueGame()">PLAY</button><div class="lb-row"><button class="lb-small" onclick="lobbyStop(); MODE=1;newGame();createScreen()">New game</button><button class="lb-small" onclick="lobbyStop(); MODE=2;newGame();createScreen()">2 Players</button></div>`
         : `<button class="lb-play" onclick="lobbyStop(); MODE=1;newGame();createScreen()">PLAY</button><div class="lb-row"><button class="lb-small" onclick="lobbyStop(); MODE=2;newGame();createScreen()">2 Players</button></div>`}
-      <div class="lb-row"><button class="lb-tiny" onclick="xmasToggle()">Christmas: ${XMAS() ? "ON" : "OFF"}</button><button class="lb-tiny" onclick="lookToggle()">Pictures: ${LOOK_GAME() ? "3D game" : "Real photos"}</button></div>
+      <div class="lb-row"><button class="lb-tiny" onclick="xmasToggle()">Christmas: ${XMAS() ? "ON" : "OFF"}</button></div>
     </div></div>`);
   document.body.classList.add("immersive", "lobbymode");
   if (hasWebGL()) loadThree().then(lobbyStart).catch(() => {});
@@ -3869,6 +3869,7 @@ function townAnimalHTML(a, name, id, click, cls = "") {
 }
 function townStyle() { townSave(); S.townStyle = townReal() ? "cartoon" : "real"; townScreen(); }
 function townScreen() {
+  if (hasWebGL() && typeof THREE_P !== "undefined") { try { closePhone(); } catch (e) {} closeClock(); return eyesScreen(S.worldAt || "village"); }
   try { closePhone(); } catch (e) {} closeClock();
   S.outside = "town"; S.guest = null; S.meetPlace = null;
   const me = ART[S.animal[0]], all = friends();
@@ -4077,18 +4078,21 @@ function sendPicT(name, t) {
   setTimeout(() => deliver(name, [line + tag, ...back]), 1300);
 }
 // ===== 3D game look: cartoonish 3D game art (g_*.png) swaps in for the photos wherever it exists =====
-const LOOK_GAME = () => { try { return localStorage.getItem("gaosLook") !== "real"; } catch (e) { return true; } };
+const LOOK_GAME = () => true; // one look everywhere: the 3D game look
 function lookToggle() { try { localStorage.setItem("gaosLook", LOOK_GAME() ? "real" : "game"); } catch (e) {} location.reload(); }
 const G_NAMES = ["owlhost", "bakestage", "tvstudio", "talentstage", "fox", "bunny", "raccoon", "bear", "deer", "hedgehog", "squirrel", "owl", "wolf", "mouse", "badger", "weasel", "magpie", "otter", "beaver"];
 const G_HAVE = new Set();
 const gName = n => LOOK_GAME() && G_HAVE.has(n) ? "g_" + n : n;
-const gFix = str => str.replace(/art\/([a-z0-9_]+)\.png/g, (a, n) => G_HAVE.has(n) ? `art/g_${n}.png` : a);
+const gFix = str => str.replace(/art\/([a-z0-9_]+)\.png/g, (a, n) => { const b = n.replace(/^g_/, "").replace("owlhost", "owl"); return P3D[b] ? P3D[b] : G_HAVE.has(n) ? `art/g_${n}.png` : a; });
 function gSwap(root) {
-  if (!LOOK_GAME() || !G_HAVE.size || !root || !root.querySelectorAll) return;
-  const fix = el => { if (el.tagName === "IMG") { const v = el.getAttribute("src"); if (v && v.includes("art/")) { const w = gFix(v); if (w !== v) el.setAttribute("src", w); } }
+  if (!LOOK_GAME() || (!G_HAVE.size && !P3D.fox) || !root || !root.querySelectorAll) return;
+  const fix = el => { if (el.tagName === "IMG") { const v = el.getAttribute("src"); if (v && v.includes("art/")) { let w = gFix(v);
+      if (w.startsWith("data:") && el.closest && el.closest(SMALL_PIC)) { const m = v.match(/art\/(?:g_)?([a-z]+)\.png/); if (m && P3D_FACE[m[1]]) w = P3D_FACE[m[1]]; }
+      if (w !== v) el.setAttribute("src", w); } }
     const st = el.getAttribute && el.getAttribute("style"); if (st && st.includes("art/")) { const w = gFix(st); if (w !== st) el.setAttribute("style", w); } };
   fix(root); if (!gSwap.one) root.querySelectorAll('img[src*="art/"], [style*="art/"]').forEach(fix);
 }
+const SMALL_PIC = ".date-pick, .call-pic, .w3t-head, .tt-head, .friend, .rel-pair, .ph-msgs, .ph-list, .ph-top, .feed, .post, .notif, .walk-grid, .contact";
 function gFixOne(el) { gSwap.one = true; try { gSwap(el); } finally { gSwap.one = false; } }
 if (LOOK_GAME()) {
   document.body.classList.add("look-game");
@@ -4096,6 +4100,26 @@ if (LOOK_GAME()) {
   if (typeof MutationObserver !== "undefined") new MutationObserver(ms => ms.forEach(m => { if (m.type === "attributes") { const v = m.target.getAttribute(m.attributeName); if (v && v.includes("art/")) gFixOne(m.target); } else m.addedNodes.forEach(n => n.nodeType === 1 && gSwap(n)); }))
     .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["src", "style"] });
 }
+// ===== The same 3D animals everywhere: draw each one once and use that picture on every screen =====
+const P3D = {}, P3D_FACE = {};
+const P3D_KINDS = ["fox", "bunny", "raccoon", "bear", "deer", "hedgehog", "squirrel", "owl", "wolf", "mouse", "badger", "weasel", "magpie", "otter", "beaver"];
+function w3Portraits() {
+  if (!hasWebGL()) return;
+  loadThree().then(() => {
+    if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+    const cv = document.createElement("canvas"); cv.width = 512; cv.height = 512;
+    const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, preserveDrawingBuffer: true }); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.setClearColor(0x000000, 0);
+    const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0xb0a090, .9)); const d = new THREE.DirectionalLight(0xfff2e0, 1.5); d.position.set(2, 4, 5); sc.add(d); const rim = new THREE.DirectionalLight(0xc8b8ff, .7); rim.position.set(-3, 3, -4); sc.add(rim);
+    const cam = new THREE.PerspectiveCamera(28, 1, .1, 50), xmas = XMAS();
+    P3D_KINDS.forEach(k => { const fi = FRIENDS.girl.findIndex(f => ART[f.emo] === k), look = fi >= 0 ? W3_OUTFIT[fi % W3_OUTFIT.length] : [0xfff1e0, 0x5a4a7a, 0x6b4a2f, "apron"];
+      const c = w3Animal(k, look, xmas); c.arms[0].rotation.z = -.15; c.arms[1].rotation.z = .15; c.g.rotation.y = .32; sc.add(c.g); c.g.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(c.g), ctr = box.getCenter(new THREE.Vector3()), h = box.max.y - box.min.y, dist = h / 2 / Math.tan(14 * Math.PI / 180) * 1.04;
+      cam.position.set(ctr.x, ctr.y + h * .04, ctr.z + dist); cam.lookAt(ctr.x, ctr.y, ctr.z); R.render(sc, cam); P3D[k] = cv.toDataURL("image/png");
+      const hp = new THREE.Vector3(); c.head.getWorldPosition(hp); const fd = h * .42 / 2 / Math.tan(14 * Math.PI / 180); cam.position.set(hp.x + .05, hp.y, hp.z + fd); cam.lookAt(hp.x, hp.y - h * .04, hp.z); R.render(sc, cam); P3D_FACE[k] = cv.toDataURL("image/png"); sc.remove(c.g); });
+    R.dispose(); R.forceContextLoss(); document.body.classList.add("p3d"); gSwap(document.body);
+  }).catch(() => {});
+}
+setTimeout(w3Portraits, 300);
 // ===== Real 3D walking world (three.js): walk around Animal Burrow in first person =====
 // Town map pixels / 20 = world units. x -> X, y -> Z. The fronts of buildings face +Z (south).
 let W3 = null, THREE_P = null;
@@ -4142,7 +4166,7 @@ function w3Start(start) {
   if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
   root.innerHTML = `<canvas id="w3c"></canvas>
     <div class="w3-top"><b id="w3place"></b></div>
-    <button class="w3-exit" onclick="w3Exit()">Exit</button><button class="w3-map" onclick="w3Stop(); townScreen()">Town map</button>
+    <button class="w3-exit" onclick="w3Exit()">Exit</button>
     <div id="w3joy"><i></i></div><div id="w3pad"><button class="u" data-k="arrowup" aria-label="Walk forward"><svg viewBox="0 0 24 24" style="transform:rotate(0deg)"><path d="M12 3 L21 15 H15 V21 H9 V15 H3 Z"/></svg></button><button class="l" data-k="arrowleft" aria-label="Turn left"><svg viewBox="0 0 24 24" style="transform:rotate(-90deg)"><path d="M12 3 L21 15 H15 V21 H9 V15 H3 Z"/></svg></button><button class="r" data-k="arrowright" aria-label="Turn right"><svg viewBox="0 0 24 24" style="transform:rotate(90deg)"><path d="M12 3 L21 15 H15 V21 H9 V15 H3 Z"/></svg></button><button class="d" data-k="arrowdown" aria-label="Walk back"><svg viewBox="0 0 24 24" style="transform:rotate(180deg)"><path d="M12 3 L21 15 H15 V21 H9 V15 H3 Z"/></svg></button></div><button class="w3-jump" onpointerdown="w3Jump(event)">Jump</button><button class="w3-run" id="w3run" onclick="W3.run=!W3.run;this.classList.toggle('on')">Run</button>
     <button class="w3-view" onclick="w3View()">Camera</button><div class="w3-hint" id="w3hint">Arrows: walk and turn. Swipe anywhere else: look around.</div>
     <div id="w3act"></div><div id="w3say"></div><div id="w3talk"></div>`;
