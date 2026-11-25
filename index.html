@@ -602,6 +602,7 @@
   .lb-tiny { font:700 13px Fredoka, Arial Rounded MT Bold, sans-serif; color:#fff; background:rgba(20,12,40,.45); border:0; border-radius:12px; padding:6px 12px; margin:0; }
   body.lobbymode #sky, body.lobbymode #clock, body.lobbymode #phoneBtn, body.lobbymode #xlights, body.lobbymode #snow, body.lobbymode .eyes-btn, body.lobbymode #eyesBtn, body.lobbymode .phone-btn { display:none !important; }
   #snow { position:fixed; inset:0; pointer-events:none; z-index:900; }
+  body.house #snow, body.meet #snow, body.gshow #snow, body.w3mode #snow, body.lobbymode #snow { display:none; }
   #xlights { position:fixed; left:0; right:0; top:0; height:16px; display:flex; justify-content:space-around; pointer-events:none; z-index:901; border-top:2px solid #2d4a2d; }
   #xlights i { width:9px; height:13px; border-radius:50% 50% 50% 50% / 40% 40% 60% 60%; margin-top:1px; animation:twinkle 1.4s var(--d) infinite alternate; }
   #xlights i:nth-child(4n+1) { background:#ff3b3b; color:#ff3b3b; } #xlights i:nth-child(4n+2) { background:#3bd16f; color:#3bd16f; } #xlights i:nth-child(4n+3) { background:#ffd23b; color:#ffd23b; } #xlights i:nth-child(4n) { background:#3bb7ff; color:#3bb7ff; }
@@ -1059,7 +1060,9 @@ function lobbyStart() {
   LOBBY = { R, resize, t: 0, last: performance.now() };
   const loop = () => { if (!LOBBY) return; const now = performance.now(), dt = Math.min(.05, (now - LOBBY.last) / 1000); LOBBY.last = now; const t = LOBBY.t += dt;
     const ca = Math.sin(t * .15) * .55, cd = innerWidth < innerHeight ? 7.6 : 6.6; cam.position.set(Math.sin(ca) * cd, 2.1, Math.cos(ca) * cd); cam.lookAt(0, 1.2, 0);
-    dancers.forEach((c, i) => { w3Anim(c, dt, 0, false, t); const beat = t * 4 + i * 1.3;
+    dancers.forEach((c, i) => { const beat = t * 4 + i * 1.3;
+      if (c.quad) { w3Anim(c, dt, i === 1 ? 2.4 : 0, false, t); c.g.position.y = .3 + Math.max(0, Math.sin(beat)) * (i === 1 ? .12 : .3); c.head.rotation.z = Math.sin(beat * .5) * .25; c.tail.rotation.y = Math.sin(t * 12 + i) * .7; if (i === 1) c.g.rotation.y = Math.sin(t * .8) * .9; if (i === 2) c.body.rotation.z = Math.sin(beat) * .12; return; }
+      w3Anim(c, dt, 0, false, t);
       if (i === 0) { c.arms[0].rotation.z = -2.5 + Math.sin(beat * 1.5) * .35; c.arms[0].userData.elbow.rotation.x = -.4; c.body.position.y = Math.abs(Math.sin(beat)) * .08; }
       if (i === 1) { c.g.position.y = .3 + Math.max(0, Math.sin(beat)) * .35; c.arms.forEach((A, k) => { A.rotation.z = (k ? 1 : -1) * (2.3 + Math.sin(beat) * .3); }); c.legs[0].userData.knee.rotation.x = Math.max(0, Math.sin(beat)) * .8; c.legs[1].userData.knee.rotation.x = Math.max(0, Math.sin(beat)) * .8; }
       if (i === 2) { c.spine.rotation.y = Math.sin(beat) * .4; c.body.position.x = Math.sin(beat * .5) * .15; c.arms.forEach((A, k) => { A.rotation.x = Math.sin(beat + k * Math.PI) * .9; A.userData.elbow.rotation.x = -1.2; }); c.head.rotation.z = Math.sin(beat) * .12; } });
@@ -3015,7 +3018,7 @@ function actBack() {
   return mapScreen();
 }
 function activity(key, step, pick = -1) {
-  if (hasWebGL() && step === 0 && pick === -1) return act3D(key);
+  if (hasWebGL() && step === 0 && pick === -1) { const A0 = ACTS.find(a => a[0] === key); if (A0 && !A0[7] && !SHOPS[A0[0]] && (act3DSpot(A0) || A0[2] === "movienight")) return act3D(key); }
   const f = friends()[S.act.i], A = ACTS.find(a => a[0] === key), st = stageOf(f);
   const N = x => x.replaceAll("{N}", f.name);
   let mood = "walk", story = "", say = "", qs = "";
@@ -3686,6 +3689,7 @@ function phoneHome() {
     <div class="apps">
       ${app("msgs", "Messages", "linear-gradient(#5fe07a,#2bb673)", "openPhone('msgs')", un)}
       ${app("book", "Burrowbook", "linear-gradient(#7aa7ff,#3a5bd9)", "bookApp()", newPosts)}
+      ${app("sneaky", "Sneaky Paws", "linear-gradient(#3a1a3a,#0e0a14)", "sneakyApp()")}
       ${app("gossip", "Gossip Cage", "linear-gradient(#ff5aa8,#6a2a9a)", "gossipApp()", S.gossipSeen !== (S.tday || S.day) ? "!" : "")}
       ${app("photos", "Photos", "linear-gradient(#fff,#e9e3f5)", "photosApp()")}
       ${app("camera", "Camera", "linear-gradient(#777,#333)", "cameraApp()")}
@@ -4134,10 +4138,10 @@ function w3Portraits() {
     const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0xb0a090, .9)); const d = new THREE.DirectionalLight(0xfff2e0, 1.5); d.position.set(2, 4, 5); sc.add(d); const rim = new THREE.DirectionalLight(0xc8b8ff, .7); rim.position.set(-3, 3, -4); sc.add(rim);
     const cam = new THREE.PerspectiveCamera(28, 1, .1, 50), xmas = XMAS();
     P3D_KINDS.forEach(k => { const fi = FRIENDS.girl.findIndex(f => ART[f.emo] === k), look = fi >= 0 ? W3_OUTFIT[fi % W3_OUTFIT.length] : [0xfff1e0, 0x5a4a7a, 0x6b4a2f, "apron"];
-      const c = w3Animal(k, look, xmas); c.arms[0].rotation.z = -.15; c.arms[1].rotation.z = .15; c.g.rotation.y = .32; sc.add(c.g); c.g.updateMatrixWorld(true);
-      const box = new THREE.Box3().setFromObject(c.g), ctr = box.getCenter(new THREE.Vector3()), h = box.max.y - box.min.y, dist = h / 2 / Math.tan(14 * Math.PI / 180) * 1.04;
+      const c = w3Animal(k, look, xmas); if (!c.quad) { c.arms[0].rotation.z = -.15; c.arms[1].rotation.z = .15; } c.g.rotation.y = c.quad ? .78 : .32; sc.add(c.g); c.g.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(c.g), ctr = box.getCenter(new THREE.Vector3()), h = box.max.y - box.min.y, dist = Math.max(h, (box.max.x - box.min.x) * .95) / 2 / Math.tan(14 * Math.PI / 180) * 1.04;
       cam.position.set(ctr.x, ctr.y + h * .04, ctr.z + dist); cam.lookAt(ctr.x, ctr.y, ctr.z); R.render(sc, cam); P3D[k] = cv.toDataURL("image/png");
-      const hp = new THREE.Vector3(); c.head.getWorldPosition(hp); const fd = h * .42 / 2 / Math.tan(14 * Math.PI / 180); cam.position.set(hp.x + .05, hp.y, hp.z + fd); cam.lookAt(hp.x, hp.y - h * .04, hp.z); R.render(sc, cam); P3D_FACE[k] = cv.toDataURL("image/png"); sc.remove(c.g); });
+      const hp = new THREE.Vector3(); c.head.getWorldPosition(hp); const fd = h * .42 / 2 / Math.tan(14 * Math.PI / 180); const fa = c.quad ? .5 : 0; cam.position.set(hp.x + .05 + Math.sin(fa) * fd, hp.y, hp.z + Math.cos(fa) * fd); cam.lookAt(hp.x, hp.y - h * .04, hp.z); R.render(sc, cam); P3D_FACE[k] = cv.toDataURL("image/png"); sc.remove(c.g); });
     R.dispose(); R.forceContextLoss(); document.body.classList.add("p3d"); gSwap(document.body); setTimeout(i3dAll, 200);
   }).catch(() => {});
 }
@@ -4471,32 +4475,57 @@ function w3Animal(kind, look, xmas) {
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
   const furM = w3Mat(fur, { roughness: .8 }), clothM = w3Mat(shirt, { roughness: .9 }), pantsM = w3Mat(pants, { roughness: .9 });
   const torsoG = w3Geo("torso", () => { const pts = [[.0, -.02], [.17, 0], [.19, .1], [.215, .28], [.235, .42], [.2, .52], [.09, .58], [0, .6]].map(([r, y]) => new THREE.Vector2(r, y)); return new THREE.LatheGeometry(pts, 24); });
+  let legs, arms, spine, torso; const quad = !bird;
+  if (quad) {
+    // four legs, like a real animal: a round body, a neck, and a big cute head
+    const pawC = darker(fur, .18);
+    add(body, SPH, fur, 0, .64, -.02, .29, .27, .5, true, furM);
+    add(body, SPH, belly, 0, .55, .06, .23, .19, .4);
+    add(body, SPH, fur, 0, .7, .3, .27, .29, .27, true, furM);
+    add(body, SPH, belly, 0, .66, .44, .17, .2, .12);
+    add(body, SPH, fur, 0, .66, -.36, .26, .25, .22, true, furM);
+    torso = add(body, SPH, shirt, 0, .66, .02, .305, .28, .38, true, clothM);
+    add(body, tor(.29, .035), darker(shirt, .2), 0, .66, .38, 1, .97, 1);
+    spine = new THREE.Group(); spine.position.set(0, .8, .4); body.add(spine);
+    add(spine, CYL, fur, 0, .14, .05, .13, .3, .13, false, furM).rotation.x = .45;
+    const leg = (sd, z, front) => { const L = new THREE.Group(); L.position.set(sd * .16, .64, z); body.add(L);
+      if (!front) add(L, SPH, fur, 0, -.02, -.02, .14, .19, .19, true, furM);
+      add(L, cap(.075, .2), fur, 0, -.18, 0, 1, 1, 1, true, furM);
+      const kn = new THREE.Group(); kn.position.y = -.33; L.add(kn); L.userData.knee = kn; L.userData.elbow = kn;
+      add(kn, cap(.062, .17), fur, 0, -.12, 0, 1, 1, 1, true, furM);
+      add(kn, SPH, pawC, 0, -.255, .035, .08, .05, .1, true);
+      [-1, 0, 1].forEach(k => add(kn, SPH, pawC, k * .032, -.262, .11, .026, .022, .03));
+      return L; };
+    legs = [leg(-1, -.34, false), leg(1, -.34, false)];
+    arms = [leg(-1, .34, true), leg(1, .34, true)];
+  } else {
   // legs: thigh + shin that bend at the knee, chunky sneakers
-  const legs = [-1, 1].map(sd => { const L = new THREE.Group(); L.position.set(sd * .115, .9, 0); body.add(L);
+  legs = [-1, 1].map(sd => { const L = new THREE.Group(); L.position.set(sd * .115, .9, 0); body.add(L);
     if (bird) { add(L, cap(.12, .2), fur, 0, -.16, 0, 1, 1, 1, true, furM); add(L, CYL, 0xf2a93b, 0, -.6, 0, .05, .5, .05); const kn = new THREE.Group(); kn.position.y = -.84; L.add(kn); add(kn, SPH, 0xf2a93b, 0, -.02, .06, .1, .04, .14); L.userData.knee = kn; return L; }
     add(L, cap(.112, .26), pants, 0, -.2, 0, 1, 1, 1, true, pantsM); const kn = new THREE.Group(); kn.position.y = -.42; L.add(kn); L.userData.knee = kn;
     add(kn, cap(.098, .24), pants, 0, -.19, 0, 1, 1, 1, true, pantsM); add(kn, SPH, shoes, 0, -.42, .06, .11, .075, .18, true, w3Mat(shoes, { roughness: .45 })); add(kn, BOX, 0xf4f4f4, 0, -.475, .06, .21, .035, .34, false, w3Mat(0xf4f4f4, { roughness: .6 }));
     return L; });
   add(body, SPH, pants, 0, .93, 0, .25, .15, .19, true, pantsM);
   // upper body twists from the hips
-  const spine = new THREE.Group(); spine.position.y = .9; body.add(spine);
-  const torso = add(spine, torsoG, shirt, 0, .02, 0, 1.1, 1, .85, true, clothM);
+  spine = new THREE.Group(); spine.position.y = .9; body.add(spine);
+  torso = add(spine, torsoG, shirt, 0, .02, 0, 1.1, 1, .85, true, clothM);
   if (!bird) { add(spine, tor(.12, .045), shirt, 0, .55, -.01, 1, 1, .9, false, clothM).rotation.x = Math.PI / 2; add(spine, BOX, darker(shirt, .25), 0, .3, .182, .015, .42, .01); }
   if (bird) add(spine, SPH, belly, 0, .25, .11, .16, .22, .1);
   add(spine, CYL, fur, 0, .62, 0, .075, .14, .075, false, furM);
   // arms: shoulder + elbow, hands
-  const arms = [-1, 1].map(sd => { const A = new THREE.Group(); A.position.set(sd * .28, .48, 0); spine.add(A);
+  arms = [-1, 1].map(sd => { const A = new THREE.Group(); A.position.set(sd * .28, .48, 0); spine.add(A);
     if (bird) { add(A, SPH, fur, sd * .05, -.24, -.02, .07, .3, .17, true, furM); A.userData.elbow = new THREE.Group(); A.add(A.userData.elbow); return A; }
     add(A, SPH, shirt, 0, 0, 0, .1, .1, .1, false, clothM); add(A, cap(.08, .18), shirt, 0, -.13, 0, 1, 1, 1, true, clothM);
     const el = new THREE.Group(); el.position.y = -.27; A.add(el); A.userData.elbow = el;
     add(el, cap(.072, .15), shirt, 0, -.1, 0, 1, 1, 1, true, clothM); add(el, CYL, darker(shirt, .2), 0, -.2, 0, .078, .045, .078); add(el, SPH, fur, 0, -.28, .01, .085, .09, .075, false, furM); [-1, 0, 1].forEach(k => add(el, SPH, fur, k * .035, -.355, .03, .028, .03, .028, false, furM));
     return A; });
+  }
   // head
-  const head = new THREE.Group(); head.position.set(0, .9, .01); head.scale.setScalar(.95); spine.add(head);
+  const head = new THREE.Group(); head.position.set(0, .9, .01); head.scale.setScalar(.95); spine.add(head); if (quad) { head.position.set(0, .4, .17); head.scale.setScalar(1.18); }
   add(head, SPH, fur, 0, 0, 0, .3, .29, .28, true, furM);
   const owlish = kind === "owl";
   if (owlish) add(head, SPH, belly, 0, -.01, .14, .25, .22, .16);
-  const eyes = new THREE.Group(); eyes.userData.gloss = true; head.add(eyes); if (owlish) eyes.position.z = .045; const er = (owlish ? .1 : .082) * 1.1, irisC = W3_EYE[kind] || 0x5a3a2a;
+  const eyes = new THREE.Group(); eyes.userData.gloss = true; head.add(eyes); if (owlish) eyes.position.z = .045; const er = (owlish ? .1 : .082) * (quad ? 1.22 : 1.1), irisC = W3_EYE[kind] || 0x5a3a2a;
   [-1, 1].forEach(s => { add(eyes, SPH, 0xffffff, s * .11, .04, .235, er, er * 1.15, er * .65);
     add(eyes, SPH, irisC, s * .108, .036, .235 + er * .42, er * .7, er * .8, er * .32);
     add(eyes, SPH, 0x120e16, s * .108, .034, .235 + er * .6, er * .4, er * .48, er * .2);
@@ -4529,10 +4558,12 @@ function w3Animal(kind, look, xmas) {
   else if (kind !== "hedgehog") [-1, 1].forEach(s => ear(s * .2, .22, 0, SPH, .085, .085, .045, kind === "raccoon" ? acc : fur, kind === "bear" || kind === "otter" ? belly : null));
   // hedgehog spikes on the head and back
   if (kind === "hedgehog") for (let i = 0; i < 34; i++) { const a = (i % 9) / 8 * Math.PI - Math.PI / 2, row = Math.floor(i / 9), onHead = row < 2;
+    if (quad && !onHead) continue;
     const par = onHead ? head : spine, r = onHead ? .27 : .22, y = onHead ? .14 - row * .14 : .45 - (row - 2) * .17, z = onHead ? -.12 : -.17;
     const sp = add(par, CONE, acc, Math.sin(a) * r * .9, y, z + Math.cos(a) * -.06, .05, .2, .05); sp.rotation.x = -1.9; sp.rotation.z = -Math.sin(a) * .7; }
+  if (kind === "hedgehog" && quad) for (let i = 0; i < 40; i++) { const a = ((i % 8) / 7 - .5) * 2.4, z = .3 - Math.floor(i / 8) * .17; const sp = add(body, CONE, acc, Math.sin(a) * .29, .66 + Math.cos(a) * .27, z, .05, .2, .05); sp.rotation.x = -1.2; sp.rotation.z = -Math.sin(a) * 1.1; }
   // tail
-  const tail = new THREE.Group(); tail.position.set(0, .95, -.16); body.add(tail);
+  const tail = new THREE.Group(); tail.position.set(0, .95, -.16); body.add(tail); if (quad) { tail.position.set(0, .76, -.52); tail.rotation.x = -.45; }
   if (kind === "fox" || kind === "wolf") { add(tail, SPH, fur, 0, .02, -.26, .13, .13, .32, true).rotation.x = .5; add(tail, SPH, belly, 0, -.1, -.52, .08, .08, .1); }
   else if (kind === "squirrel") add(tail, SPH, fur, 0, .38, -.12, .15, .42, .17, true).rotation.x = -.25;
   else if (kind === "bunny" || kind === "deer") add(tail, SPH, 0xffffff, 0, 0, -.04, .08, .08, .08);
@@ -4546,20 +4577,45 @@ function w3Animal(kind, look, xmas) {
   const hat = extra === "cap" || extra === "beret" || extra === "headphones" || extra === "headband";
   if (extra === "glasses") { [-1, 1].forEach(s => add(head, tor(.075, .012), 0x3a2a4a, s * .11, .04, .3, 1, 1, 1)); add(head, BOX, 0x3a2a4a, 0, .05, .3, .07, .015, .015); }
   if (extra === "shades") [-1, 1].forEach(s => { add(head, BOX, 0x1b1022, s * .11, .045, .3, .15, .09, .02, false, w3Mat(0x1b1022, { roughness: .15, metalness: .5 })); add(head, BOX, 0xff5ac8, 0, .085, .3, .32, .02, .02); });
-  if (extra === "bandana") { add(spine, tor(.13, .045), 0xd62828, 0, .56, 0, 1, 1, 1).rotation.x = Math.PI / 2; add(spine, CONE, 0xd62828, 0, .47, .14, .09, .16, .03).rotation.x = Math.PI; }
-  if (extra === "scarf") { add(spine, tor(.13, .06), 0xff5a8a, 0, .56, 0, 1, 1, 1).rotation.x = Math.PI / 2; add(spine, BOX, 0xff5a8a, .09, .38, .2, .09, .26, .04); }
-  if (extra === "apron") { add(spine, BOX, 0xfffaf2, 0, .2, .185, .3, .5, .02); add(spine, BOX, 0xff8fb1, 0, .1, .2, .14, .08, .01); }
+  if (quad && (extra === "bandana" || extra === "scarf")) { const col = extra === "bandana" ? 0xd62828 : 0xff5a8a; add(spine, tor(.15, .05), col, 0, .06, .02, 1, 1, 1).rotation.x = Math.PI / 2 - .4; add(spine, CONE, col, 0, -.02, .17, .1, .16, .03).rotation.x = Math.PI; }
+  else if (extra === "bandana") { add(spine, tor(.13, .045), 0xd62828, 0, .56, 0, 1, 1, 1).rotation.x = Math.PI / 2; add(spine, CONE, 0xd62828, 0, .47, .14, .09, .16, .03).rotation.x = Math.PI; }
+  if (extra === "scarf" && !quad) { add(spine, tor(.13, .06), 0xff5a8a, 0, .56, 0, 1, 1, 1).rotation.x = Math.PI / 2; add(spine, BOX, 0xff5a8a, .09, .38, .2, .09, .26, .04); }
+  if (extra === "apron" && !quad) { add(spine, BOX, 0xfffaf2, 0, .2, .185, .3, .5, .02); add(spine, BOX, 0xff8fb1, 0, .1, .2, .14, .08, .01); }
   if (extra === "cap") { add(head, HEMI, shirt === 0xffd23b ? 0x3a6fd8 : shirt, 0, .08, 0, .31, .26, .31, true); add(head, CYL, 0x3a6fd8, 0, .1, -.3, .17, .02, .14); }
   if (extra === "beret") { const b = add(head, SPH, 0x7a3fd1, .04, .25, -.02, .27, .08, .27, true); b.rotation.z = -.25; add(head, CYL, 0x7a3fd1, .07, .33, 0, .015, .05, .015); }
   if (extra === "headphones") { const hb = add(head, tor(.31, .025, Math.PI), 0x111111, 0, .02, -.02, 1, 1, 1); [-1, 1].forEach(s => add(head, CYL, 0x45d0ff, s * .3, .0, -.02, .08, .07, .08).rotation.z = Math.PI / 2); }
   if (extra === "headband") add(head, tor(.29, .03), 0x45d0ff, 0, .1, -.02, 1, 1, 1).rotation.x = Math.PI / 2 - .25;
-  if (extra === "rainbow") [0xff3b3b, 0xff9f1c, 0xffd23b, 0x3ddc84, 0x3bb7ff, 0x9b6bff].forEach((c, i) => add(spine, tor(.232, .02), c, 0, .4 - i * .04, 0, 1, 1, .8).rotation.x = Math.PI / 2);
+  if (extra === "rainbow" && quad) [0xff3b3b, 0xff9f1c, 0xffd23b, 0x3ddc84, 0x3bb7ff, 0x9b6bff].forEach((c, i) => add(body, tor(.3, .028), c, 0, .66, .3 - i * .11, 1, .95, 1));
+  else if (extra === "rainbow") [0xff3b3b, 0xff9f1c, 0xffd23b, 0x3ddc84, 0x3bb7ff, 0x9b6bff].forEach((c, i) => add(spine, tor(.232, .02), c, 0, .4 - i * .04, 0, 1, 1, .8).rotation.x = Math.PI / 2);
   if (xmas && !hat) { const h = new THREE.Group(); h.position.set(0, .22, -.02); h.rotation.z = -.2; head.add(h); add(h, CONE, 0xd62828, 0, .17, 0, .21, .36, .21, true); add(h, tor(.21, .05), 0xffffff, 0, 0, 0, 1, 1, 1).rotation.x = Math.PI / 2; add(h, SPH, 0xffffff, .02, .36, 0, .06, .06, .06); }
   g.userData.furCols = [fur, belly, acc]; w3Bake(g);
-  return { g, body, spine, legs, arms, head, eyes, brows, tail, torso: spine, ph: Math.random() * 6, amp: 0, blink: 2 + Math.random() * 3, heading: 0 };
+  return { g, body, spine, legs, arms, head, eyes, brows, tail, torso: spine, quad, ph: Math.random() * 6, amp: 0, blink: 2 + Math.random() * 3, heading: 0 };
+}
+// four-legged trot: legs move in diagonal pairs, the body bobs, the head bobs, the tail wags
+function w3AnimQuad(c, dt, speed, air, t) {
+  const runK = Math.min(1, Math.max(0, (speed - 6) / 4));
+  c.amp += ((speed > .05 ? 1 : 0) - c.amp) * Math.min(1, dt * 8);
+  c.ph += dt * (6 + speed * 1.5) * (speed > .05 ? 1 : 0);
+  const a = c.amp, L = c.legs, A = c.arms;
+  if (air) { L.forEach(X => { X.rotation.x = .7; X.userData.knee.rotation.x = .9; }); A.forEach(X => { X.rotation.x = -.8; X.userData.knee.rotation.x = 1.1; }); c.body.rotation.x = -.12; }
+  else {
+    const leg = (X, p) => { const sw = Math.sin(p); X.rotation.x = -sw * (.5 + .25 * runK) * a; X.userData.knee.rotation.x = Math.max(0, Math.cos(p)) * (.85 + .4 * runK) * a; };
+    leg(A[0], c.ph); leg(L[1], c.ph); leg(A[1], c.ph + Math.PI); leg(L[0], c.ph + Math.PI);
+    c.body.rotation.x = Math.sin(c.ph * 2) * .035 * a; }
+  const breathe = Math.sin(t * 2.2) * .008;
+  c.body.position.y = Math.abs(Math.sin(c.ph)) * (.045 + .04 * runK) * a + breathe;
+  c.body.rotation.z = (1 - a) * Math.sin(t * .8) * .02; c.body.position.x = 0;
+  c.spine.rotation.x = -.05 + Math.sin(c.ph * 2) * .06 * a + (1 - a) * Math.sin(t * .6 + c.ph) * .05;
+  c.spine.rotation.y = (1 - a) * Math.sin(t * .45 + c.ph) * .35 + (c.look || 0) * .6;
+  c.head.rotation.y = (c.look || 0) * .4 + (1 - a) * Math.sin(t * .37 + 1) * .15; c.head.rotation.z = (1 - a) * Math.sin(t * .5) * .08;
+  c.head.rotation.x = (c.nod ? Math.sin(t * 9) * .12 : 0);
+  c.tail.rotation.y = Math.sin(t * (a > .5 ? 9 : 4) + c.ph) * (.35 + .25 * a); c.tail.rotation.z = 0;
+  c.blink -= dt; c.eyes.scale.y = c.blink < .12 ? .1 : 1; if (c.blink < 0) c.blink = 2 + Math.random() * 4;
+  if (c.brows) c.brows.forEach(b => b.position.y = c.nod ? Math.abs(Math.sin(t * 4)) * .025 : 0);
 }
 // one frame of moving: speed is how fast they are going (0 = standing still)
 function w3Anim(c, dt, speed, air, t) {
+  if (c.quad) return w3AnimQuad(c, dt, speed, air, t);
   const runK = Math.min(1, Math.max(0, (speed - 6) / 4));
   c.amp += ((speed > .05 ? Math.min(1, .55 + speed * .06) : 0) - c.amp) * Math.min(1, dt * 10);
   c.ph += dt * (5 + speed * 1.05) * (speed > .05 ? 1 : 0);
@@ -4842,7 +4898,7 @@ function w3Tick() {
   // place name + what you can do here
   let best = "village", bd = 1e9; Object.entries(TOWN_SPOT).forEach(([k2, [x, y]]) => { const d = Math.hypot(x / 20 - W.x, y / 20 - W.z); if (d < bd) { bd = d; best = k2; } });
   if (W.place !== best) { W.place = best; S.worldAt = best; const pl = document.getElementById("w3place"); if (pl) pl.textContent = WORLD_NAMES[best] || "Animal Burrow"; }
-  let door = null; W.blds.forEach(b => { if (b.door && Math.hypot(W.x - b.door[0], W.z - b.door[1]) < 3.4) door = b; });
+  let door = null, dd0 = 3.4; W.blds.forEach(b => { if (!b.door) return; const dd = Math.hypot(W.x - b.door[0], W.z - b.door[1]); if (dd < dd0) { dd0 = dd; door = b; } });
   const key = (near ? "p" + near.i : "") + "|" + (door ? door.n + door.label : "");
   if (key !== W.actKey && !W.talk) { W.actKey = key; const act = document.getElementById("w3act");
     if (act) act.innerHTML = (near ? `<button class="rainbow" onclick="w3TalkOpen(${near.i})">Talk to ${near.f.name}</button>` : "") + (!door ? "" : door.lot ? `<button class="green" onclick="lotScreen(${door.what.slice(4)})">Open your own place here!</button>` : (door.what ? `<button class="green" onclick="w3Enter('${door.what}')">Go into ${esc(door.label)}</button>` : "") + `<button class="soft" onclick="renamePlace('${placeKey(TOWN_BLD[door.n], door.n)}')">${door.what ? "Name it" : door.label ? "Rename this house" : "Name this house"}</button>`); }
@@ -6334,6 +6390,7 @@ document.head.insertAdjacentHTML("beforeend", `<style>.w3-ask{margin-bottom:8px}
 const ACT_SPOT = { kitchen: "village", boat: "lake" };
 function act3DSpot(A) { return TOWN_SPOT[A[2]] ? A[2] : ACT_SPOT[A[2]] || null; }
 function act3D(key) {
+  if (SHOPS[key]) { try { closePopup(); } catch (e) {} if (W3) { try { w3Stop(); } catch (e) {} } S.act = { i: S.act.i, from: "shop" }; return activity(key, 0); }
   const f = friends()[S.act.i], A = ACTS.find(a => a[0] === key), spot = act3DSpot(A);
   S.actRun = { key, step: 0, i: S.act.i };
   if (!spot) { S.guest = f.name; S.visitSaid = ""; S.visitReply = ""; houseScreen(); setTimeout(actShow, 500); return; }
@@ -6387,6 +6444,65 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 .act-title{font-weight:900;font-size:17px;color:#7a3fd1;margin-bottom:4px}
 .act-story{margin:2px 0 6px;font-size:14px;opacity:.85}
 .act-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}.act-list button{margin:0;font-size:14px;padding:8px}.act-list .fav{background:#ffe4f1}
+</style>`);
+
+// ===== Sneaky Paws: the secret app for sneaking around behind your partner's back (soap-opera drama) =====
+APP_ICON.sneaky = `<svg viewBox="0 0 24 24"><path d="M3 12c2.5-4 5.6-6 9-6s6.5 2 9 6c-2.5 4-5.6 6-9 6s-6.5-2-9-6Z" fill="#fff"/><circle cx="12" cy="12" r="3.2" fill="#2a1840"/><path d="M4 4l16 16" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`;
+const SNEAKY_SAY = ["Psst... wanna get secret ice cream later? 🍦🤫", "Don't tell anyone, but I think you're really cute. 🙈", "Meet me behind the bakery? Come alone. 👀", "I can't stop thinking about you. Is that bad? 😳"];
+const SNEAKY_REPLY = {
+  yes: ["OMG. Yes. But what about your partner?? ...Okay fine, I won't tell. 🤫", "Ooh, a secret! I LOVE secrets. I'll be there. 👀", "*blushes* You're SO naughty. ...See you there. 😳"],
+  no: ["Um... aren't you with someone?? I'm not doing that. 😬", "No way! I'm not getting in the middle of THAT drama. 🙅", "Hmm. I don't think that's a good idea. Sorry! 😅"]
+};
+const SNEAKY_SPOTS = ["behind the bakery", "at the far end of the Lake", "in the back row of the cinema", "under the Big Oak Treehouse", "at the Berry Patch"];
+function sneakyApp() {
+  const ph = document.getElementById("phone"); ph.style.display = "flex"; ph.dataset.thread = "";
+  const sh = sweetheart(), sus = Math.round(S.sus || 0);
+  ph.innerHTML = `<div class="ph-screen sneaky">${appTop("Sneaky Paws")}
+    <div class="gc-hero">Sneaky Paws<small>Shhh... your secrets are safe here. Probably.</small></div>
+    ${!sh ? `<p class="sk-note">You don't have a partner to sneak around on! You're single, so you can date anyone you want. 😇</p>` : `
+      <div class="sk-meter"><b>How suspicious ${sh.name} is:</b><div class="sk-bar"><i style="width:${sus}%"></i></div><small>${sus < 30 ? "Totally clueless 😌" : sus < 60 ? "Getting a little suspicious 🤨" : "VERY suspicious. Be careful!! 😠"}</small></div>
+      <button class="soft sk-hide" onclick="sneakyHide()">Delete my messages (calms ${sh.name} down)</button>
+      ${friends().filter(f => f.name !== sh.name).map(f => `<div class="ph-contact sk-row">${face(f)}<div><b>${f.name}</b><br><small>${heartBar(S.hearts[f.name])}</small></div>
+        <div class="sk-acts"><button class="soft" onclick="sneakyMsg('${f.name}')">Secret text</button><button class="rainbow" onclick="sneakyDate('${f.name}')">Secret date</button></div></div>`).join("")}`}
+  </div>`;
+  noEmoji(ph); setTimeout(phMore, 30);
+}
+function sneakyRisk(add) {
+  S.sus = Math.min(100, (S.sus || 0) + add);
+  const sh = sweetheart(); if (!sh || S.caught) return false;
+  if (Math.random() * 100 < S.sus * .55) { S.sus = 0; return true; }
+  return false;
+}
+function sneakyCaught(name, where) {
+  const sh = sweetheart(); S.caught = { by: sh.name, with: name, where }; if (S.wed && S.wed.done) S.caughtWith = name; addHearts(sh, -2);
+  deliver(sh.name, pickOne(CAUGHT_TEXT).map(l => l.replace("{X}", name)));
+  setTimeout(() => { closePhone(); popup(`<h2>Uh oh... 😱</h2><p>${sh.name} found out about you and ${name}!</p><p>${sh.name} is on the way to your house RIGHT NOW.</p><button class="rainbow" onclick="closePopup(); houseScreen()">Go home and face it</button>`); }, 1800);
+}
+function sneakyMsg(name) {
+  const f = fName(name), sh = sweetheart(); if (!f || !sh) return;
+  const yes = S.hearts[name] >= 3 || Math.random() < .5;
+  texts(name).push({ from: "me", t: pickOne(SNEAKY_SAY), read: true });
+  deliver(name, [pickOne(yes ? SNEAKY_REPLY.yes : SNEAKY_REPLY.no)]);
+  if (yes) addHearts(f, 1);
+  chime(); if (sneakyRisk(12)) return sneakyCaught(name, "your phone");
+  sneakyApp();
+}
+function sneakyDate(name) {
+  const f = fName(name), sh = sweetheart(); if (!f || !sh) return;
+  const where = pickOne(SNEAKY_SPOTS); addHearts(f, 2); chime(); floatHearts(3);
+  try { postFeed(pickOne(friends().filter(x => x.name !== name && x.name !== sh.name)).name, `Okay WHO was that sneaking around ${where} with ${name}?? 👀👀`); } catch (e) {}
+  if (sneakyRisk(25)) return sneakyCaught(name, where);
+  popup(`<h2>Secret date! 🤫</h2><div class="life-row">${lifeImg(myKind())}${lifeImg(ART[f.emo])}</div><p>You and ${name} sneak off ${where}. You share a milkshake and giggle the whole time.</p>
+    <div class="bubble"><b>${name}:</b> "${voiceLine(f, pickOne(["This is SO sneaky. My heart is going a million miles an hour! 😳", "We're like spies! Secret love spies! 🕵️", "If " + sh.name + " finds out, we're SO in trouble. 😬"]))}"</div>
+    <p><b>+2 ❤️ with ${name}</b>... but ${sh.name} is getting more suspicious.</p><button class="rainbow" onclick="closePopup(); sneakyApp()">Sneak back home</button>`);
+}
+function sneakyHide() { S.sus = Math.max(0, (S.sus || 0) - 15); chime(); sneakyApp(); }
+document.head.insertAdjacentHTML("beforeend", `<style>
+.ph-screen.sneaky{background:linear-gradient(#141018,#2a1030)}.ph-screen.sneaky .ph-top{background:#3a1a3a;color:#fff}
+.sk-note{color:#fff;text-align:center;padding:10px 16px;flex-shrink:0}
+.sk-meter{color:#fff;margin:6px 14px;flex-shrink:0}.sk-bar{height:12px;border-radius:8px;background:#ffffff33;overflow:hidden;margin:4px 0}.sk-bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd23b,#ff3b6b)}
+.sk-hide{margin:4px 14px;flex-shrink:0}
+.ph-screen.sneaky .sk-row{background:#ffffff10;color:#fff;border-bottom:1px solid #ffffff20;flex-wrap:wrap}.sk-acts{display:flex;gap:4px;margin-left:auto}.sk-acts button{font-size:12px;padding:6px 8px;margin:0}
 </style>`);
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
