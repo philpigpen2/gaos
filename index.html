@@ -3901,7 +3901,7 @@ const TOWN_BLD = [ // [sprite, x, y, width, what happens when you tap it, label]
   ["t_icecream", 1250, 1110, 200, "shop:icecream", "Scoops Ice Cream"], ["t_flowers", 750, 1110, 200, "shop:flowers", "Flower Shop"], ["t_cinema", 1500, 820, 220, "shop:cinema", "Starlight Cinema"],
   ["t_arcade", 520, 800, 200, "shop:arcade", "Arcade"], ["t_studio", 1170, 560, 250, "shows", "Game Show Studio"], ["t_library", 620, 580, 230, "eyes:library", "Tree Library"],
   ["t_treehouse", 1720, 520, 260, "eyes:treehouse", "Treehouse"], ["t_campfire", 1330, 1300, 170, "eyes:campfire", "Campfire"], ["t_fountain", 1000, 990, 190, "eyes:village", "Town Square"],
-  ["t_house1", 400, 1100, 170, "", ""], ["t_house2", 1620, 1100, 170, "", ""], ["t_house3", 1560, 640, 170, "", ""], ["t_house1", 860, 1440, 150, "", ""], ["t_house2", 1150, 1440, 150, "", ""], ["t_house3", 1640, 330, 250, "hospital", "Hospital"]
+  ["t_house1", 400, 1100, 170, "", ""], ["t_house2", 1620, 1100, 170, "", ""], ["t_house3", 1560, 640, 170, "", ""], ["t_house1", 860, 1440, 150, "", ""], ["t_house2", 1150, 1440, 150, "", ""], ["t_house3", 1640, 330, 250, "hospital", "Hospital"], ["t_house2", 210, 1560, 210, "adopt", "Adoption Center"]
 ];
 const LOTS = [[860, 290], [1140, 290], [1800, 880]];
 LOTS.forEach(([x, y], i) => TOWN_BLD.push(["t_lot", x, y, 190, "lot:" + i, "For sale"]));
@@ -4387,7 +4387,7 @@ function w3Start(start) {
   inst(new THREE.IcosahedronGeometry(1.3, 0), birchM, trees.birch, (o, t) => at(o, t, 3.6, 1.3));
   // buildings
   const blds = [];
-  TOWN_BLD.forEach((b, n) => { const [sp, px, py, pw, what, label] = b, kind = what.startsWith("shop:") ? what.slice(5) : what === "home" ? "home" : what === "shows" ? "shows" : what === "eyes:library" ? "library" : what === "hospital" ? "hospital" : what ? "" : "house";
+  TOWN_BLD.forEach((b, n) => { const [sp, px, py, pw, what, label] = b, kind = what.startsWith("shop:") ? what.slice(5) : what === "home" ? "home" : what === "shows" ? "shows" : what === "eyes:library" ? "library" : what === "hospital" ? "hospital" : what === "adopt" ? "adopt" : what ? "" : "house";
     const x = px / 20, z = py / 20;
     if (what === "eyes:village") { // fountain
       const st = new THREE.MeshStandardMaterial({ color: 0xbdb6ab, roughness: .8 });
@@ -4415,8 +4415,8 @@ function w3Start(start) {
     const mineT = what.startsWith("shop:my") && SHOPS[what.slice(5)] ? LOT_TYPES[SHOPS[what.slice(5)].mine] : null;
     const [wallC, roofC] = mineT ? [mineT.wall, mineT.roof] : W3_COL[kind] || W3_COL.house;
     const w = pw * .036, d = w * .8, h = w * (kind === "shows" ? .75 : .62), cz = z - d / 2;
-    const style = mineT ? mineT.style : { home:"siding", cafe:"brick", bakery:"plaster", icecream:"siding", flowers:"plaster", cinema:"brick", arcade:"plaster", shows:"plaster", library:"stone", hospital:"plaster" }[kind] || (n % 2 ? "brick" : "siding");
-    const shop = what.startsWith("shop:") || kind === "shows" || kind === "library" || kind === "hospital";
+    const style = mineT ? mineT.style : { home:"siding", cafe:"brick", bakery:"plaster", icecream:"siding", flowers:"plaster", cinema:"brick", arcade:"plaster", shows:"plaster", library:"stone", hospital:"plaster", adopt:"siding" }[kind] || (n % 2 ? "brick" : "siding");
+    const shop = what.startsWith("shop:") || kind === "shows" || kind === "library" || kind === "hospital" || kind === "adopt";
     const g = w3Building({ w, d, h, wall: wallC, roof: roofC, style, shop, xmas, chimney: !shop || kind === "bakery", door: kind === "home" ? 0x3a7bd5 : mineT ? mineT.awn : null,
       awning: shop && !["cinema", "arcade", "shows", "library"].includes(kind) ? (mineT ? mineT.awn : roofC) : null, sign: shop || kind === "home" ? label : null });
     g.position.set(x, 0, cz); sc.add(g);
@@ -7952,6 +7952,100 @@ function famHouse(ci, mode, pick) {
 }
 function famBringToggle(ci, name) { S.famBring = S.famBring || []; const i = S.famBring.indexOf(name); if (i >= 0) S.famBring.splice(i, 1); else S.famBring.push(name); famHouse(ci); }
 document.head.insertAdjacentHTML("beforeend", `<style>.fam-kid{display:inline-flex;flex-direction:column;align-items:center;margin:0 4px}.fam-kid img{width:64px;height:64px;object-fit:contain}.fam-kid small{display:block;font-size:11px;opacity:.7}</style>`);
+
+// ===== Adoption Center: babies waiting for a family. Pick one, name them, take them home =====
+W3_COL.adopt = [0xfff0f6, 0xff8fb8];
+const ADOPT_KINDS = ["fox", "bunny", "bear", "deer", "raccoon", "squirrel", "otter", "hedgehog", "mouse", "beaver", "badger", "wolf"];
+const ADOPT_TRAIT = ["loves giggling at everything", "is a champion napper", "is always hungry for berries", "is very, very curious", "gives the best tiny hugs", "hums little songs", "loves being carried around", "is a bit shy but SO sweet", "laughs at bubbles", "never lets go of their teddy"];
+const ADOPT_STAFF = "Mrs. Featherby";
+let ADOPT3 = null;
+function adoptBabies() {
+  const day = S.tday || S.day || 1, r = gcRand("adopt" + day), used = new Set([...friends().map(f => f.name), ...mmAllKids().map(x => x.k.name)]);
+  const names = MM_KID_NAMES.concat(["Pudding", "Button", "Maple Jr.", "Hazelnut", "Pip Jr.", "Tulip", "Pickle", "Marshmallow", "Clover", "Bumble"]).filter(n => !used.has(n));
+  const taken = (S.adoptedToday && S.adoptedToday.day === day) ? S.adoptedToday.ids : [];
+  return [0, 1, 2, 3].map(i => ({ id: i, kind: ADOPT_KINDS[Math.floor(r() * ADOPT_KINDS.length)], name: names[Math.floor(r() * names.length)] || "Bean", trait: ADOPT_TRAIT[Math.floor(r() * ADOPT_TRAIT.length)] })).filter(b => !taken.includes(b.id));
+}
+function adopt3Stop() { if (!ADOPT3) return; cancelAnimationFrame(ADOPT3.raf); removeEventListener("resize", ADOPT3.resize); try { ADOPT3.R.dispose(); } catch (e) {} ADOPT3 = null; }
+function adopt3Start(babies, pick) {
+  const cv = document.getElementById("adC"); if (!cv || !window.THREE) return; adopt3Stop();
+  if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+  const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true }); R.setPixelRatio(Math.min(devicePixelRatio || 1, 1.6)); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.shadowMap.enabled = true;
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(0xffe6f0);
+  const M = (c, r = .8) => new THREE.MeshStandardMaterial({ color: c, roughness: r });
+  const box = (w, h, d, c, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(c)); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; sc.add(o); return o; };
+  sc.add(new THREE.HemisphereLight(0xfff6fa, 0xb08aa0, .8)); const key = new THREE.DirectionalLight(0xfff0e8, 1.1); key.position.set(2, 7, 5); key.castShadow = true; sc.add(key);
+  const fl = new THREE.Mesh(new THREE.PlaneGeometry(12, 9).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xf2d7b8, roughness: .6, map: w3Canvas("d3plank", 256, 256, D3_PLANK_DRAW) })); fl.receiveShadow = true; sc.add(fl);
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(12, 5), M(0xffe6f0, .95)); wall.position.set(0, 2.5, -2.6); sc.add(wall);
+  const strip = new THREE.Mesh(new THREE.PlaneGeometry(12, .5), new THREE.MeshBasicMaterial({ map: w3Canvas("adoptstrip", 256, 16, g => { for (let i = 0; i < 16; i++) { g.fillStyle = ["#ffb3d1", "#b3e0ff", "#fff0a8", "#c8f0c0"][i % 4]; g.beginPath(); g.arc(i * 16 + 8, 8, 6, 0, 7); g.fill(); } }) })); strip.position.set(0, 2.2, -2.58); sc.add(strip);
+  const win = new THREE.Mesh(new THREE.PlaneGeometry(2, 1.3), new THREE.MeshBasicMaterial({ map: w3Canvas("d3win", 256, 160, D3_WIN_DRAW) })); win.position.set(3.4, 3, -2.58); sc.add(win);
+  // a mobile with stars, and cribs in a row
+  const mob = new THREE.Group(); [0, 1, 2, 3, 4].forEach(i => { const st = new THREE.Mesh(new THREE.OctahedronGeometry(.12), new THREE.MeshBasicMaterial({ color: [0xffd23b, 0xff8fb8, 0x8fd3ff][i % 3] })); st.position.set(Math.cos(i * 1.26) * .5, -.3 - (i % 2) * .15, Math.sin(i * 1.26) * .5); mob.add(st); }); mob.position.set(0, 3.8, -.6); sc.add(mob);
+  const n = babies.length, xs = babies.map((b, i) => (i - (n - 1) / 2) * 1.55), people = [];
+  babies.forEach((b, i) => { const x = xs[i], cc = [0xffffff, 0xfff6d8, 0xe8f6ff, 0xffeaf2][i % 4];
+    box(1.3, .08, .9, cc, x, .55, -.6); box(1.3, .6, .06, cc, x, .85, -1.05); box(1.3, .14, .06, cc, x, .62, -.15); box(.06, .9, .9, cc, x - .65, .7, -.6); box(.06, .9, .9, cc, x + .65, .7, -.6);
+    for (let k = 0; k < 4; k++) box(.05, .3, .05, 0xdcc8b0, x - .5 + k * .33, .4, -.15);
+    const blank = new THREE.Mesh(new THREE.BoxGeometry(1.1, .06, .5), M([0xffb3d1, 0xb3e0ff, 0xfff0a8, 0xc8f0c0][i % 4], 1)); blank.position.set(x, .62, -.45); sc.add(blank);
+    const ch = w3Animal(b.kind, W3_OUTFIT[(i * 3 + 1) % W3_OUTFIT.length], XMAS()); ch.g.scale.setScalar(w3Size(b.kind) / 2 * .52); ch.g.position.set(x, .6, -.55); ch.g.rotation.y = .5 * (i % 2 ? 1 : -1); ch.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); sc.add(ch.g);
+    const lab = w3Label(b.name); lab.position.set(x, 1.75, -.6); lab.scale.multiplyScalar(.55); sc.add(lab);
+    if (pick === b.id) { const ring = new THREE.Mesh(new THREE.TorusGeometry(.75, .05, 8, 40).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff5aa8 })); ring.position.set(x, .05, -.6); sc.add(ring); }
+    people.push(ch); });
+  const cam = new THREE.PerspectiveCamera(45, 1, .1, 60);
+  const resize = () => { const w = cv.clientWidth || 390, h = cv.clientHeight || 300; R.setSize(w, h, false); cam.aspect = w / h; const narrow = w < h; cam.fov = narrow ? 64 : 42; cam.updateProjectionMatrix();
+    const span = Math.max(2, (n - 1) * 1.55 + 1.6), dist = narrow ? span * 1.55 + 1.2 : span * .9 + 2.4; cam.position.set(0, 3.1, dist); cam.lookAt(0, .75, -.6); }; resize();
+  ADOPT3 = { R, sc, cam, people, resize, t: 0, last: performance.now() }; addEventListener("resize", resize);
+  const loop = () => { if (!ADOPT3 || !document.getElementById("adC")) return adopt3Stop(); const now = performance.now(), dt = Math.min(.05, (now - ADOPT3.last) / 1000); ADOPT3.last = now; ADOPT3.t += dt;
+    ADOPT3.people.forEach((c, i) => { c.look = Math.sin(ADOPT3.t * .7 + i * 2) * .6; c.nod = Math.sin(ADOPT3.t * .9 + i) > .92; w3Anim(c, dt, 0, false, ADOPT3.t + i * 3); });
+    mob.rotation.y += dt * .5; R.render(sc, cam); ADOPT3.raf = requestAnimationFrame(loop); };
+  loop();
+}
+function adoptScreen(pick, step) {
+  try { townSave(); } catch (e) {}
+  const babies = adoptBabies(), sp = (() => { try { return spouse(); } catch (e) { return null; } })(), kids = S.kids || [];
+  let bubble = "", panel = "";
+  const b = babies.find(x => x.id === pick);
+  if (kids.length >= 6) { bubble = `<b>${ADOPT_STAFF}:</b> "Goodness, you already have SIX little ones! That's a full house. Come visit the babies anytime, though. 💕"`; panel = `<button class="soft" onclick="adopt3Stop(); goOutside()">Back outside</button>`; }
+  else if (!babies.length) { bubble = `<b>${ADOPT_STAFF}:</b> "All of today's babies have found homes! 🥹 Come back tomorrow."`; panel = `<button class="soft" onclick="adopt3Stop(); goOutside()">Back outside</button>`; }
+  else if (!b) {
+    bubble = `<b>${ADOPT_STAFF}:</b> "${pickOne(["Welcome to the Adoption Center, dear! These little ones are all waiting for a loving family. 💕", "Hello! Every baby here is looking for a home. Take your time and say hello.", "Shhh, a few of them are napping. Come and meet them!"])}"`;
+    panel = `<h2>Meet the babies</h2><div class="ad-list">${babies.map(x => `<button class="soft ad-baby" onclick="adoptScreen(${x.id})">${lifeImg(x.kind, "life-pic kid-Baby")}<span><b>${esc(x.name)}</b><small>A baby ${x.kind}. ${x.name} ${x.trait}.</small></span></button>`).join("")}</div>
+      <button class="soft" onclick="adopt3Stop(); goOutside()">Back outside</button>`;
+  } else if (!step) {
+    bubble = `<b>${ADOPT_STAFF}:</b> "This is ${esc(b.name)}. ${esc(b.name)} ${b.trait}. ${pickOne(["I think they like you already!", "Look, they're reaching for you! 🥹", "Would you like to hold them?"])}"`;
+    panel = `<h2>Adopt ${esc(b.name)}?</h2><p class="sub">You can keep the name or give them a new one.</p>
+      <input id="adName" class="ad-name" maxlength="16" value="${esc(b.name)}">
+      <p id="adErr" class="err" style="min-height:1em"></p>
+      <div><button class="rainbow" onclick="adoptGo(${b.id})">Adopt ${esc(b.name)} 💕</button><button class="soft" onclick="adoptScreen()">Meet the others</button></div>`;
+  }
+  show(`<div class="scene pov"><div class="pov-stage d3-stage"><canvas id="adC"></canvas><div class="pov-label">Adoption Center</div><button class="pov-exit" onclick="adopt3Stop(); goOutside()">Exit</button></div>
+    ${bubble ? `<div class="bubble">${bubble}</div>` : ""}</div><div class="box center">${panel}</div>`);
+  app.classList.remove("enter"); document.body.classList.add("immersive", "meet"); scrollTo(0, 0);
+  loadThree().then(() => { try { adopt3Start(babies.length ? babies : [], pick); } catch (e) { console.warn(e); } }).catch(() => {});
+}
+function adoptGo(id) {
+  const b = adoptBabies().find(x => x.id === id); if (!b) return adoptScreen();
+  const inp = document.getElementById("adName"), raw = ((inp && inp.value) || b.name).replace(/[<>"'`]/g, "").trim().slice(0, 16) || b.name, t = normalize(raw);
+  if (SAFE.swear.test(" " + t + " ") || SAFE.info.test(" " + t + " ") || /https?:|www\.|@|\d{3,}/.test(raw)) { const e = document.getElementById("adErr"); if (e) e.textContent = "Let's pick a different name!"; return; }
+  S.kids = S.kids || []; S.kids.push({ name: raw, kind: b.kind, born: S.day, stage: "Baby", adopted: true });
+  const day = S.tday || S.day; S.adoptedToday = S.adoptedToday && S.adoptedToday.day === day ? S.adoptedToday : { day, ids: [] }; S.adoptedToday.ids.push(id);
+  adopt3Stop(); chime(); try { confetti(); } catch (e) {} try { floatHearts(8); } catch (e) {}
+  let sp = null; try { sp = spouse(); } catch (e) {}
+  if (sp) setTimeout(() => { try { textFrom(sp.name, pickOne([`WE HAVE A BABY?! ${raw}?! I'm crying. I'm actually crying. 😭💕 Bring them home RIGHT NOW.`, `${raw} is OURS? Oh my goodness. I'm getting the nursery ready! 🍼💕`])); } catch (e) {} }, 2500);
+  try { if (sp) postFeed(sp.name, `Everyone, meet ${raw}! 🍼💕 We just adopted the sweetest little ${b.kind}. Our family just got bigger. I'm crying. Happy crying.`); else postFeed(pickOne(friends()).name, `Did everyone hear?! ${esc(S.name)} just ADOPTED a baby ${b.kind} named ${raw}! 🍼😭 Welcome to the Burrow, little one!`); } catch (e) {}
+  try { friends().filter(f => !sp || f.name !== sp.name).slice(0, 2).forEach((f, n) => setTimeout(() => textFrom(f.name, pickOne([`You ADOPTED a baby?!?! 😭 I need to meet ${raw} immediately!!`, `Congratulations!!! ${raw} is so lucky to have you! 🍼💕`, `OMG a baby!! Can I be the fun auntie?? 🥹`])), 6000 + n * 4000)); } catch (e) {}
+  popup(`<h2>Welcome to the family, ${esc(raw)}! 🍼</h2><div class="life-row">${lifeImg(myKind())}${lifeImg(b.kind, "life-pic kid-Baby")}${sp ? lifeImg(ART[sp.emo]) : ""}</div>
+    <div class="bubble"><b>${ADOPT_STAFF}:</b> "${esc(raw)} is going to be so happy with you. Take good care of each other! 💕"</div>
+    <button class="rainbow" onclick="closePopup(); houseScreen()">Take ${esc(raw)} home</button>`);
+}
+const _townEnterAD = townEnter;
+townEnter = function (what) { if (what === "adopt") return adoptScreen(); return _townEnterAD(what); };
+// other couples adopt too, now and then
+const _lifeNewDayAD = lifeNewDay;
+lifeNewDay = function () { _lifeNewDayAD(); try { const c = pickOne((S.couples || []).filter(c => c.st >= 3 && (c.kids || []).length < 3) || []); if (c && Math.random() < .12) { const b = pickOne(adoptBabies()); if (b) { c.kids = c.kids || []; c.kids.push({ name: b.name, kind: b.kind, born: S.day, stage: "Baby", adopted: true }); setTimeout(() => mmAlert("Adoption alert! 🍼", `${c.a} and ${c.b} adopted a baby ${b.kind} named ${b.name}!`), 9000); } } } catch (e) {} };
+document.head.insertAdjacentHTML("beforeend", `<style>
+.ad-list{display:flex;flex-direction:column;gap:6px;margin:6px 0}.ad-baby{display:flex;align-items:center;gap:10px;text-align:left;width:100%}
+.ad-baby img{width:58px;height:58px;object-fit:contain;flex-shrink:0}.ad-baby small{display:block;font-size:12px;opacity:.75;font-weight:500}
+.ad-name{font:inherit;font-size:20px;text-align:center;border:3px solid #ffb3d1;border-radius:14px;padding:8px 12px;width:min(240px,80%)}
+</style>`);
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
 </script>
