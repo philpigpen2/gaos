@@ -2161,6 +2161,17 @@ const CONFLICT_SAY = [
   "Wow. WOW. Okay. I'm telling EVERYONE what you just said. 📣😤",
   "Hmph! Fine! Staring contest. Loser buys ice cream. And it's gonna be YOU. 😠",
   "You think you can beat ME? HA. Hahaha. *laughs dramatically* Prepare to be AMAZED. 💅"];
+// say "the baby is coming!" and everyone freaks out and rushes you to the hospital
+const BABY_COMING = /\b(the )?bab(y|ies|ys)('?s| is| are)? (is )?(coming|here|on (its|their) way( now)?)\b|\bmy water (just )?broke\b|\bi'?m (having|in) (the |my )?(baby|labor|labour)( now| right now)?\b|\bget me to the hospital\b|\bit'?s (baby )?time\b/;
+const BABY_PANIC = ["WHAT?!?! THE BABY IS COMING?!?! 😱😱 OH MY GOSH OH MY GOSH! Okay! Okay! Don't panic! I'M PANICKING! HOSPITAL! NOW!!",
+  "AAAAH!!! 😱 Right NOW?! Breathe! Breathe! No wait, I need to breathe! Grab the bag! WHERE'S THE BAG?! TO THE HOSPITAL!!",
+  "OH MY GOSH!!! 😱 Okay, everyone stay calm! *runs into a wall* I'm fine! I'M FINE! Let's GO! Hospital! RIGHT NOW!!",
+  "THE BABY?! NOW?!?! 😱🍼 *trips over the cat* I'm calling Dr. Wisewing! No, I'm driving! No, YOU sit! GO GO GO!!"];
+function babyComing(f) {
+  if (!S.preg) { let sp = null; try { sp = spouse(); } catch (e) {} S.preg = { start: S.day, by: sp ? sp.name : f.name, who: "me" }; }
+  setTimeout(() => { try { closePhone(); } catch (e) {} try { if (W3) w3Stop(); } catch (e) {} try { pregTime(); } catch (e) {} }, 2600);
+  return { pts: 0, mood: "confused", fixed: true, say: pickOne(BABY_PANIC) };
+}
 function conflictReply(f) { return { pts: 0, mood: "angry", fixed: true, say: pickOne(CONFLICT_SAY) }; }
 function madSorry(f) {
   if (S.fightOpen) delete S.fightOpen[f.name];
@@ -2169,7 +2180,7 @@ function madSorry(f) {
 }
 function chatReply(f, text) {
   const nt = normalize(text);
-  const r = MAD_AT.test(nt) && !safety(f, nt) ? madSorry(f) : CONFLICT.test(nt) && !safety(f, nt) ? conflictReply(f) : calmDown(f, text, chatReply0(f, text));
+  const r = BABY_COMING.test(nt) ? babyComing(f) : MAD_AT.test(nt) && !safety(f, nt) ? madSorry(f) : CONFLICT.test(nt) && !safety(f, nt) ? conflictReply(f) : (kidTalk(f, nt) || calmDown(f, text, chatReply0(f, text)));
   if (r && r.say) {
     S.saidBy = S.saidBy || {};
     const past = S.saidBy[f.name] = S.saidBy[f.name] || [];
@@ -6923,6 +6934,10 @@ function hospHome() {
     S.kids = S.kids || []; S.kids.push({ name: nm2, kind: [myKind(), ART[sp.emo]][1 - (S.hospPick || 0)], born: S.day, stage: "Baby", twin: true }); }
   S.preg = null; S.lastBaby = S.day; babyHome(S.hospPick || 0);
 }
+// if a baby is on the way when you come back to the game, it's time right away
+let PREG_ASKED = false;
+["eyesScreen", "mapScreen", "houseScreen", "townScreen"].forEach(fn => { const old = window[fn]; if (typeof old !== "function") return;
+  window[fn] = function (...a) { const r = old.apply(this, a); if (S && S.preg && !PREG_ASKED) { PREG_ASKED = true; setTimeout(() => { try { if (S.preg) pregTime(); } catch (e) {} }, 1800); } return r; }; });
 // a new day can bring baby news
 const _lifeNewDayH = lifeNewDay;
 lifeNewDay = function () { _lifeNewDayH(); try { pregNewDay(); } catch (e) {} };
@@ -7395,6 +7410,61 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 .mm-acts{display:flex;flex-wrap:wrap;gap:4px;width:100%}.mm-acts button{margin:0;padding:6px 10px;font-size:13px}
 .mm-class img{width:54px;height:54px}
 </style>`);
+
+// ===== Parents talk about their kids like grown-ups =====
+const KID_WORD = /\b(bab(y|ies|ys)|kids?|kiddos?|child(ren)?|sons?|daughters?|little ones?|toddlers?|teens?|teenagers?|family)\b/;
+const PARENT_SAY = {
+  "Baby": ["Honestly, {k} is the best thing that ever happened to us. We're running on about three hours of sleep, but every time {k} grabs my finger I just melt.",
+    "{k} is teething right now, so it's been a long week. {o} and I are taking turns with the night shifts. Coffee is my best friend.",
+    "Oh, {k} rolled over for the first time yesterday! {o} cried. Okay, I cried too.",
+    "We just had {k}'s check-up with Dr. Wisewing. Healthy, growing, right on track. I was so relieved.",
+    "{k} finally slept through the night! {o} and I didn't know what to do with ourselves. We just lay there staring at the ceiling."],
+  "Little kid": ["{k} has started asking 'why' about everything. Why is the grass green, why do we have to sleep... I'm learning a lot, honestly.",
+    "We're working on sharing at the moment. {k} is getting better at it. Mostly.",
+    "{k} drew a picture of our whole family and {o} put it on the fridge straight away. We're very proud parents.",
+    "{k} has so much energy. I take them to the park every morning and I'm the one who needs a nap afterwards."],
+  "Big kid": ["{k} just started reading chapter books all on their own. I'm so proud I could burst.",
+    "School's going really well. Teacher Hoot says {k} is kind to the other kids, and honestly that matters more to me than any grade.",
+    "{k} wants to join the soccer team, so our weekends are about to get very busy. {o} already bought the orange slices.",
+    "{k} lost a tooth yesterday and made me promise to write the Tooth Fairy a thank-you note. So that's my evening sorted."],
+  "Teen": ["{k} is a teenager now, which means I'm officially 'so embarrassing'. I'm choosing to take that as a compliment.",
+    "We had a really good talk with {k} about responsibility last night. They're growing up so fast. It's a little hard to watch, honestly.",
+    "{k} got their first job at the bakery. {o} and I went in to buy a muffin and {k} pretended not to know us."],
+  "Grown-up": ["{k} is all grown up and doing wonderfully. We still have dinner together every Sunday. I wouldn't miss it for anything.",
+    "{k} moved into their own burrow last month. The house is so quiet now. {o} keeps setting an extra plate at dinner."]
+};
+const PARENT_ASK = [" How about you? Do you think you'd want kids someday?", " Anyway, enough about me. How are YOU doing?", " Parenting is hard work, but it's the best job in the world.", ""];
+function kidCouple(name) { return mmCouples().find(c => (c.a === name || c.b === name) && (c.kids || []).length); }
+function kidTalk(f, nt) {
+  if (/pregnan|having a baby|expecting|bab(y|ies)( is| are)? coming/.test(nt)) return null;
+  const all = mmAllKids(), named = all.find(x => new RegExp("\\b" + x.k.name.toLowerCase().replace(/[^a-z ]/g, "") + "\\b").test(nt));
+  if (!named && !KID_WORD.test(nt)) return null;
+  let sp = null; try { sp = spouse(); } catch (e) {}
+  const mineSp = sp && sp.name === f.name && (S.kids || []).length;
+  const c = kidCouple(f.name);
+  let kids = null, other = "";
+  if (named && (named.parents.includes(f.name) || (named.mine && mineSp))) { kids = named.mine ? S.kids : c.kids; other = named.mine ? S.name : (c.a === f.name ? c.b : c.a); }
+  else if (!named && c) { kids = c.kids; other = c.a === f.name ? c.b : c.a; }
+  else if (!named && mineSp) { kids = S.kids; other = S.name; }
+  if (kids) {
+    const k = named ? named.k : pickOne(kids), st = kidStage(k)[1];
+    const fill = s => s.replace(/\{k\}/g, k.name).replace(/\{o\}/g, other === S.name ? "you" : other);
+    let say = fill(pickOne(PARENT_SAY[st] || PARENT_SAY["Baby"]));
+    if (other === S.name) say = say.replace(/\byou and I\b/gi, "we").replace(/^(\w)/, m => m);
+    if (!named && kids.length > 1) say = `We've got ${kids.length} now: ${kids.map(x => x.name).join(", ").replace(/, ([^,]*)$/, " and $1")}. ` + say;
+    if (other !== S.name) say += pickOne(PARENT_ASK);
+    return { pts: 1, mood: "happy", fixed: true, say };
+  }
+  if (named) { const p = named.parents.filter(n => n !== f.name).join(" and ");
+    return { pts: 1, mood: "happy", fixed: true, say: pickOne([`Oh, ${named.k.name}? ${p}'s little one? Absolutely lovely. I babysat last week and ${named.k.name} was an angel. Mostly.`,
+      `${named.k.name} is doing great from what I hear. ${p} must be so proud. They're wonderful parents.`,
+      `I saw ${named.k.name} at the park yesterday. Such good manners! ${p} are clearly doing something right.`]) }; }
+  if (/\b(do|have|got) you (have |got )?(any )?(kids|children|bab(y|ies))\b|\byour (kids|children|bab(y|ies))\b/.test(nt)) {
+    const anyKid = all.find(x => !x.mine && !x.parents.includes(f.name));
+    return { pts: 1, mood: "happy", fixed: true, say: (anyKid ? `Not yet! Maybe someday, when the time is right. For now I'm happy being the fun grown-up friend to little ${anyKid.k.name}.` : "Not yet! Maybe someday, when the time is right. I think I'd be a pretty good parent, honestly.") };
+  }
+  return null;
+}
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
 </script>
