@@ -5091,7 +5091,7 @@ function w3Tick() {
   let door = null, dd0 = 3.4; W.blds.forEach(b => { if (!b.door) return; const dd = Math.hypot(W.x - b.door[0], W.z - b.door[1]); if (dd < dd0) { dd0 = dd; door = b; } });
   const key = (near ? "p" + near.i : "") + "|" + (door ? door.n + door.label : "");
   if (key !== W.actKey && !W.talk) { W.actKey = key; const act = document.getElementById("w3act");
-    if (act) act.innerHTML = (near ? `<button class="rainbow" onclick="w3TalkOpen(${near.i})">Talk to ${near.f.name}</button>` : "") + (!door ? "" : door.lot ? `<button class="green" onclick="lotScreen(${door.what.slice(4)})">Open your own place here!</button>` : (door.what ? `<button class="green" onclick="w3Enter('${door.what}')">Go into ${esc(door.label)}</button>` : "") + `<button class="soft" onclick="renamePlace('${placeKey(TOWN_BLD[door.n], door.n)}')">${door.what ? "Name it" : door.label ? "Rename this house" : "Name this house"}</button>`); }
+    if (act) act.innerHTML = (near ? `<button class="rainbow" onclick="w3TalkOpen(${near.i})">Talk to ${near.f.name}</button>` : "") + (!door ? "" : door.lot ? `<button class="green" onclick="lotScreen(${door.what.slice(4)})">Open your own place here!</button>` : (door.what ? `<button class="green" onclick="w3Enter('${door.what}')">Go into ${esc(door.label)}</button>` : "") + (door.what && door.what.startsWith("fam:") ? "" : `<button class="soft" onclick="renamePlace('${placeKey(TOWN_BLD[door.n], door.n)}')">${door.what ? "Name it" : door.label ? "Rename this house" : "Name this house"}</button>`)); }
   if (W.say && W.say.p) { const p = W.say.p, v = new THREE.Vector3(p.x, w3HeightAt(p.x, p.z) + p.hgt + .9, p.z).project(W.cam), el = document.getElementById("w3say");
     if (el) { if (W.t > W.say.until || v.z > 1) { el.style.opacity = 0; if (W.t > W.say.until) W.say = null; } else { el.style.opacity = 1; el.style.left = (v.x + 1) / 2 * innerWidth + "px"; el.style.top = (1 - v.y) / 2 * innerHeight + "px"; } } }
   W.R.render(W.sc, W.cam);
@@ -7470,6 +7470,7 @@ function kidTalk(f, nt) {
 }
 
 // ===== 3D dates: you really sit together. A cafe table with food you both eat, a picnic blanket, side-by-side cinema seats =====
+const D3_PLANK_DRAW = g => { for (let i = 0; i < 8; i++) { const v = 205 + Math.random() * 40; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(0, i * 32, 256, 32); g.fillStyle = "rgba(0,0,0,.22)"; g.fillRect(0, i * 32 + 30, 256, 2); g.fillRect((i * 97) % 256, i * 32, 2, 32); } };
 const D3_WIN_DRAW = g => { const gd = g.createLinearGradient(0, 0, 0, 160); gd.addColorStop(0, "#8fd0ff"); gd.addColorStop(1, "#e8f6ff"); g.fillStyle = gd; g.fillRect(0, 0, 256, 160); g.fillStyle = "#7cc45a"; g.fillRect(0, 118, 256, 42); [[40, 100], [120, 92], [200, 104]].forEach(([x, y]) => { g.fillStyle = "#7a5030"; g.fillRect(x - 4, y, 8, 26); g.fillStyle = "#4f9a3a"; g.beginPath(); g.arc(x, y - 6, 26, 0, 7); g.fill(); }); g.fillStyle = "#fff"; g.beginPath(); g.arc(180, 34, 14, 0, 7); g.arc(196, 30, 18, 0, 7); g.arc(214, 36, 12, 0, 7); g.fill(); };
 const DATE3 = { cafe: "table", bakery: "table", icecream: "table", picnic: "blanket", cinema: "seats" };
 const D3_ROOM = { cafe: [0xf1d6b0, 0x9a6a44, 0xffe2b0], bakery: [0xffe0b5, 0xa8703e, 0xfff0c8], icecream: [0xffdbe9, 0xd8f2e6, 0xffffff] };
@@ -7534,7 +7535,7 @@ function d3Start(key, f, mood) {
   let seatA, seatB, faceA, faceB, sitH = 0;
   if (type === "table") {
     const [wall, floorC, accent] = D3_ROOM[key]; sc.background = new THREE.Color(wall);
-    const fl = new THREE.Mesh(new THREE.PlaneGeometry(14, 10).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: floorC, roughness: .55, map: w3Canvas("d3plank", 256, 256, g => { for (let i = 0; i < 8; i++) { const v = 205 + Math.random() * 40; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(0, i * 32, 256, 32); g.fillStyle = "rgba(0,0,0,.22)"; g.fillRect(0, i * 32 + 30, 256, 2); g.fillRect((i * 97) % 256, i * 32, 2, 32); } }) })); fl.receiveShadow = true; sc.add(fl);
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(14, 10).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: floorC, roughness: .55, map: w3Canvas("d3plank", 256, 256, D3_PLANK_DRAW) })); fl.receiveShadow = true; sc.add(fl);
     const wm = M(wall, .95), back = new THREE.Mesh(new THREE.PlaneGeometry(14, 6), wm); back.position.set(0, 3, -3.2); back.receiveShadow = true; sc.add(back);
     box(14, 1.1, .06, accent, 0, .55, -3.15, .5); box(14, .06, .1, 0xffffff, 0, 1.12, -3.13, .4);
     const win = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.7), new THREE.MeshBasicMaterial({ map: w3Canvas("d3win", 256, 160, D3_WIN_DRAW) })); win.position.set(-2.2, 2.4, -3.17); sc.add(win);
@@ -7836,6 +7837,121 @@ const _babyAppSIT = babyApp;
 babyApp = function () { _babyAppSIT(); try { if (!(S.kids || []).length) return; const b = document.querySelector(".by-body"); if (b) b.insertAdjacentHTML("beforeend", sitterOn() ? `<p class="by-note">${sitterOf().name} is babysitting. 🍼</p>` : `<button class="rainbow" onclick="sitterHire()">Hire a babysitter 🍼</button>`); } catch (e) {} };
 const _lifeNewDaySIT = lifeNewDay;
 lifeNewDay = function () { const was = S.sitter; _lifeNewDaySIT(); if (was && !sitterOn()) { S.sitter = null; try { notify(was.name, "I'm heading home now! The kids had the BEST time. Call me again anytime! 💛"); } catch (e) {} } };
+
+// ===== Other families' houses: married couples get a house on the map with their name on it. Visit, see the kids, playdates and sleepovers =====
+let FAM3 = null;
+function famSync() {
+  const cs = (S && S.couples) || [], wed = cs.map((c, i) => [c, i]).filter(([c]) => c.st >= 3 && fName(c.a) && fName(c.b));
+  let k = 0;
+  TOWN_BLD.forEach(b => { if (!/^t_house/.test(b[0])) return; if (b[4] && !b[4].startsWith("fam:")) return;
+    const w = wed[k++]; if (w) { b[4] = "fam:" + w[1]; b[5] = `${w[0].a} & ${w[0].b}'s House`; } else if (b[4].startsWith("fam:")) { b[4] = ""; b[5] = ""; } });
+}
+const _applyPlaceNamesFAM = applyPlaceNames;
+applyPlaceNames = function () { _applyPlaceNamesFAM(); try { famSync(); } catch (e) {} };
+const _townEnterFAM = townEnter;
+townEnter = function (what) { if (what && what.startsWith("fam:")) { try { townSave(); } catch (e) {} return famHouse(+what.slice(4)); } return _townEnterFAM(what); };
+// news of a wedding: the house sign goes up right away
+const _mmStepFAM = mmStep;
+mmStep = function (c, quiet) { const r = _mmStepFAM(c, quiet); try { famSync(); } catch (e) {} return r; };
+
+const FAM_HI = ["Come in, come in! The kids have been asking about you all day. 😊", "Oh, hello! Excuse the mess. Toys EVERYWHERE. Come on in!", "Perfect timing! I just made lemonade. Kids, look who's here!"];
+const FAM_NOKIDS = ["Welcome to our little home! No kids yet. Maybe one day. 💕 Want some lemonade?", "Hi! It's just the two of us for now. Come in, I'll put the kettle on. ☕"];
+const FAM_PLAY = [["Hide and seek", ["{K} hides behind the sofa. Their tail is sticking out. You pretend you can't find them for AGES. 🙈", "You count to ten. {K} is under a blanket, giggling so loud you find them in two seconds. 😂"]],
+  ["Build a block tower", ["You and {K} build a tower SO tall it touches the lamp. Then {K} knocks it down. On purpose. 🧱💥", "{K} says the tower is a castle and you are the dragon. ROAR! 🐉"]],
+  ["Tea party", ["{K} pours you pretend tea. 'It's very hot. Blow on it.' You blow on it. 🫖", "Everyone gets a teddy and a cup. {K}'s teddy is the guest of honour. 🧸☕"]],
+  ["Dance party", ["{K} puts on music and does the wiggliest dance you've ever seen. You copy it. Everyone falls over laughing. 💃", "Freeze dance! {K} freezes in the silliest pose. You can't stop giggling. 🎶"]]];
+const FAM_SLEEP = ["Sleeping bags in a row, a torch under the blanket, and spooky (not too spooky) stories. 🔦", "You build a blanket fort, eat popcorn and whisper secrets until {K} falls asleep mid-sentence. 😴", "Midnight snacks! Shhh! Don't wake the grown-ups! ...{P} definitely heard. 🍪🌙"];
+function famKidsOf(c) { return (c.kids || []).map(k => ({ k, st: kidStage(k) })); }
+function famStop() { if (!FAM3) return; cancelAnimationFrame(FAM3.raf); removeEventListener("resize", FAM3.resize); try { FAM3.R.dispose(); } catch (e) {} FAM3 = null; }
+function famStart(c, extra, night) {
+  const cv = document.getElementById("famC"); if (!cv || !window.THREE) return; famStop();
+  if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+  const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true }); R.setPixelRatio(Math.min(devicePixelRatio || 1, 1.6)); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+  const sc = new THREE.Scene(), h = hashStr(c.a + c.b), walls = [0xf3e3c8, 0xdfeedd, 0xe6e0f5, 0xfbe0e0, 0xdcecf7], wallC = walls[h % walls.length]; sc.background = new THREE.Color(night ? 0x1a1838 : wallC);
+  const M = (col, r = .8) => new THREE.MeshStandardMaterial({ color: col, roughness: r });
+  const box = (w, hh, d, col, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), M(col)); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; sc.add(o); return o; };
+  sc.add(new THREE.HemisphereLight(0xfff6e8, 0x9a7a5a, night ? .18 : .7)); const key = new THREE.DirectionalLight(night ? 0x8899ff : 0xfff0d8, night ? .25 : 1.2); key.position.set(3, 7, 5); key.castShadow = true; Object.assign(key.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7 }); sc.add(key);
+  const lamp = new THREE.PointLight(0xffc880, night ? .9 : .5, 9); lamp.position.set(-3, 2.2, -2.5); sc.add(lamp);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 8).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xc9935a, roughness: .6, map: w3Canvas("d3plank", 256, 256, D3_PLANK_DRAW) })); floor.position.z = -.2; floor.receiveShadow = true; sc.add(floor);
+  const wallM = M(wallC, .95), back = new THREE.Mesh(new THREE.PlaneGeometry(10, 4.5), wallM); back.position.set(0, 2.25, -4.2); back.receiveShadow = true; sc.add(back);
+  [-1, 1].forEach(s => { const w = new THREE.Mesh(new THREE.PlaneGeometry(8, 4.5), wallM); w.rotation.y = -s * Math.PI / 2; w.position.set(s * 5, 2.25, -.2); sc.add(w); });
+  const win = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.4), new THREE.MeshBasicMaterial({ color: night ? 0x22305a : 0xffffff, map: night ? null : w3Canvas("d3win", 256, 160, D3_WIN_DRAW) })); win.position.set(2.3, 2.6, -4.18); sc.add(win);
+  if (night) for (let i = 0; i < 8; i++) { const st = new THREE.Mesh(new THREE.SphereGeometry(.03, 6, 4), new THREE.MeshBasicMaterial({ color: 0xffffff })); st.position.set(1.4 + Math.random() * 1.8, 2.1 + Math.random() * 1, -4.16); sc.add(st); }
+  // sofa, rug, a family photo and toys everywhere
+  const sofaC = [0x6a8ad8, 0xd86a8a, 0x6ab88a, 0xd8a85a][h % 4]; box(3, .5, 1, sofaC, -2.2, .45, -3.4); box(3, .9, .3, sofaC, -2.2, .9, -3.85); box(.3, .7, 1, sofaC, -3.6, .6, -3.4); box(.3, .7, 1, sofaC, -.8, .6, -3.4);
+  const rug = new THREE.Mesh(new THREE.CircleGeometry(2, 40).rotateX(-Math.PI / 2), M([0xffd6e8, 0xd6f0ff, 0xfff0c8][h % 3], 1)); rug.position.set(0, .01, .3); rug.receiveShadow = true; sc.add(rug);
+  box(1, .7, .05, 0x6b4a2a, 0, 2.6, -4.15); box(.86, .56, .03, 0xffe9b0, 0, 2.6, -4.12);
+  [[0xe0403a, -1, 1.4], [0x3a8ae0, -.7, 1.6], [0xf0c030, -.85, 1.3], [0x40b060, 1.6, .9], [0xe0403a, 1.3, 1.2]].forEach(([col, x, z], i) => { const t = box(.28, .28, .28, col, x, .14 + (i === 2 ? .28 : 0), z); t.rotation.y = i * .7; });
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(.22, 16, 12), M(0xff6fa5, .4)); ball.position.set(2.4, .22, 1.8); ball.castShadow = true; sc.add(ball);
+  if (night) [[-1.6, 1.2], [-.4, 1.4], [.8, 1.2], [2, 1.4]].forEach(([x, z], i) => { const bag = new THREE.Mesh(new THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.32, 1.2, 6, 12).rotateX(Math.PI / 2) : new THREE.BoxGeometry(.7, .3, 1.8), M([0x7a5ad8, 0x5ab0d8, 0xd85a8a, 0x5ad87a][i], .9)); bag.position.set(x, .2, z); bag.scale.y = .45; sc.add(bag); });
+  // the family (and you, and any of your kids you brought)
+  const A = fName(c.a), B = fName(c.b), look = f => W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))];
+  const fam = [[ART[A.emo], look(A), 1, A.name], [ART[B.emo], look(B), 1, B.name], ...famKidsOf(c).map(({ k, st }, n) => [k.kind, W3_OUTFIT[(n * 3 + 1) % W3_OUTFIT.length], st[2], k.name]), ...(extra || [])];
+  fam.push([myKind(), [0x9b6bff, 0x2e3a55, 0xffffff, "rainbow"], 1, null]);
+  const spots = [[-2.4, -2.4], [-1.4, -2.3], [-.6, .6], [.8, .9], [1.8, .4], [-1.8, .9], [0, 1.9], [2.6, 1.8], [-.3, -.6]];
+  const people = fam.slice(0, 9).map(([kind, lk, scl, nm], n) => { const ch = w3Animal(kind, lk, XMAS()); ch.g.scale.setScalar(w3Size(kind) / 2 * scl); ch.g.position.set(spots[n][0], 0, spots[n][1]); ch.g.rotation.y = n < 2 ? .4 : Math.random() * 6; ch.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); sc.add(ch.g); ch.calm = n < 2 || night; ch.nm = nm; return ch; });
+  const cam = new THREE.PerspectiveCamera(50, 1, .1, 60);
+  const resize = () => { const w = cv.clientWidth || 390, hh = cv.clientHeight || 300; R.setSize(w, hh, false); cam.aspect = w / hh; cam.fov = w < hh ? 66 : 50; cam.updateProjectionMatrix(); }; resize();
+  cam.position.set(0, 5.6, 7.2); cam.lookAt(0, .2, -.6);
+  FAM3 = { R, sc, cam, people, resize, t: 0, last: performance.now() }; addEventListener("resize", resize);
+  const loop = () => { if (!FAM3 || !document.getElementById("famC")) return famStop(); const now = performance.now(), dt = Math.min(.05, (now - FAM3.last) / 1000); FAM3.last = now; FAM3.t += dt;
+    FAM3.people.forEach((ch, n) => { const g = ch.g;
+      if (ch.calm || ch.tx == null) { ch.wt = (ch.wt ?? n * .5) - dt; w3Anim(ch, dt, 0, false, FAM3.t + n * 2); if (!ch.calm && ch.wt <= 0) { ch.tx = -3.6 + Math.random() * 7.2; ch.tz = -1.6 + Math.random() * 3.8; } }
+      else { const dx = ch.tx - g.position.x, dz = ch.tz - g.position.z, d = Math.hypot(dx, dz);
+        if (d < .1) { ch.tx = null; ch.wt = .6 + Math.random() * 2; w3Anim(ch, dt, 0, false, FAM3.t); }
+        else { const sp = Math.min(d, 1.6 * dt); g.position.x += dx / d * sp; g.position.z += dz / d * sp; ch.heading = w3Turn(ch.heading || 0, Math.atan2(dx, dz), dt * 6); g.rotation.y = ch.heading; w3Anim(ch, dt, 2.6, false, FAM3.t); } } });
+    ball.position.x = 2.4 + Math.sin(FAM3.t * .8) * .3; ball.rotation.z -= dt * 1.5;
+    R.render(sc, cam); FAM3.raf = requestAnimationFrame(loop); };
+  loop();
+}
+function famHouse(ci, mode, pick) {
+  const c = (S.couples || [])[ci]; if (!c) return mapScreen(); const A = fName(c.a), B = fName(c.b); if (!A || !B) return mapScreen();
+  const kids = famKidsOf(c), host = hashStr(c.a + S.day) % 2 ? A : B, other = host === A ? B : A, label = `${c.a} & ${c.b}'s House`;
+  S.famAt = ci; S.famBring = S.famBring || [];
+  const mine = (S.kids || []).filter(k => kidStage(k)[1] !== "Baby"), bring = mine.filter(k => S.famBring.includes(k.name));
+  const extra = bring.map((k, n) => [k.kind, W3_OUTFIT[(n * 3 + 2) % W3_OUTFIT.length], kidStage(k)[2], k.name]);
+  const K = kids.length ? pickOne(kids.filter(x => x.st[1] !== "Baby").length && mode === "sleep" ? kids.filter(x => x.st[1] !== "Baby") : kids).k : null;
+  const kname = () => [K ? esc(K.name) : "", ...bring.map(k => esc(k.name))].filter(Boolean).join(" and ");
+  let bubble = "", panel = "";
+  if (!mode) {
+    bubble = `<b>${host.name}:</b> "${kids.length ? pickOne(FAM_HI) : pickOne(FAM_NOKIDS)}"`;
+    panel = `<h2>${label}</h2>
+      ${kids.length ? `<div class="life-fam">${kids.map(({ k, st }) => `<div class="fam-kid">${lifeImg(k.kind, "life-pic kid-" + st[1].replace(/\W/g, ""))}<span>${esc(k.name)}<small>${st[1]}</small></span></div>`).join("")}</div>` : ""}
+      ${mine.length && kids.length ? `<p class="sub" style="margin:6px 0 2px">Bring your kids along?</p><div>${mine.map(k => `<button class="soft ${S.famBring.includes(k.name) ? "picked" : ""}" onclick="famBringToggle(${ci}, '${esc(k.name).replace(/'/g, "")}')">${esc(k.name)}</button>`).join("")}</div>` : ""}
+      <div style="margin-top:8px">
+      ${kids.length ? `<button class="rainbow" onclick="famHouse(${ci}, 'play')">Playdate 🧸</button><button class="rainbow" onclick="famHouse(${ci}, 'sleep')">Sleepover 🌙</button>` : ""}
+      <button class="soft" onclick="famHouse(${ci}, 'talk')">Chat with ${host.name}</button>
+      <button class="soft" onclick="famStop(); goOutside()">Back outside</button></div>`;
+  } else if (mode === "play") {
+    if (pick === undefined) { bubble = `<b>${esc(K.name)}:</b> "${K && kidStage(K)[1] === "Baby" ? "Goo goo! *claps tiny paws*" : pickOne(["Yay! You're here! What do you want to play?", "PLAY WITH ME! Please please please!", "I've been waiting ALL day!"])}"`;
+      panel = `<h2>Playdate at ${label}</h2><div>${FAM_PLAY.map(([n], i) => `<button class="soft" onclick="famHouse(${ci}, 'play', ${i})">${n}</button>`).join("")}</div><button class="soft" onclick="famHouse(${ci})">Back</button>`; }
+    else { const [n, lines] = FAM_PLAY[pick]; chime(); try { floatHearts(3); } catch (e) {}
+      bubble = `${pickOne(lines).replace(/\{K\}/g, kname())}`;
+      panel = `<h2>${n}!</h2><div class="bubble"><b>${esc(K.name)}:</b> "${pickOne(["That was the BEST! Again? AGAIN?", "You're my favourite grown-up. Don't tell Mum and Dad.", "Can you come back tomorrow? Pleeease?"])}"</div>
+        <div class="bubble"><b>${host.name}:</b> "${pickOne(["Thank you SO much. That's the happiest I've seen them all week.", "You're a natural with kids, you know that?", "They're going to sleep SO well tonight. Thank you!"])}"</div>
+        <div><button class="rainbow" onclick="famHouse(${ci}, 'play')">Play something else</button><button class="soft" onclick="famHouse(${ci})">Back</button></div>`;
+      try { mmAlert("Playdate! 🧸", `You had a playdate at ${label}!`); } catch (e) {} }
+  } else if (mode === "sleep") {
+    const big = kids.filter(x => x.st[1] !== "Baby");
+    if (!big.length) { bubble = `<b>${host.name}:</b> "Aww, the baby's too little for sleepovers! Maybe when they're older. 💕"`; panel = `<button class="soft" onclick="famHouse(${ci})">Back</button>`; }
+    else { chime(); bubble = `${pickOne(FAM_SLEEP).replace(/\{K\}/g, kname()).replace(/\{P\}/g, host.name)}`;
+      panel = `<h2>Sleepover! 🌙</h2><div class="bubble"><b>${esc(K.name)}:</b> "${pickOne(["This is the best sleepover in the history of sleepovers.", "Tell me another story. A funny one. Then a scary one. Then a funny one again.", "Can we stay up ALL night? ...*yawns* ...okay maybe not all night."])}"</div>
+        <div class="bubble"><b>${host.name}:</b> "${pickOne(["Lights out in ten minutes, you lot! ...Okay, fifteen.", "Pancakes for everyone in the morning. 🥞 Goodnight!", "I'll leave the hall light on. Sleep tight!"])}"</div>
+        <button class="rainbow" onclick="famHouse(${ci})">Good morning! ☀️</button>`;
+      try { mmAlert("Sleepover! 🌙", `You're having a sleepover at ${label}!`); } catch (e) {} }
+  } else if (mode === "talk") {
+    const r = kids.length ? kidTalk(host, " how are your kids ") : null;
+    bubble = `<b>${host.name}:</b> "${r ? r.say : pickOne(["Married life is wonderful. " + other.name + " makes me breakfast every Sunday. 🥞", "We're thinking about kids someday. Not yet, though. We just got the sofa clean. 😅", "Honestly? I'm so happy. This little house is everything."])}"`;
+    panel = `<div><button class="soft" onclick="famHouse(${ci}, 'talk')">Ask more</button><button class="soft" onclick="famHouse(${ci})">Back</button></div>`;
+  }
+  const night = mode === "sleep" && kids.some(x => x.st[1] !== "Baby");
+  show(`<div class="scene pov"><div class="pov-stage d3-stage"><canvas id="famC"></canvas><div class="pov-label">${label}</div><button class="pov-exit" onclick="famStop(); goOutside()">Exit</button></div>
+    ${bubble ? `<div class="bubble">${bubble}</div>` : ""}</div><div class="box center">${panel}</div>`);
+  app.classList.remove("enter"); document.body.classList.add("immersive", "meet"); scrollTo(0, 0);
+  loadThree().then(() => { try { famStart(c, extra, night); } catch (e) { console.warn(e); } }).catch(() => {});
+}
+function famBringToggle(ci, name) { S.famBring = S.famBring || []; const i = S.famBring.indexOf(name); if (i >= 0) S.famBring.splice(i, 1); else S.famBring.push(name); famHouse(ci); }
+document.head.insertAdjacentHTML("beforeend", `<style>.fam-kid{display:inline-flex;flex-direction:column;align-items:center;margin:0 4px}.fam-kid img{width:64px;height:64px;object-fit:contain}.fam-kid small{display:block;font-size:11px;opacity:.7}</style>`);
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
 </script>
