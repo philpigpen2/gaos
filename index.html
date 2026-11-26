@@ -2180,7 +2180,7 @@ function madSorry(f) {
 }
 function chatReply(f, text) {
   const nt = normalize(text);
-  const r = BABY_COMING.test(nt) ? babyComing(f) : MAD_AT.test(nt) && !safety(f, nt) ? madSorry(f) : CONFLICT.test(nt) && !safety(f, nt) ? conflictReply(f) : (kidTalk(f, nt) || calmDown(f, text, chatReply0(f, text)));
+  const r = BABY_COMING.test(nt) ? babyComing(f) : typeof UNFRIEND !== 'undefined' && UNFRIEND.test(nt) ? unfriendStart(f) : typeof isUnfriended === 'function' && isUnfriended(f.name) ? unfriendTalk(f, nt) : MAD_AT.test(nt) && !safety(f, nt) ? madSorry(f) : CONFLICT.test(nt) && !safety(f, nt) ? conflictReply(f) : (kidTalk(f, nt) || (typeof spouseTalk === 'function' && spouseTalk(f, nt)) || calmDown(f, text, chatReply0(f, text)));
   if (r && r.say) {
     S.saidBy = S.saidBy || {};
     const past = S.saidBy[f.name] = S.saidBy[f.name] || [];
@@ -2792,6 +2792,7 @@ function sendText(fname) {
   S.textFight = S.textFight || {}; S.convoAt = S.convoAt || {};
   const n = normalize(said), firstMsg = !S.convoAt[fname] || Date.now() - S.convoAt[fname] > 600000;
   S.convoAt[fname] = Date.now();
+  if (typeof unfriendText === 'function' && unfriendText(f, fname, n)) return;
   // a random soap-opera fight: rare, never on the first text, a laugh, an emoji, or anything sad or serious
   const fightOk = !firstMsg && n.split(/\s+/).filter(w => /[a-z]/.test(w)).length >= 3 && !/\b(lol|haha|hehe|lmao)\b/.test(n) && !safety(f, " " + n + " ") && calmFor(f, said, { pts:0 }, {});
   if (fightOk && !S.fightOpen?.[fname] && S.hearts[fname] >= 3 && S.textFight[fname] !== S.day && Math.random() < 0.03 && !has(" " + n + " ", APOLOGY)) {
@@ -3338,6 +3339,8 @@ function realTalk(f, raw, text, t) {
   if (isGibberish(raw)) { S.gibN[f.name] = (S.gibN[f.name] || 0) + 1; return { pts:0, mood:"confused", gib:true, say: pickOne(S.gibN[f.name] >= 3 ? GIB_AGAIN : GIB_SAY) }; }
   S.gibN[f.name] = 0;
   if (MEAN_PHRASE.test(t.trim()) && /\b(jk|just kidding|joking|kidding)\b/.test(t) && !S.fightOpen[f.name]) return { pts:0, mood:"confused", chilly:true, say: pickOne(["Hmm. 'jk.' Sure. 😒", "Wow. Even as a joke, that was kinda rude. 🙄", "Haha. Very funny. ...Not. 😒"]) };
+  if (MEAN_PHRASE.test(t.trim()) && !/\b(my|his|her) (brother|sister|mom|dad|cousin)\b/.test(t) && !S.fightOpen[f.name] && (S.hurtOnce = S.hurtOnce || {})[f.name] !== S.day) { S.hurtOnce[f.name] = S.day;
+    return { pts:0, mood:"sad", fixed:true, chilly:true, say: pickOne(["Wait... what? 😟 Why would you say that? Did I do something wrong?", "Oh. 😕 That kind of hurt. Are you okay? You don't usually talk like that.", "Hey... that wasn't very nice. 🥺 Is something wrong?", "Um. Ouch. 😟 Did I upset you somehow?"]) }; }
   if (MEAN_PHRASE.test(t.trim()) && !/\b(my|his|her) (brother|sister|mom|dad|cousin)\b/.test(t)) { const again = S.fightOpen[f.name]; S.fightOpen[f.name] = true; S.fightLost[f.name] = (S.fightLost[f.name] || 0) + 1; S.chilly[f.name] = 0;
     return { pts:-1, fight:true, mood:"confused", say: again ? pickOne(["Wow. You're making it WORSE. 😤", "Okay, now I'm REALLY not talking to you.", "Keep going. I'm taking screenshots. 📸😒"]) : pickOne(ARGUE.back) }; }
   if (S.fightOpen[f.name] && has(t, APOLOGY)) { const back = Math.min(2, S.fightLost[f.name] || 0); S.fightOpen[f.name] = false; S.fightLost[f.name] = 0; S.madeUp = S.madeUp || {}; S.madeUp[f.name] = Date.now(); S.chilly[f.name] = 3;
@@ -7620,6 +7623,78 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 .d3-stage{position:relative;height:min(52vh,460px);border-radius:18px;overflow:hidden;background:#222}
 .d3-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 </style>`);
+
+// ===== Breaking up a friendship: they say okay, then get upset, then go quiet until you say sorry =====
+const UNFRIEND = /\bi (dont|don't|do not|dont really|don't really) (want to|wanna) be (your )?friends?( with (you|u))?( any ?more)?\b|\b(we'?re|we are|were) not friends( any ?more)?\b|\bi'?m not your friend( any ?more)?\b|\b(let'?s|lets) (not be|stop being) friends\b|\bnot (your )?friends any ?more\b|\bi unfriend (you|u)\b|\bunfriend(ed)?\b|\bi (dont|don't|do not) want to be friends\b/;
+const UNF_OK = ["Oh. Um... okay. If that's what you want.", "...Okay. I get it.", "Oh. Okay then. 😶", "Wow. Okay. If that's how you feel."];
+const UNF_HURT = ["Actually, I've been thinking about what you said. That really hurt. I thought we were friends. 😢", "You know what? That wasn't fair. I was always nice to you. I'm really upset. 😤", "I can't believe you said that. I'm actually really mad now. Don't text me. 😠", "I told everyone you were my friend. Guess not. 💔 I'm not talking to you anymore."];
+const UNF_COLD = ["*doesn't look at you*", "...", "I thought you didn't want to be friends.", "*turns away* I'm not talking to you right now.", "Hmph. 😤"];
+const UNF_BACK = ["...Really? You mean it? 🥺 Okay. Friends again. But please don't say that ever again, okay?", "I was so sad. 😭 Okay, I forgive you. Friends again! 🤝", "You really want to be friends again? ...Okay. I missed you, honestly. 💛", "Fine. FINE. Friends again. 🤝 I was going to forgive you anyway."];
+const UNF_SORRY = /\b(sorry|apologi[sz]e|forgive me|my fault|i didn'?t mean it|i didnt mean it)\b/, UNF_FRIEND = /\b(friends?|be friends|make up|forgive)\b/;
+const isUnfriended = n => !!(S.unfriend && S.unfriend[n]);
+function unfriendStart(f) {
+  S.unfriend = S.unfriend || {}; S.unfriend[f.name] = { day: S.day, at: Date.now(), grace: Date.now() + 6000 };
+  if (S.fightOpen) delete S.fightOpen[f.name];
+  try { addHearts(f, -1); } catch (e) {}
+  setTimeout(() => { if (!isUnfriended(f.name)) return; S.unfriend[f.name].hurt = true; textFrom(f.name, pickOne(UNF_HURT), true); }, 9000 + Math.random() * 5000);
+  return { pts: 0, mood: "sad", fixed: true, say: pickOne(UNF_OK) };
+}
+function unfriendTalk(f, nt) {
+  if (UNF_SORRY.test(nt) && UNF_FRIEND.test(nt)) { delete S.unfriend[f.name]; try { addHearts(f, 1); } catch (e) {} return { pts: 1, mood: "happy", fixed: true, say: pickOne(UNF_BACK) }; }
+  if (UNF_SORRY.test(nt)) return { pts: 0, mood: "sad", fixed: true, say: pickOne(["Sorry for what? You said you didn't want to be friends.", "...Do you want to be friends again or not? 😒"]) };
+  return { pts: 0, mood: "sad", fixed: true, cold: true, say: pickOne(UNF_COLD) };
+}
+// they stop texting you while you're not friends
+const _textFromUNF = textFrom;
+textFrom = function (fname, msg, force) { if (isUnfriended(fname) && !force) return; return _textFromUNF(fname, msg); };
+const _deliverUNF = deliver;
+deliver = function (fname, lines, k = 0, keep = false) { const u = S.unfriend && S.unfriend[fname]; if (u && Date.now() > (u.grace || 0) && !S.unfAllow) return; return _deliverUNF(fname, lines, k, keep); };
+// a text to someone who isn't your friend any more: read, no answer (unless you say sorry and want to be friends)
+function unfriendText(f, fname, n) {
+  if (!isUnfriended(fname)) return false;
+  const box = document.getElementById("phMsgs");
+  const r = unfriendTalk(f, " " + n + " ");
+  setTimeout(() => { const b = document.getElementById("phMsgs"); if (b) b.querySelectorAll(".typing").forEach(x => x.remove());
+    if (r.cold) { if (b) { b.insertAdjacentHTML("beforeend", `<div class="ph-seen">Read ✓✓</div>`); b.scrollTop = b.scrollHeight; } return; }
+    S.unfAllow = true; try { deliver(fname, [r.say], 0, true); } finally { S.unfAllow = false; } }, r.cold ? 900 : 1500);
+  return true;
+}
+document.head.insertAdjacentHTML("beforeend", `<style>.ph-seen{align-self:flex-end;font-size:11px;color:#8a8a9a;margin:-2px 6px 6px;text-align:right}</style>`);
+
+// ===== Your husband or wife talks like your husband or wife =====
+const SP_PET = ["honey", "sweetheart", "my love", "babe", "darling", "sweetie"];
+const SP_TALK = [
+  [/\b(i love (you|u)|love (you|u)|ily|i luv (you|u))\b/, ["I love you too, {p}. More than anything in the whole Burrow. 💍💕", "Love you more, {p}. Always have, always will. 💕", "I love you SO much. Marrying you was the best thing I ever did. 💍"]],
+  [/\b(miss (you|u)|missing (you|u))\b/, ["I miss you too, {p}! Hurry home. I'll put the kettle on. ☕💕", "Come home soon! The house is too quiet without you. 🏡"]],
+  [/\b(good ?morning|gm|morning)\b/, ["Good morning, {p}! ☀️ I made breakfast. Come downstairs! 🥞", "Morning, {p}! 💕 Did you sleep okay? You were snoring a tiny bit. It was cute."]],
+  [/\b(good ?night|gn|going to bed|going to sleep|nighty night)\b/, ["Goodnight, {p}. 😴💕 Sweet dreams. I love you.", "Night night, {p}. I'll turn the lights off. 🌙"]],
+  [/\b(dinner|hungry|cook|cooking|lunch|breakfast|food)\b/, ["I'm making your favourite tonight, {p}. Be home by six! 🍝", "Your turn to cook! 😜 Just kidding, I've got it. Pancakes for dinner?", "Want me to pick up something from Honey Bakery on the way home? 🥐"]],
+  [/\b(where are (you|u)|wya|where r u|come home|are (you|u) home)\b/, ["On my way home, {p}! Need anything from the shop? 🛒", "At home! I'm waiting for you on the sofa. 🏡💕", "Just finishing up at work. Home in ten minutes, {p}!"]],
+  [/\b(date night|go on a date|go out tonight|lets go out|let'?s go out)\b/, ["Date night?! YES. I'll wear my nice sweater. 😍 Acorn Cafe at seven?", "A date with my favourite person? Always. 💕 Where are you taking me?"]],
+  [/\b(wife|husband|married|marriage|wedding|spouse)\b/, ["Best decision I ever made was marrying you, {p}. 💍", "I still look at our wedding photos every day. 🥹💍"]],
+  [/\b(how are (you|u)|hru|how'?s your day|how was your day|wyd|what are (you|u) doing)\b/, ["Better now that you texted me, {p}. 💕 How was YOUR day?", "Busy! I tidied the house{k}. Can't wait to see you tonight. 🏡", "Just thinking about you, {p}. 💕 What are you up to?"]],
+  [/\b(i'?m (sad|tired|stressed|upset)|bad day|rough day)\b/, ["Oh no, {p}. 🥺 Come home and I'll make you cocoa and we'll watch a movie. I've got you.", "I'm sorry, {p}. Want a big hug when you get home? Because you're getting one. 🤗"]]
+];
+const SP_TEXTS = ["Good morning, {p}! ☀️ Don't forget we have date night on Friday. 💕", "Thinking about you, {p}. That's it. That's the text. 💕", "Can you grab some honey on the way home? We ran out! 🍯", "I love you, {p}. Have the best day! 💍", "Dinner's at six! I'm making your favourite. 🍝"];
+const SP_KID_TEXTS = ["{K} just said the funniest thing at breakfast. I'll tell you tonight. 😂", "{K} misses you! They keep asking when you'll be home. 🥹", "Don't forget: {K} has a playdate tomorrow!", "Look at us, {p}. A whole family. 🥹💕"];
+const isSpouse = f => { try { const sp = spouse(); return !!(sp && f && sp.name === f.name); } catch (e) { return false; } };
+const spPet = () => pickOne(SP_PET);
+function spFill(s) { const k = (S.kids || [])[0]; return s.replace(/\{p\}/g, spPet()).replace(/\{K\}/g, k ? k.name : "The baby").replace(/\{k\}/g, k ? ` and played with ${k.name}` : ""); }
+function spouseTalk(f, nt) {
+  if (!isSpouse(f)) return null;
+  for (const [re, lines] of SP_TALK) if (re.test(nt)) return { pts: 1, mood: /love|miss|married|wife|husband/.test(nt) ? "blush" : "happy", fixed: true, say: spFill(pickOne(lines)) };
+  return null;
+}
+const _chatReplySP = chatReply;
+chatReply = function (f, text) {
+  const r = _chatReplySP(f, text);
+  try { if (isSpouse(f) && r && r.say && !r.safe && !r.fight && !r.gib && !r.cold && !r.chilly && !r.fixed && !/honey|sweetheart|my love|babe|darling|sweetie/i.test(r.say) && Math.random() < .45) {
+    const p = spPet(); r.say = (Math.random() < .5 ? `Aww, ${p}! ` : `${p[0].toUpperCase() + p.slice(1)}, `) + r.say[0].toLowerCase() + r.say.slice(1); } } catch (e) {}
+  return r;
+};
+// your spouse texts you like a spouse
+const _lifeNewDaySP = lifeNewDay;
+lifeNewDay = function () { _lifeNewDaySP(); try { const sp = spouse(); if (sp && Math.random() < .6) setTimeout(() => { try { textFrom(sp.name, spFill(pickOne((S.kids || []).length && Math.random() < .5 ? SP_KID_TEXTS : SP_TEXTS))); } catch (e) {} }, 8000 + Math.random() * 20000); } catch (e) {} };
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
 </script>
