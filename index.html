@@ -984,8 +984,10 @@ function show(html) {
   if (typeof W3 !== "undefined" && W3 && !/id="w3"/.test(html)) w3Stop();
   if (typeof LOBBY !== "undefined" && LOBBY && !/id="lobby"/.test(html)) lobbyStop();
   if (typeof H3 !== "undefined" && H3) h3Stop();
+  if (typeof GS3 !== "undefined" && GS3 && !/id="gs3ui"/.test(html)) gs3Stop();
+  if (typeof J3 !== "undefined" && J3 && !/id="j3"/.test(html)) job3DStop();
   try { if (typeof S !== "undefined" && S) applyPlaceNames(); } catch (e) {}
-  document.body.classList.remove("immersive", "world", "meet", "house", "gshow", "walking", "townmode", "w3mode", "lobbymode"); WALK = null; TOWN = null;
+  document.body.classList.remove("immersive", "world", "meet", "house", "gshow", "walking", "townmode", "w3mode", "lobbymode", "gs3mode"); WALK = null; TOWN = null;
   app.innerHTML = html;
   app.classList.remove("enter"); void app.offsetWidth; app.classList.add("enter");
   const m = html.match(/url\(art\/(\w+)\.png\)/); if (m) setBg(m[1]);
@@ -3094,7 +3096,7 @@ function stageScreen(bg, label, people, bubble, panel) {
   document.body.classList.add("immersive", "world", "gshow"); scrollTo(0, 0);
 }
 function gameShows() {
-  S.trophies = S.trophies || {};
+  S.trophies = S.trophies || {}; S.gs = null;
   const won = SHOWS.filter(s => S.trophies[s.k]).map(s => `${s.prize} x${S.trophies[s.k]}`).join(", ");
   stageScreen("tvstudio", "Game Shows", [["host", 50, 46]],
     `<b>${HOST}:</b> "${pickOne(["Welcome, welcome! Which show do you want to be on today?", "Lights! Camera! YOU! Pick a show and apply!", "Ooh, a new star! Which show are you applying for?"])}"`,
@@ -3119,11 +3121,12 @@ function applyShow(k, step = 0, pick = 0) {
 }
 function startShow(k) {
   const all = friends().slice().sort(() => Math.random() - .5);
-  S.gs = { k, rival: all[0].name, step: 0, me: 0, them: 0 };
+  S.gs = { k, rival: all[0].name, step: 0, me: 0, them: 0, live: true, sc: {} };
+  if (k === "quiz" || k === "bake") { S.gs.rivals = all.slice(0, k === "quiz" ? 3 : 2).map(f => f.name); S.gs.rivals.forEach(n => S.gs.sc[n] = 0); }
   if (k === "quiz") { S.gs.qs = QUIZ.slice().sort(() => Math.random() - .5).slice(0, 5); return quizShow(); }
   if (k === "talent") { S.gs.judges = all.slice(0, 3).map(f => f.name); return talentShow(); }
   if (k === "date") { const seen = new Set(); S.gs.doors = all.filter(f => !seen.has(f.type) && seen.add(f.type)).slice(0, 3).map(f => f.name); S.gs.qn = 0; S.gs.qsUsed = []; return dateShow(); }
-  S.gs.judges = all.slice(1, 3).map(f => f.name); return bakeShow();
+  S.gs.judges = all.slice(2, 4).map(f => f.name); return bakeShow();
 }
 // --- Acorn Quiz Showdown ---
 const QUIZ = [
@@ -3142,11 +3145,11 @@ function quizShow(pick) {
   const g = S.gs, r = fName(g.rival); let say = "";
   if (pick !== undefined) {
     const q = g.qs[g.step], right = pick === q[2], theyRight = Math.random() < 0.55;
-    if (right) g.me++; if (theyRight) g.them++;
+    if (right) g.me++; (g.rivals || [g.rival]).forEach((n, k) => { if (k === 0 ? theyRight : Math.random() < .5) g.sc[n] = (g.sc[n] || 0) + 1; }); g.them = Math.max(0, ...Object.values(g.sc));
     say = `<b>${HOST}:</b> "${right ? pickOne(["CORRECT!", "Yes! Point for you!", "Hoo hoo, RIGHT!"]) : `Ooh, no! It was ${q[1][q[2]]}.`}"<br><b>${r.name}:</b> "${right ? pickOne(["Ugh. Lucky guess. 🙄", "Okay, show-off. 💅", "I KNEW that. I was just being nice."]) : theyRight ? pickOne(["Too easy. 😏", "Hehe. Point for me!", "Sorry not sorry! 💅"]) : pickOne(["Oop, we BOTH got it wrong 😂", "Okay that one was hard!"])}"`;
     g.step++;
-  } else say = `<b>${HOST}:</b> "Welcome to the <b>Acorn Quiz Showdown</b>! Tonight, you're up against... <b>${r.name}</b>!"<br><b>${r.name}:</b> "${pickOne(["Hope you studied. 😏", "May the best animal win. (It's me.) 💅", "Don't cry when you lose, okay? Hehe."])}"`;
-  const score = `<p class="sub" style="margin:4px 0">You ${g.me} - ${g.them} ${r.name}</p>`;
+  } else say = `<b>${HOST}:</b> "Welcome to the <b>Acorn Quiz Showdown</b>! Tonight, you're up against... <b>${(g.rivals || [r.name]).join("</b>, <b>").replace(/, <b>([^<]*)$/, " and <b>$1")}</b>!"<br><b>${r.name}:</b> "${pickOne(["Hope you studied. 😏", "May the best animal win. (It's me.) 💅", "Don't cry when you lose, okay? Hehe."])}"`;
+  const score = `<p class="sub" style="margin:4px 0">You ${g.me}${(g.rivals || [g.rival]).map(n => ` · ${n} ${g.sc ? g.sc[n] || 0 : g.them}`).join("")}</p>`;
   if (g.step >= g.qs.length) return showEnd(g.me >= g.them, say + `<br><b>${HOST}:</b> "${g.me >= g.them ? (g.me === g.them ? "A TIE! But you buzzed in first, so YOU win!" : "And the winner is... YOU!") : `${r.name} wins this time!`}"`, score);
   const q = g.qs[g.step];
   stageScreen("tvstudio", "Acorn Quiz Showdown", [["host", 22, 40], [r, 78, 42]], say,
@@ -3200,10 +3203,10 @@ function dateShow(qi, pickDoor) {
 const BAKE_STEPS = [["What are you baking?", ["Honey cake", "Strawberry tart", "Chocolate cupcakes"]], ["Uh oh, the timer! What do you do?", ["Bake faster!", "Stay calm", "Turn the oven up"]], ["Decorate it!", ["Sprinkles everywhere", "Flower petals", "A tiny picture of the judges"]]];
 function bakeShow(pick) {
   const g = S.gs, r = fName(g.rival); let say;
-  if (pick === undefined) say = `<b>${HOST}:</b> "Welcome to <b>Bake Battle</b>! You're baking against... <b>${r.name}</b>! Ready, set, BAKE!"<br><b>${r.name}:</b> "${pickOne(["My cake is going to make yours CRY. 😏", "Hope you like losing. Hehe. 💅", "Good luck. You'll need it. 😇"])}"`;
+  if (pick === undefined) say = `<b>${HOST}:</b> "Welcome to <b>Bake Battle</b>! You're baking against... <b>${(g.rivals || [r.name]).join("</b> and <b>")}</b>! Ready, set, BAKE!"<br><b>${r.name}:</b> "${pickOne(["My cake is going to make yours CRY. 😏", "Hope you like losing. Hehe. 💅", "Good luck. You'll need it. 😇"])}"`;
   else {
     const pts = g.step === 1 && pick === 2 ? (Math.random() < 0.5 ? 3 : 0) : 1 + Math.floor(Math.random() * 3);
-    g.me += pts; g.them += 1 + Math.floor(Math.random() * 3);
+    g.me += pts; (g.rivals || [g.rival]).forEach(n => g.sc[n] = (g.sc[n] || 0) + 1 + Math.floor(Math.random() * 3)); g.them = Math.max(0, ...Object.values(g.sc));
     say = g.step === 1 && pick === 2 && !pts ? `<b>${HOST}:</b> "Oh no, a little smoke! It's okay, it's still yummy... ish."` : `<b>${HOST}:</b> "${pickOne(["Ooh, it smells AMAZING over here!", "Look at that! Beautiful!", "The judges are drooling!"])}"`;
     say += `<br><b>${r.name}:</b> "${pickOne(["*bumps your bowl* Oops. 😇 Totally an accident.", "Did you just copy my sprinkles?! 😤", "Mine looks better. Just saying. 💅", "Wait, how is yours so good?? 😳"])}"`;
     g.step++;
@@ -7078,6 +7081,157 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 #byWish.full{background:linear-gradient(#ff7aa8,#ff3b80)}#byWish.full .by-pair,#byWish.full p{opacity:0;transition:opacity .8s}
 .by-hearts i{position:absolute;bottom:-60px;font-style:normal;animation:byUp 2.6s ease-in forwards}
 @keyframes byUp{to{transform:translateY(-120vh) rotate(25deg)}}@keyframes byIn{from{opacity:0}}
+</style>`);
+
+// ===== Game shows in 3D: a real TV studio with a video wall, light towers, spotlights, an audience, and every contestant on a glowing pedestal =====
+let GS3 = null;
+const GS3_THEME = { "Game Shows": [0xff4fa0, 0x45d0ff, "#ff4fa0", "#5a2a9a"], "Acorn Quiz Showdown": [0x3b8bff, 0xffc83b, "#1a4fd8", "#0a1a5a"],
+  "Sparkle Stage": [0xb35fff, 0xff5ac8, "#9b3bff", "#2a0a4a"], "Mystery Date Doors": [0xff3b6b, 0xffb3d1, "#e0204a", "#4a0a24"], "Bake Battle": [0xff9f1c, 0xfff3b0, "#ff7a1c", "#5a2a0a"] };
+const gs3Theme = label => GS3_THEME[label] || GS3_THEME[Object.keys(GS3_THEME).find(k => label.includes(k))] || GS3_THEME["Game Shows"];
+function gs3Can(w, h, draw) { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; }
+function gs3Wall(label) {
+  const [, , c1, c2] = gs3Theme(label);
+  return gs3Can(1024, 512, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, c2); gr.addColorStop(.5, c1); gr.addColorStop(1, c2); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 26; i++) { g.strokeStyle = `rgba(255,255,255,${.04 + (i % 3) * .03})`; g.lineWidth = 10; g.beginPath(); g.moveTo(w / 2, h * 1.1); g.lineTo(i * w / 25, -20); g.stroke(); }
+    for (let i = 0; i < 70; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * .7})`; g.beginPath(); g.arc(Math.random() * w, Math.random() * h, 1 + Math.random() * 3, 0, 7); g.fill(); }
+    g.textAlign = "center"; g.textBaseline = "middle"; g.font = `900 ${label.length > 16 ? 92 : 118}px Fredoka, Arial Rounded MT Bold, sans-serif`;
+    g.shadowColor = "#fff"; g.shadowBlur = 30; g.lineWidth = 14; g.strokeStyle = c2; g.strokeText(label.toUpperCase(), w / 2, h / 2); g.fillStyle = "#fff"; g.fillText(label.toUpperCase(), w / 2, h / 2);
+    g.shadowBlur = 0; g.font = "700 34px Fredoka, Arial Rounded MT Bold, sans-serif"; g.fillStyle = "#ffe98a"; g.fillText("★  LIVE FROM ANIMAL BURROW  ★", w / 2, h * .82);
+  });
+}
+function gs3Tag(name, score, col) {
+  return gs3Can(256, 96, (g, w, h) => { g.fillStyle = "rgba(10,8,30,.85)"; g.beginPath(); g.roundRect ? g.roundRect(4, 4, w - 8, h - 8, 22) : g.rect(4, 4, w - 8, h - 8); g.fill();
+    g.strokeStyle = col; g.lineWidth = 6; g.stroke(); g.textAlign = "center"; g.fillStyle = "#fff"; g.font = "700 34px Fredoka, Arial Rounded MT Bold, sans-serif"; g.fillText(name, w / 2, score === null ? 60 : 42);
+    if (score !== null) { g.fillStyle = "#ffd23b"; g.font = "900 34px Fredoka, Arial Rounded MT Bold, sans-serif"; g.fillText(String(score), w / 2, 80); } });
+}
+function gs3Start() {
+  const wrap = document.createElement("div"); wrap.id = "gs3wrap"; wrap.innerHTML = `<canvas id="gs3c"></canvas>`; document.body.appendChild(wrap);
+  const cv = wrap.firstChild;
+  if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+  const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true }); R.setPixelRatio(Math.min(devicePixelRatio || 1, 1.6)); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(0x07051a); sc.fog = new THREE.Fog(0x07051a, 14, 30);
+  sc.add(new THREE.HemisphereLight(0x8a7aff, 0x1a0a2a, .55));
+  const key = new THREE.DirectionalLight(0xffffff, 1); key.position.set(0, 7, 8); sc.add(key);
+  // glossy studio floor and the round stage with a glowing LED ring
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 30).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x14102a, roughness: .25, metalness: .4 })); sc.add(floor);
+  const stage = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.4, .3, 64), new THREE.MeshStandardMaterial({ color: 0x241a4a, roughness: .3, metalness: .5 })); stage.position.set(0, .15, -.6); sc.add(stage);
+  const ringM = new THREE.MeshBasicMaterial({ color: 0xff4fa0 }), ring = new THREE.Mesh(new THREE.TorusGeometry(6.25, .06, 8, 96), ringM); ring.rotation.x = Math.PI / 2; ring.position.set(0, .3, -.6); sc.add(ring);
+  const ring2M = new THREE.MeshBasicMaterial({ color: 0x45d0ff }), ring2 = new THREE.Mesh(new THREE.TorusGeometry(4.2, .04, 8, 96), ring2M); ring2.rotation.x = Math.PI / 2; ring2.position.set(0, .31, -.6); sc.add(ring2);
+  // giant video wall with the show's name
+  const wallM = new THREE.MeshBasicMaterial({ map: gs3Wall("Game Shows") }), wall = new THREE.Mesh(new THREE.PlaneGeometry(12, 6), wallM); wall.position.set(0, 4.2, -6.5); sc.add(wall);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(12.5, 6.5, .2), new THREE.MeshStandardMaterial({ color: 0x1a1430, metalness: .6, roughness: .3 })); frame.position.set(0, 4.2, -6.62); sc.add(frame);
+  // light towers either side, full of colour-changing panels
+  const towerMs = [];
+  [-1, 1].forEach(s => { for (let k = 0; k < 2; k++) { const x = s * (7.2 + k * 1.6); const t = new THREE.Mesh(new THREE.BoxGeometry(.9, 7, .9), new THREE.MeshStandardMaterial({ color: 0x1a1430, metalness: .6, roughness: .4 })); t.position.set(x, 3.5, -5 + k * .8); sc.add(t);
+    for (let j = 0; j < 9; j++) { const m = new THREE.MeshBasicMaterial({ color: 0xffffff }); towerMs.push(m); const p = new THREE.Mesh(new THREE.PlaneGeometry(.7, .55), m); p.position.set(x, .7 + j * .7, -5 + k * .8 + .46); sc.add(p); } } });
+  // lighting truss and spotlight beams
+  const truss = new THREE.Mesh(new THREE.BoxGeometry(18, .3, .3), new THREE.MeshStandardMaterial({ color: 0x8a8aa0, metalness: .8, roughness: .3 })); truss.position.set(0, 8.2, -1); sc.add(truss);
+  const beams = [];
+  [-6, -3, 0, 3, 6].forEach((x, i) => { const can = new THREE.Mesh(new THREE.CylinderGeometry(.2, .28, .5, 12), new THREE.MeshStandardMaterial({ color: 0x222233, metalness: .7 })); can.position.set(x, 7.85, -1); sc.add(can);
+    const beam = new THREE.Mesh(new THREE.ConeGeometry(1.5, 8, 24, 1, true), new THREE.MeshBasicMaterial({ color: [0xff4fa0, 0x45d0ff, 0xfff2c0, 0x45d0ff, 0xff4fa0][i], transparent: true, opacity: .13, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    beam.geometry.translate(0, -4, 0); beam.position.set(x, 7.8, -1); sc.add(beam); beams.push(beam); });
+  [[-3.5, 0xff8fd0], [3.5, 0x8fd8ff], [0, 0xfff2d8]].forEach(([x, c]) => { const sp = new THREE.SpotLight(c, 1.2, 24, .5, .6); sp.position.set(x, 8, 3); sp.target.position.set(x * .4, 0, -1); sc.add(sp, sp.target); });
+  // the audience in front of the stage
+  const crowdG = new THREE.Group(); sc.add(crowdG);
+  const headG = new THREE.SphereGeometry(.32, 12, 10), crowdCols = [0x2a2244, 0x33284f, 0x241c3a, 0x3a2e58];
+  for (let row = 0; row < 3; row++) for (let i = 0; i < 16; i++) { const h = new THREE.Mesh(headG, new THREE.MeshStandardMaterial({ color: crowdCols[(i + row) % 4], roughness: .9 })); h.position.set(-8.4 + i * 1.12 + (row % 2) * .5, .6 + row * .45, 6.6 + row * 1); h.scale.set(1, 1.05, 1); h.userData.ph = Math.random() * 6; crowdG.add(h);
+    [-1, 1].forEach(s => { const e = new THREE.Mesh(new THREE.SphereGeometry(.1, 8, 6), h.material); e.position.set(s * .2, .3, 0); h.add(e); }); }
+  const cam = new THREE.PerspectiveCamera(55, 1, .1, 60);
+  const resize = () => { const w = innerWidth, h = innerHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.fov = w < h ? 62 : 46; if (w < h) cam.setViewOffset(w, h, 0, h * .16, w, h); else cam.clearViewOffset(); cam.updateProjectionMatrix(); };
+  resize(); addEventListener("resize", resize);
+  GS3 = { R, sc, cam, resize, wrap, wall, wallM, label: "Game Shows", ringM, ring2M, towerMs, beams, crowdG, chars: {}, cast: [], doors: {}, last: performance.now(), t: 0, raf: 0, camZ: 9 };
+  const loop = () => { if (!GS3) return; GS3.raf = requestAnimationFrame(loop); gs3Tick(); R.render(sc, cam); };
+  loop();
+}
+function gs3Tick() {
+  const G = GS3, now = performance.now(), dt = Math.min(.1, (now - G.last) / 1000); G.last = now; G.t += dt; const t = G.t;
+  G.towerMs.forEach((m, i) => m.color.setHSL(((t * .12 + i * .07) % 1), .9, .55 + .15 * Math.sin(t * 3 + i)));
+  G.ringM.color.setHSL((t * .08) % 1, .9, .6); G.ring2M.color.setHSL((t * .08 + .5) % 1, .9, .6);
+  G.beams.forEach((b, i) => { b.rotation.z = Math.sin(t * .6 + i * 1.3) * .35; b.rotation.x = Math.cos(t * .5 + i) * .2; });
+  G.crowdG.children.forEach(h => { h.position.y = h.userData.y0 ?? (h.userData.y0 = h.position.y); h.position.y = h.userData.y0 + Math.max(0, Math.sin(t * (G.cheer > t ? 9 : 1.4) + h.userData.ph)) * (G.cheer > t ? .25 : .03); });
+  G.cast.forEach(c => { w3Anim(c.ch, dt, 0, false, t); c.ch.nod = !!c.talk && Math.sin(t * 2) > 0; if (c.ch.quad) c.ch.g.rotation.y = c.face; });
+  G.cam.position.set(Math.sin(t * .15) * .6, 3.1, G.camZ + Math.sin(t * .2) * .3); G.cam.lookAt(0, 1.5, -1);
+}
+function gs3Stop() {
+  if (!GS3) return; const G = GS3; GS3 = null; cancelAnimationFrame(G.raf); removeEventListener("resize", G.resize);
+  try { G.R.dispose(); G.R.forceContextLoss(); } catch (e) {} G.wrap.remove();
+}
+function gs3Char(key, kind, look, scale) {
+  const G = GS3; if (G.chars[key]) return G.chars[key];
+  const ch = w3Animal(kind, look, XMAS()); ch.g.scale.setScalar(scale || w3Size(kind) / 2);
+  const grp = new THREE.Group(); grp.add(ch.g);
+  const ped = new THREE.Mesh(new THREE.CylinderGeometry(.6, .68, .35, 32), new THREE.MeshStandardMaterial({ color: 0x2a2050, metalness: .6, roughness: .3 })); ped.position.y = .17; grp.add(ped);
+  const glowM = new THREE.MeshBasicMaterial({ color: 0x45d0ff }), glow = new THREE.Mesh(new THREE.TorusGeometry(.64, .035, 8, 48), glowM); glow.rotation.x = Math.PI / 2; glow.position.y = .35; grp.add(glow);
+  ch.g.position.y = .35;
+  const tagM = new THREE.SpriteMaterial({ map: gs3Tag(" ", null, "#fff"), depthTest: false }), tag = new THREE.Sprite(tagM); tag.scale.set(1.25, .47, 1); grp.add(tag);
+  G.sc.add(grp); return G.chars[key] = { ch, grp, glowM, tag, tagM, kind, face: 0, tagKey: "" };
+}
+function gs3Door(n) {
+  const G = GS3; if (G.doors[n]) return G.doors[n];
+  const g = new THREE.Group(), fr = new THREE.Mesh(new THREE.BoxGeometry(1.9, 3.2, .3), new THREE.MeshStandardMaterial({ color: 0xffd23b, metalness: .5, roughness: .3 }));
+  fr.position.y = 1.9; const d = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.9, .34), new THREE.MeshStandardMaterial({ map: gs3Can(256, 448, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, ["#ff3b6b", "#3b8bff", "#9b3bff"][n - 1]); gr.addColorStop(1, "#2a0a3a"); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.fillStyle = "#fff"; c.textAlign = "center"; c.font = "900 200px Fredoka, Arial Rounded MT Bold, sans-serif"; c.fillText(String(n), w / 2, h * .62); c.fillStyle = "#ffd23b"; c.beginPath(); c.arc(w * .8, h * .55, 14, 0, 7); c.fill(); }), roughness: .4 }));
+  d.position.y = 1.9; g.add(fr, d); G.sc.add(g); return G.doors[n] = g;
+}
+// who is on stage right now
+function gs3Cast(label, people) {
+  const G = GS3, g = S.gs && S.gs.live ? S.gs : null, list = [];
+  const hostOn = people.some(p => p[0] === "host");
+  if (hostOn) list.push({ key: "host", kind: "owl", look: [0xffd23b, 0x2a2a3a, 0x222222, "bandana"], name: HOST + " (host)", score: null, col: "#ffd23b", host: true });
+  const showK = g && g.k;
+  if (g && (showK === "quiz" || showK === "bake")) {
+    list.push({ key: "me", kind: myKind(), look: [0x9b6bff, 0x2e3a55, 0xffffff, "rainbow"], name: S.name, score: g.me, col: "#ff4fa0", me: true });
+    (g.rivals || [g.rival]).forEach(n => { const f = fName(n); if (f) list.push({ key: n, f, kind: ART[f.emo], look: W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], name: n, score: showK === "quiz" || showK === "bake" ? (g.sc ? g.sc[n] || 0 : g.them) : null, col: "#45d0ff" }); });
+  } else if (g && showK === "talent") {
+    list.push({ key: "me", kind: myKind(), look: [0x9b6bff, 0x2e3a55, 0xffffff, "rainbow"], name: S.name, score: null, col: "#ff4fa0", me: true, center: true });
+    (g.judges || []).forEach(n => { const f = fName(n); if (f) list.push({ key: n, f, kind: ART[f.emo], look: W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], name: n + " (judge)", score: null, col: "#ffd23b", judge: true }); });
+  } else people.forEach(([p, , , hidden]) => { if (p === "host") return; if (hidden) list.push({ door: hidden }); else if (p) list.push({ key: p.name, f: p, kind: ART[p.emo], look: W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(p)))], name: p.name, score: null, col: "#ff4fa0" }); });
+  if (g && showK === "date" && !list.some(x => x.door)) list.push({ key: "me", kind: myKind(), look: [0x9b6bff, 0x2e3a55, 0xffffff, "rainbow"], name: S.name, score: null, col: "#ff4fa0", me: true });
+  return list;
+}
+function gs3Place(label, people, talker) {
+  const G = GS3;
+  if (G.label !== label) { G.label = label; const old = G.wallM.map; G.wallM.map = gs3Wall(label); G.wallM.needsUpdate = true; old.dispose(); }
+  const list = gs3Cast(label, people), used = new Set(), doorsUsed = new Set();
+  const others = list.filter(x => !x.host && !x.door && !x.judge && !x.center), judges = list.filter(x => x.judge), doors = list.filter(x => x.door);
+  G.cast = [];
+  list.forEach(x => {
+    if (x.door) { const d = gs3Door(x.door); doorsUsed.add(x.door); const k = doors.indexOf(x); d.position.set((k - (doors.length - 1) / 2) * 2.7, .3, -2.6); d.visible = true; return; }
+    const c = gs3Char(x.key, x.kind, x.look); used.add(x.key);
+    let px, pz, face = 0;
+    const narrow = innerWidth < innerHeight, sp = narrow ? 1.45 : 2.1;
+    if (x.host) { px = narrow ? 0 : -4; pz = narrow ? -3.4 : .4; face = narrow ? 0 : .5; }
+    else if (x.judge) { const k = judges.indexOf(x); px = (k - 1) * (narrow ? 1.05 : 2); pz = 3; face = Math.PI; }
+    else if (x.center) { px = 0; pz = -1; face = 0; }
+    else { const k = others.indexOf(x), n = others.length; px = (k - (n - 1) / 2) * sp + (list.some(y => y.host) && n === 1 ? 1 : 0); pz = -1.4 - Math.abs(k - (n - 1) / 2) * .25; face = -px * .06; }
+    c.grp.position.set(px, .3, pz); c.face = face; c.ch.g.rotation.y = face; c.grp.visible = true; c.talk = talker && (talker === x.name || x.host && talker === HOST);
+    const hgt = (w3Size(x.kind) / 2) * (c.ch.quad ? 1.2 : 2) + .55; c.tag.position.y = x.judge ? .55 : hgt + .45; c.tag.scale.set(x.judge ? 1 : 1.25, x.judge ? .38 : .47, 1);
+    const tk = x.name + "|" + x.score; if (c.tagKey !== tk) { c.tagKey = tk; const old = c.tagM.map; c.tagM.map = gs3Tag(x.name, x.score, x.col); c.tagM.needsUpdate = true; old.dispose(); }
+    c.glowM.color.set(x.me ? 0xff4fa0 : x.host ? 0xffd23b : 0x45d0ff); G.cast.push(c);
+  });
+  Object.entries(G.chars).forEach(([k, c]) => { if (!used.has(k)) c.grp.visible = false; });
+  Object.entries(G.doors).forEach(([k, d]) => { if (!doorsUsed.has(+k)) d.visible = false; });
+  G.camZ = (doors.length ? 8.2 : 9) - (innerWidth < innerHeight ? 1.2 : 0);
+}
+function gs3Show(bg, label, people, bubble, panel) {
+  show(`<div id="gs3ui"><div class="gs3-top"><b>${label}</b><button class="soft" onclick="mapScreen()">Exit</button></div>
+    ${bubble ? `<div class="gs3-say">${bubble}</div>` : ""}<div class="gs3-panel">${panel}</div></div>`);
+  document.body.classList.add("immersive", "gshow", "gs3mode");
+  const talker = ((bubble || "").match(/<b>([^<:]+?):?<\/b>/g) || []).map(s => s.replace(/<\/?b>|:/g, "").trim()).pop();
+  const go = () => { if (!GS3) gs3Start(); gs3Place(label, people, talker); if (/CORRECT|winner is|YOU win|You won|You win|RIGHT!|Point for you/i.test(bubble || "")) GS3.cheer = GS3.t + 2.5; };
+  if (window.THREE) go(); else loadThree().then(go).catch(() => {});
+}
+const stageScreenOld = stageScreen;
+stageScreen = function (bg, label, people, bubble, panel) { if (hasWebGL()) return gs3Show(bg, label, people, bubble, panel); return stageScreenOld(bg, label, people, bubble, panel); };
+document.head.insertAdjacentHTML("beforeend", `<style>
+#gs3wrap{position:fixed;inset:0;z-index:0;background:#07051a}#gs3c{width:100%;height:100%;display:block}
+body.gs3mode #app{position:relative;z-index:5;background:transparent;transform:none !important;animation:none !important;filter:none !important}body.gs3mode #app > *{animation:none !important;transform:none !important}body.gs3mode{background:#07051a}
+body.gs3mode #snow,body.gs3mode #xlights,body.gs3mode #sky,body.gs3mode #clock,body.gs3mode #treeBtn,body.gs3mode #phoneBtn,body.gs3mode #eyesBtn{display:none !important}
+#gs3ui .gs3-top{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;z-index:6}
+#gs3ui .gs3-top b{background:#000a;color:#ffd23b;padding:6px 14px;border-radius:20px;font-size:15px}#gs3ui .gs3-top button{margin:0;padding:6px 12px;font-size:13px}
+#gs3ui .gs3-say{position:fixed;top:52px;left:12px;right:12px;background:#fffffff2;color:#2a1f3d;border-radius:18px;padding:10px 14px;font-size:16px;box-shadow:0 4px 14px #0007;text-align:center;z-index:6;max-height:30vh;overflow-y:auto}
+#gs3ui .gs3-panel{position:fixed;left:0;right:0;bottom:0;max-height:46vh;overflow-y:auto;background:linear-gradient(#0000,#0a0820ee 22%);color:#fff;padding:28px 12px 14px;text-align:center;z-index:6}
+#gs3ui .gs3-panel h2{color:#fff;margin:4px 0}#gs3ui .gs3-panel .sub{color:#ffe98a}#gs3ui .gs3-panel .act-btn{min-height:70px}
 </style>`);
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
