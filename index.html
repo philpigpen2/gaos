@@ -7696,6 +7696,107 @@ chatReply = function (f, text) {
 const _lifeNewDaySP = lifeNewDay;
 lifeNewDay = function () { _lifeNewDaySP(); try { const sp = spouse(); if (sp && Math.random() < .6) setTimeout(() => { try { textFrom(sp.name, spFill(pickOne((S.kids || []).length && Math.random() < .5 ? SP_KID_TEXTS : SP_TEXTS))); } catch (e) {} }, 8000 + Math.random() * 20000); } catch (e) {} };
 
+// ===== Gossip Cage, extra gossipy: breaking news, anonymous tips, comment threads, polls, trending tags =====
+const GOSSIP_MORE = [
+  "{A} was spotted buying TWO hot cocoas at the cafe. Who's the second one for?? 👀☕",
+  "{A} has been texting someone ALL day and smiling at their phone. Suspicious. 📱😏",
+  "I heard {A} practising a speech in the mirror. A love confession?? 💌",
+  "{A} said they 'don't care' about the game show. They've applied FOUR times. 📺😂",
+  "{A} left the bakery with a box that said 'for my favourite person'. WHO. 🎁",
+  "{A} got a new haircut and is pretending they didn't. We SEE you. ✂️👀",
+  "{A} told me a secret and made me pinky promise. I'm not telling. ...Okay, it's about the swings. 🤐",
+  "{A} was humming a love song at work. All. Day. Long. 🎶💕",
+  "Has anyone else noticed {A} only goes to the Lake when a certain someone is there? 🌊👀"
+];
+const GOSSIP_PAIR_MORE = [
+  "{A} and {B} were whispering at the Treehouse and STOPPED when I walked in. 🤫",
+  "{A} gave {B} a flower and {B} went bright red. I have EYES. 🌷😳",
+  "{A} and {B} are wearing matching bracelets now. Coincidence?? I think NOT. 📿",
+  "{A} saved {B} a seat at the cinema. Again. Third time this week. 🍿👀",
+  "{A} and {B} both said 'I'm busy tonight'. On the SAME night. Hmmmm. 🌙"
+];
+const GOSSIP_TIPS = ["Anonymous tip: someone in this town has a SECRET crush. And they read this app. 👀", "Anonymous tip: the bakery is planning a surprise. Big one. That's all I know. 🎂", "Anonymous tip: two people are about to start dating. Watch the Lake this week. 🌊💕", "Anonymous tip: someone left a love note in the Tree Library. It's not signed. 💌"];
+const GC_COMMENTS = ["NO WAY 😱", "I KNEW IT. I literally said this last week. 🙄", "spill MORE 🍵🍵", "not me screenshotting this 📸", "okay this is the best thing I've read all day 😂", "I'm not saying anything. 🤐 ...but yes.", "this town is SO dramatic and I love it 💅", "wait WHAT 😳", "{A} you better explain yourself 👀", "can confirm. I was there. 👀", "omg stop 😂😂", "I need a part two IMMEDIATELY"];
+const GC_TAGS = ["#CocoaGate", "#SwingWars", "#CupcakeCrime", "#WhoIsIt", "#LakeLovers", "#BakeryDrama", "#ScarfGate", "#BurrowNews", "#TeaTime"];
+function gcRand(seed) { let x = hashStr(seed) || 7; return () => (x = (x * 16807) % 2147483647) / 2147483647; }
+const _gossipPostsBase = gossipPosts;
+gossipPosts = function () {
+  const base = _gossipPostsBase(), fr = friends(), day = S.tday || S.day || 1, out = [];
+  // breaking news from real things happening in town
+  const news = [];
+  try { (S.couples || []).forEach(c => { if (c.kids && c.kids.length) { const k = c.kids[c.kids.length - 1]; if (S.day - k.born <= 1) news.push(`BREAKING: ${c.a} and ${c.b} had a baby named ${k.name}!! 🍼😭 Everyone bring snacks to their house.`); }
+    if (c.st === 3 && c.wedDay === undefined) c.wedDay = S.day; if (c.st === 3 && S.day - c.wedDay <= 1) news.push(`BREAKING: ${c.a} and ${c.b} are MARRIED! 💒 Who cried at the wedding? (Everyone. Everyone cried.)`);
+    if (c.st === 2) news.push(`${c.a} and ${c.b} are ENGAGED and I already picked my outfit for the wedding. 💍👗`);
+    if (c.st === 1) news.push(`Are ${c.a} and ${c.b} DATING now?? They looked VERY cosy at the cafe. 👀💕`); }); } catch (e) {}
+  try { if (S.preg) news.push(`Rumour has it ${esc(S.name)} is having a BABY!! 🤰 The whole Burrow is knitting tiny socks. 🧦`); } catch (e) {}
+  try { Object.keys(S.unfriend || {}).forEach(n => news.push(`${esc(S.name)} and ${n} aren't friends any more?! 😱 What HAPPENED? ${n} looked so sad at the bakery. 🥺`)); } catch (e) {}
+  try { Object.keys(S.fightOpen || {}).filter(n => S.fightOpen[n]).forEach(n => news.push(`Is it just me or are ${esc(S.name)} and ${n} in a FIGHT? The silence is LOUD. 😬`)); } catch (e) {}
+  try { if (S.lastHang) news.push(`Spotted: ${esc(S.name)} and ${S.lastHang} hanging out AGAIN. 👀 Is this a thing now??`); } catch (e) {}
+  const r = gcRand("gc" + day);
+  news.slice(0, 3).forEach((t, i) => out.push({ id: "n" + i, by: fr[Math.floor(r() * fr.length)], about: "news", t, breaking: /^BREAKING/.test(t) }));
+  base.forEach((p, i) => { out.push(p); if (i % 2 === 0) { const by = fr[Math.floor(r() * fr.length)], others = fr.filter(x => x.name !== by.name), a = others[Math.floor(r() * others.length)], b = others.filter(x => x.name !== a.name)[Math.floor(r() * (others.length - 1))];
+    const pair = r() < .4, t = (pair ? GOSSIP_PAIR_MORE : GOSSIP_MORE)[Math.floor(r() * (pair ? GOSSIP_PAIR_MORE : GOSSIP_MORE).length)].replaceAll("{A}", a.name).replaceAll("{B}", b.name);
+    out.push({ id: "m" + i, by, about: a.name, t }); } });
+  out.splice(Math.min(4, out.length), 0, { id: "tip", by: null, anon: true, about: "tip", t: GOSSIP_TIPS[Math.floor(r() * GOSSIP_TIPS.length)] });
+  return out;
+};
+function gcComments(p, key) {
+  const r = gcRand("gcc" + key), fr = friends().filter(x => !p.by || x.name !== p.by.name), n = 1 + Math.floor(r() * 3), out = [];
+  for (let i = 0; i < n; i++) { const by = fr[Math.floor(r() * fr.length)]; if (!by || by.name === p.about) continue; out.push({ by, t: GC_COMMENTS[Math.floor(r() * GC_COMMENTS.length)].replace("{A}", p.about && !["me", "news", "tip"].includes(p.about) ? p.about : "somebody") }); }
+  if (p.about && friends().some(f => f.name === p.about) && r() < .55) { const a = friends().find(f => f.name === p.about); out.push({ by: a, t: pickOne(["EXCUSE ME?? That is NOT what happened!! 😤", "okay who posted this 😑", "...I have no comment. 🙈", "lies!! all lies!! (it's a little bit true) 😳"]), self: true }); }
+  if (p.about === "me" && r() < .7) out.push({ by: null, t: "", you: true });
+  return out;
+}
+gossipApp = function () {
+  S.gossipSeen = S.tday || S.day;
+  const ph = document.getElementById("phone"); ph.style.display = "flex"; ph.dataset.thread = "";
+  S.gossipReact = S.gossipReact || {}; const day = S.tday || S.day, rr = gcRand("gct" + day);
+  const posts = gossipPosts(), tags = GC_TAGS.filter(() => rr() < .5).slice(0, 4);
+  const pollA = friends()[Math.floor(rr() * friends().length)], pollB = friends().filter(x => x.name !== pollA.name)[Math.floor(rr() * (friends().length - 1))];
+  const poll = S.gossipPoll && S.gossipPoll.day === day ? S.gossipPoll : null;
+  ph.innerHTML = `<div class="ph-screen gossip">${appTop("Gossip Cage")}
+    <div class="gc-hero">The Gossip Cage<small>What everyone in ${VILLAGE} is REALLY saying</small></div>
+    <div class="gc-tags">${["Trending:", ...tags].map((t, i) => `<span class="${i ? "" : "lbl"}">${t}</span>`).join("")}</div>
+    <button class="gc-post-btn" onclick="gossipWrite()">Spill some tea</button>
+    ${posts.map((p, pi) => { const key = day + p.id, re = S.gossipReact[key] || {}, rc = gcRand("gcn" + key), eyes = 3 + Math.floor(rc() * 60) + (re.omg ? 1 : 0), shock = 2 + Math.floor(rc() * 40) + (re.tea ? 1 : 0);
+      const cm = gcComments(p, key);
+      const pollHtml = pi === 3 ? `<div class="gc-post gc-poll"><div class="gc-who"><b>Gossip Cage Poll</b><small>vote now</small></div><p>Who is the most dramatic animal in town? 🎭</p>
+        ${[pollA, pollB].map((x, j) => { const pct = poll ? (poll.v === j ? 58 + (hashStr(x.name) % 30) : 42 - (hashStr(x.name) % 30)) : 0; return `<button class="gc-vote ${poll && poll.v === j ? "on" : ""}" onclick="gossipVote(${j})">${face(x)}<span>${x.name}</span>${poll ? `<b>${pct}%</b><i style="width:${pct}%"></i>` : ""}</button>`; }).join("")}</div>` : "";
+      return `${pollHtml}<div class="gc-post ${p.breaking ? "gc-breaking" : ""} ${p.anon ? "gc-anon" : ""}">
+        ${p.breaking ? `<div class="gc-bn">BREAKING NEWS</div>` : ""}
+        <div class="gc-who">${p.anon ? `<b>Anonymous</b>` : p.by ? `${face(p.by)}<b>${p.by.name}</b>` : `<b>You (secretly)</b>`}<small>${p.anon ? "sent a tip" : p.by ? pickOne(["whispered", "spilled", "posted", "just heard"]) : "posted"}</small></div>
+        <p>${p.breaking ? p.t.replace(/^BREAKING: /, "") : p.t}</p>
+        <div class="gc-count">${eyes} saw this · ${shock} gasped · ${cm.length} comment${cm.length === 1 ? "" : "s"}</div>
+        <div class="gc-acts">
+          <button class="${re.omg ? "on" : ""}" onclick="gossipReact('${key}','omg')">OMG</button>
+          <button class="${re.tea ? "on" : ""}" onclick="gossipReact('${key}','tea')">Spill</button>
+          ${p.about && friends().some(f => f.name === p.about) && p.by ? `<button class="${re.def ? "on" : ""}" onclick="gossipDefend('${key}','${p.about}','${p.by.name}')">Stick up for ${p.about}</button>` : ""}
+          ${p.about === "me" && p.by ? `<button class="${re.def ? "on" : ""}" onclick="gossipClapBack('${key}','${p.by.name}')">Clap back</button>` : ""}
+        </div>
+        ${cm.filter(c => !c.you).map(c => `<div class="gc-cm ${c.self ? "self" : ""}">${face(c.by)}<span><b>${c.by.name}</b> ${c.t}</span></div>`).join("")}
+      </div>`; }).join("")}
+    <p class="gc-foot">Gossip is fun... until it's about YOU. 😉</p>
+  </div>`;
+  noEmoji(ph);
+};
+function gossipVote(j) { S.gossipPoll = { day: S.tday || S.day, v: j }; chime(); gossipApp(); }
+// news alerts: the Gossip Cage pings you when something juicy happens
+const _mmAlertGC = typeof mmAlert === "function" ? mmAlert : null;
+if (_mmAlertGC) mmAlert = function (title, msg) { _mmAlertGC(title, msg); S.gossipSeen = -1; try { phoneButton(); } catch (e) {} };
+document.head.insertAdjacentHTML("beforeend", `<style>
+.gc-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:2px 10px 6px;flex-shrink:0}
+.gc-tags span{background:#ffffff33;color:#fff;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:700}.gc-tags span.lbl{background:none;padding:3px 0}
+.gc-count{font-size:12px;color:#8a6a9a;margin:4px 0 2px}
+.gc-cm{display:flex;gap:6px;align-items:flex-start;font-size:13px;background:#f7f0fb;border-radius:12px;padding:5px 8px;margin-top:5px}
+.gc-cm img{width:22px;height:22px;object-fit:contain;flex-shrink:0}.gc-cm.self{background:#fff0f4}
+.gc-breaking{border:3px solid #ff2d6f}.gc-bn{background:#ff2d6f;color:#fff;font-weight:900;font-size:12px;letter-spacing:1px;border-radius:8px;padding:2px 8px;display:inline-block;margin-bottom:4px;animation:gcBlink 1.2s infinite}
+@keyframes gcBlink{50%{opacity:.55}}
+.gc-anon{background:#2a1a3a;color:#fff}.gc-anon .gc-who b{color:#ffb3e0}.gc-anon .gc-count{color:#c9a8e0}
+.gc-poll p{margin:4px 0 8px}.gc-vote{position:relative;display:flex;align-items:center;gap:8px;width:100%;border:2px solid #e3c8f2;background:#fff;border-radius:12px;padding:6px 10px;margin:4px 0;overflow:hidden;font:inherit;text-align:left}
+.gc-vote img{width:26px;height:26px;object-fit:contain;position:relative;z-index:1}.gc-vote span,.gc-vote b{position:relative;z-index:1}.gc-vote b{margin-left:auto}
+.gc-vote i{position:absolute;left:0;top:0;bottom:0;background:#ffd6ec}.gc-vote.on{border-color:#ff5aa8}
+</style>`);
+
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
 </script>
 </body>
