@@ -2151,6 +2151,17 @@ const MAD_SORRY = [
   "*hangs head* I'm sorry. I was wrong, and you didn't deserve that. I'll make it up to you, okay? Pinky promise? Please be my friend again! 🥺",
   "I'm so so SO sorry. 😢 I'll make you a friendship bracelet. I'll carry your stuff. Anything! Just please say we're still friends? 🥺💕",
   "Please don't be mad at me... I'm really sorry. You're the nicest animal I know and I'd be SO sad without you. Friends forever? Please? 🥺"];
+const CONFLICT = /\b(fight me|wanna fight|want to fight|let'?s fight|lets fight|come at me|bring it on|you'?re going down|ur going down|i challenge you|dance[- ]off|i bet you can'?t|i'?m better than you|im better than you|you'?re not better than me|say that again|say it to my face|what did you say about me|you talked about me|i heard what you said|let'?s start drama|start (some )?drama|let'?s argue|wanna argue|i'?m starting drama|you'?re jealous|ur jealous|you wish|whatever loser|cry about it|stay mad|you started it|it'?s on|its on)\b/;
+const CONFLICT_SAY = [
+  "Oh it is SO on. 😤 Meet me at the fountain. Bring your best comebacks, because I'm bringing MINE.",
+  "Excuse me?! Say that to my FACE. 💅 ...Okay you just did. Well. I'm STILL right.",
+  "Oh you want DRAMA? I LIVE for drama. 🍿😤 Let's go. Everyone's going to hear about this.",
+  "Ohhh, you did NOT just say that. *gasp* *flips tail* You're ON.",
+  "Bring it! I'm better at EVERYTHING and you KNOW it. 😏 Dance-off. Right now.",
+  "Wow. WOW. Okay. I'm telling EVERYONE what you just said. 📣😤",
+  "Hmph! Fine! Staring contest. Loser buys ice cream. And it's gonna be YOU. 😠",
+  "You think you can beat ME? HA. Hahaha. *laughs dramatically* Prepare to be AMAZED. 💅"];
+function conflictReply(f) { return { pts: 0, mood: "angry", fixed: true, say: pickOne(CONFLICT_SAY) }; }
 function madSorry(f) {
   if (S.fightOpen) delete S.fightOpen[f.name];
   const sweet = stageOf(f) >= 1 ? pickOne([" I love you SO much. Please forgive me? 💕", " You're my favorite person in the whole world. 💕"]) : "";
@@ -2158,7 +2169,7 @@ function madSorry(f) {
 }
 function chatReply(f, text) {
   const nt = normalize(text);
-  const r = MAD_AT.test(nt) && !safety(f, nt) ? madSorry(f) : calmDown(f, text, chatReply0(f, text));
+  const r = MAD_AT.test(nt) && !safety(f, nt) ? madSorry(f) : CONFLICT.test(nt) && !safety(f, nt) ? conflictReply(f) : calmDown(f, text, chatReply0(f, text));
   if (r && r.say) {
     S.saidBy = S.saidBy || {};
     const past = S.saidBy[f.name] = S.saidBy[f.name] || [];
@@ -3708,6 +3719,7 @@ function phoneHome() {
       ${app("msgs", "Messages", "linear-gradient(#5fe07a,#2bb673)", "openPhone('msgs')", un)}
       ${app("book", "Burrowbook", "linear-gradient(#7aa7ff,#3a5bd9)", "bookApp()", newPosts)}
       ${app("baby", "Baby", "linear-gradient(#ffb3d1,#ff5a9a)", "babyApp()", S.preg && !pregDaysLeft() ? "!" : "")}
+      ${app("match", "Matchmaker", "linear-gradient(#ff8fc0,#c2185b)", "matchApp()")}
       ${app("sneaky", "Sneaky Paws", "linear-gradient(#3a1a3a,#0e0a14)", "sneakyApp()")}
       ${app("gossip", "Gossip Cage", "linear-gradient(#ff5aa8,#6a2a9a)", "gossipApp()", S.gossipSeen !== (S.tday || S.day) ? "!" : "")}
       ${app("photos", "Photos", "linear-gradient(#fff,#e9e3f5)", "photosApp()")}
@@ -4446,14 +4458,14 @@ function w3Start(start) {
   stg.setAttribute("position", new THREE.BufferAttribute(sa, 3)); const stars = new THREE.Points(stg, new THREE.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false })); sc.add(stars);
   // the animals: real 3D characters in clothes who walk around town
   const people = friends().map((f, i) => {
-    const kind = ART[f.emo], hgt = w3Size(kind), ch = w3Animal(kind, W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], xmas); ch.g.scale.setScalar(hgt / 2);
+    const kind = ART[f.emo], hgt = w3Size(kind), ch = w3Animal(kind, W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], xmas); ch.g.scale.setScalar(hgt / 2); if (pregPartner(f.name)) w3Bump(ch);
     const blob = new THREE.Mesh(new THREE.CircleGeometry(hgt * .28, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: .22, depthWrite: false })); blob.position.y = .02;
     const lab = w3Label(f.name); lab.scale.set(2.4, .6, 1); lab.position.y = hgt + .45; lab.visible = false;
     const grp = new THREE.Group(); grp.add(ch.g, blob, lab); sc.add(grp);
     const w = whereNow(f), sp = w ? spotFor(i, w) : ANIMAL_HOME(i);
     return { f, i, grp, ch, lab, hgt, x: sp[0] / 20 + (Math.random() - .5) * 3, z: sp[1] / 20 + (Math.random() - .5) * 3, tx: null, tz: null, wait: Math.random() * .8, spd: 0, moving: false, talkUntil: 0 };
   });
-  const mk = ART[S.animal[0]] || "fox", mh = w3Size(mk), mch = w3Animal(mk, [0x9b6bff, 0x2e3a55, 0xffffff, "rainbow"], xmas); mch.g.scale.setScalar(mh / 2);
+  const mk = ART[S.animal[0]] || "fox", mh = w3Size(mk), mch = w3Animal(mk, [0x9b6bff, 0x2e3a55, 0xffffff, "rainbow"], xmas); mch.g.scale.setScalar(mh / 2); if (pregMe()) w3Bump(mch);
   const meBlob = new THREE.Mesh(new THREE.CircleGeometry(mh * .28, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: .25, depthWrite: false })); meBlob.position.y = .02;
   const me = new THREE.Group(); me.add(mch.g, meBlob); sc.add(me);
   start = w3CollideRaw(blds, start[0], start[1]);
@@ -4674,7 +4686,7 @@ function w3Animal(kind, look, xmas) {
   else if (extra === "rainbow") [0xff3b3b, 0xff9f1c, 0xffd23b, 0x3ddc84, 0x3bb7ff, 0x9b6bff].forEach((c, i) => add(spine, tor(.232, .02), c, 0, .4 - i * .04, 0, 1, 1, .8).rotation.x = Math.PI / 2);
   if (xmas && !hat) { const h = new THREE.Group(); h.position.set(0, .22, -.02); h.rotation.z = -.2; head.add(h); add(h, CONE, 0xd62828, 0, .17, 0, .21, .36, .21, true); add(h, tor(.21, .05), 0xffffff, 0, 0, 0, 1, 1, 1).rotation.x = Math.PI / 2; add(h, SPH, 0xffffff, .02, .36, 0, .06, .06, .06); }
   g.userData.furCols = [fur, belly, acc]; w3Bake(g);
-  return { g, body, spine, legs, arms, head, eyes, brows, tail, torso: spine, quad, gait: kind === "bunny" ? "hop" : kind === "raccoon" ? "waddle" : "trot", ph: Math.random() * 6, amp: 0, blink: 2 + Math.random() * 3, heading: 0 };
+  return { g, kind, qb: QB, body, spine, legs, arms, head, eyes, brows, tail, torso: spine, quad, gait: kind === "bunny" ? "hop" : kind === "raccoon" ? "waddle" : "trot", ph: Math.random() * 6, amp: 0, blink: 2 + Math.random() * 3, heading: 0 };
 }
 // four-legged trot: legs move in diagonal pairs, the body bobs, the head bobs, the tail wags
 function w3AnimQuad(c, dt, speed, air, t) {
@@ -4738,6 +4750,16 @@ function w3BerryBush(sc, x, z, seed) {
   const bucket = seed % 3 === 0 ? new THREE.Mesh(new THREE.CylinderGeometry(.22, .17, .3, 14, 1, true), w3Mat(0xb7a07a, { side: THREE.DoubleSide })) : null;
   if (bucket) { bucket.position.set(R + .5, .15, .3); grp.add(bucket); }
 }
+// a baby bump for whoever is expecting
+function w3Bump(c) {
+  if (!c || c.bump) return; const bc = (W3_FUR[c.kind] || W3_FUR.fox)[1], m = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), w3Mat(bc, { roughness: .8 }));
+  if (c.quad && c.qb) { const { P, cy } = c.qb; m.position.set(0, cy - P.bh * .55, P.len * .12); m.scale.set(P.w * .9, P.bh * .62, P.len * .55); c.body.add(m); }
+  else { m.position.set(0, .5, .2); m.scale.set(.22, .22, .2); c.spine.add(m); }
+  c.bump = m;
+}
+const pregMe = () => S.preg && S.preg.who !== "sp", pregPartner = name => S.preg && S.preg.who === "sp" && S.preg.by === name;
+const PREG_PASS = ["Oh my gosh, I'm SO excited for you!! 🍼", "Look at that baby bump!! 😍", "Can I feel the baby kick? Eeee! 🥺", "You're GLOWING! When's the baby coming?? ✨", "I already bought the baby a tiny hat! 🧢💕", "A baby!! I can't wait to meet them! 🍼💕", "Congratulations!!! You're going to be the BEST parent! 😭💕"];
+const PREG_PASS_SP = n => [`Tell ${n} congratulations from me!! 🍼💕`, `How's ${n} feeling? I'm SO excited for you both! 😍`, `A baby!! You and ${n} are going to be the BEST parents! 😭💕`];
 // how deep someone is in the lake (0 = on dry land); they sink up to their shoulders and swim
 function w3Wet(x, z, h) { const ld = Math.hypot((x - 50) / 15.8, (z - 77.8) / 7.9); return ld < 1 ? Math.min(1, (1 - ld) * 6) * h * .5 : 0; }
 function w3Ripple(W, key, x, z, wet) {
@@ -5025,7 +5047,7 @@ function w3Tick() {
     if (d < 70) w3Anim(p.ch, dt, p.spd, false, W.t);
     if (W.kiss && W.kiss.p === p) { const lean = Math.sin((W.kiss.until - W.t) / 1.3 * Math.PI) * .35; p.ch.body.rotation.x = lean; p.ch.head.rotation.x = -lean * .5; }
     if (d < 4.2 && d < nd) { nd = d; near = p; }
-    if (d < 6 && !W.talk && W.t > p.talkUntil && Math.random() < dt * .08) { p.talkUntil = W.t + 8; w3Say(p, voiceLine(p.f, (stageOf(p.f) >= 1 || S.hearts[p.f.name] >= 6) && Math.random() < .5 ? pickOne(SWEET_SAY[Math.min(2, stageOf(p.f))]) : pickOne([...MEET_HELLO[stageOf(p.f)], ...(atWork(p.f) ? JOBS[jobOf(p.f)].say : [])]))); }
+    if (d < 6 && !W.talk && W.t > p.talkUntil && Math.random() < dt * .08) { p.talkUntil = W.t + 8; w3Say(p, voiceLine(p.f, S.preg && Math.random() < .75 ? (pregMe() ? pickOne(PREG_PASS) : pregPartner(p.f.name) ? pickOne(["The baby kicked SO hard today! 😍", "I can't wait to meet our baby! 🍼💕"]) : pickOne(PREG_PASS_SP(S.preg.by))) : (stageOf(p.f) >= 1 || S.hearts[p.f.name] >= 6) && Math.random() < .5 ? pickOne(SWEET_SAY[Math.min(2, stageOf(p.f))]) : pickOne([...MEET_HELLO[stageOf(p.f)], ...(atWork(p.f) ? JOBS[jobOf(p.f)].say : [])]))); }
   });
   // place name + what you can do here
   let best = "village", bd = 1e9; Object.entries(TOWN_SPOT).forEach(([k2, [x, y]]) => { const d = Math.hypot(x / 20 - W.x, y / 20 - W.z); if (d < bd) { bd = d; best = k2; } });
@@ -5137,10 +5159,10 @@ function h3Start(partner, guest) {
   const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.5), new THREE.MeshBasicMaterial({ map: w3Canvas("winview", 256, 160, () => {}) })); win.position.set(2.2, 2.6, -4.18); sc.add(win);
   const mkItems = () => (S.house || []).map((it, i) => { const m = h3Furn(it.k, it.c); const [x, z] = h3Pos(it); m.position.set(x, 0, m.userData.wall ? -4.1 : z); m.rotation.y = it.r || 0; m.scale.setScalar(Math.max(.4, Math.min(2.5, (it.w || FURN_BIG[it.k] || 16) / (FURN_BIG[it.k] || 16)))); m.userData.i = i; sc.add(m); return m; });
   const items = mkItems();
-  const fam = [partner, guest, ...(S.mates || []).filter(n => !guest || n !== guest.name).map(n => friends().find(x => x.name === n))].filter(Boolean).map(f => ({ kind: ART[f.emo], look: W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], sc: 1 }));
+  const fam = [partner, guest, ...(S.mates || []).filter(n => !guest || n !== guest.name).map(n => friends().find(x => x.name === n))].filter(Boolean).map(f => ({ kind: ART[f.emo], look: W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], sc: 1, bump: pregPartner(f.name) }));
   (S.kids || []).forEach((k, n) => fam.push({ kind: k.kind, look: W3_OUTFIT[(n * 3 + 2) % W3_OUTFIT.length], sc: kidStage(k)[2] }));
   const spots = [[-.4, .3], [1.3, .3], [-2.1, 1], [2.7, 1], [.5, 1.7], [-1.2, 1.9], [2, 2.1], [-2.9, 2.2]];
-  const people = fam.slice(0, 8).map((p, n) => { const c = w3Animal(p.kind, p.look, XMAS()); c.g.scale.setScalar(w3Size(p.kind) / 2 * p.sc); c.g.position.set(spots[n][0], 0, spots[n][1]); sc.add(c.g); c.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return c; });
+  const people = fam.slice(0, 8).map((p, n) => { const c = w3Animal(p.kind, p.look, XMAS()); if (p.bump) w3Bump(c); c.g.scale.setScalar(w3Size(p.kind) / 2 * p.sc); c.g.position.set(spots[n][0], 0, spots[n][1]); sc.add(c.g); c.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return c; });
   const cam = new THREE.PerspectiveCamera(50, 1, .1, 60);
   const resize = () => { const w = cv.clientWidth, h = cv.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.fov = w < h ? 62 : 48; cam.updateProjectionMatrix(); }; resize();
   cam.position.set(0, 7.2, 7.4); cam.lookAt(0, -1.6, -.4);
@@ -7232,6 +7254,119 @@ body.gs3mode #snow,body.gs3mode #xlights,body.gs3mode #sky,body.gs3mode #clock,b
 #gs3ui .gs3-say{position:fixed;top:52px;left:12px;right:12px;background:#fffffff2;color:#2a1f3d;border-radius:18px;padding:10px 14px;font-size:16px;box-shadow:0 4px 14px #0007;text-align:center;z-index:6;max-height:30vh;overflow-y:auto}
 #gs3ui .gs3-panel{position:fixed;left:0;right:0;bottom:0;max-height:46vh;overflow-y:auto;background:linear-gradient(#0000,#0a0820ee 22%);color:#fff;padding:28px 12px 14px;text-align:center;z-index:6}
 #gs3ui .gs3-panel h2{color:#fff;margin:4px 0}#gs3ui .gs3-panel .sub{color:#ffe98a}#gs3ui .gs3-panel .act-btn{min-height:70px}
+</style>`);
+
+// ===== Matchmaker app: set other animals up, help them get engaged, married and have babies; then the kids have playdates, school and sleepovers =====
+APP_ICON.match = `<svg viewBox="0 0 24 24"><path d="M8.5 19s-5.5-3.4-5.5-7.5A3.2 3.2 0 0 1 8.5 9.4 3.2 3.2 0 0 1 14 11.5C14 15.6 8.5 19 8.5 19Z" fill="#fff"/><path d="M16 14s-3.7-2.3-3.7-5a2.1 2.1 0 0 1 3.7-1.4A2.1 2.1 0 0 1 19.7 9c0 2.7-3.7 5-3.7 5Z" fill="#ffd1e3"/><path d="M3 21 21 3" stroke="#ffd23b" stroke-width="1.6" stroke-linecap="round"/><path d="m21 3-3.2.6.6 2.6Z" fill="#ffd23b"/></svg>`;
+const MM_ST = ["", "Dating 💕", "Engaged 💍", "Married 💒"];
+const MM_KID_NAMES = ["Sprout", "Bubbles", "Twinkle", "Nibbles", "Poppy", "Dash", "Muffin", "Pebble", "Sunny", "Biscuit Jr.", "Clementine", "Waffles", "Jellybean", "Acorn", "Puddle", "Snickers", "Dot", "Bramble", "Cricket", "Peanut"];
+const mmCouples = () => (S.couples = S.couples || []);
+const mmTaken = () => { const t = new Set(); mmCouples().forEach(c => { t.add(c.a); t.add(c.b); }); try { const sp = spouse(); if (sp) t.add(sp.name); const sw = sweetheart(); if (sw) t.add(sw.name); } catch (e) {} return t; };
+function mmAllKids() {
+  const out = []; let sp = null; try { sp = spouse(); } catch (e) {}
+  (S.kids || []).forEach((k, n) => out.push({ k, mine: true, parents: [S.name, sp ? sp.name : ""].filter(Boolean), id: "m" + n }));
+  mmCouples().forEach((c, ci) => (c.kids || []).forEach((k, n) => out.push({ k, mine: false, parents: [c.a, c.b], id: "c" + ci + "_" + n })));
+  return out;
+}
+const mmKidPic = k => lifeImg(k.kind, "life-pic kid-" + kidStage(k)[1].replace(/\W/g, ""));
+function mmAlert(title, msg) { try { notify(title, msg); } catch (e) {} try { chime(); floatHearts(4); } catch (e) {} }
+function matchApp() {
+  const ph = document.getElementById("phone"); ph.style.display = "flex"; ph.dataset.thread = "";
+  S.mmPick = (S.mmPick || []).filter(n => !mmTaken().has(n)); S.mmKids = S.mmKids || [];
+  const free = friends().filter(f => !mmTaken().has(f.name)), kids = mmAllKids();
+  const couples = mmCouples().map((c, i) => { const A = fName(c.a), B = fName(c.b); if (!A || !B) return "";
+    const next = c.st === 1 ? `<button class="rainbow" onclick="mmNext(${i})">Help them get engaged 💍</button>` : c.st === 2 ? `<button class="rainbow" onclick="mmNext(${i})">Plan their wedding 💒</button>` : (c.kids || []).length < 3 ? `<button class="rainbow" onclick="mmNext(${i})">Baby time? 🍼</button>` : "";
+    return `<div class="mm-row"><div class="mm-faces">${face(A)}${face(B)}</div><div class="mm-who"><b>${c.a} & ${c.b}</b><small>${MM_ST[c.st]}${(c.kids || []).length ? ` · ${c.kids.length} kid${c.kids.length > 1 ? "s" : ""}` : ""}</small></div>
+      <div class="mm-acts">${next}<button class="soft" onclick="mmBreak(${i})">Break up 💔</button></div></div>`; }).join("");
+  ph.innerHTML = `<div class="ph-screen mmapp">${appTop("Matchmaker")}<div class="mm-body">
+    <div class="gc-hero">Matchmaker<small>Play Cupid! Get your friends together. 💘</small></div>
+    <h3>Make a match</h3><p class="mm-tip">Tap two animals, then set them up.</p>
+    <div class="mm-grid">${free.map(f => `<button class="soft mm-pick ${S.mmPick.includes(f.name) ? "on" : ""}" onclick="mmToggle('${f.name}')">${face(f)}<span>${f.name}</span></button>`).join("") || `<p class="mm-tip">Everyone is already taken! 😅</p>`}</div>
+    ${S.mmPick.length === 2 ? `<button class="rainbow" onclick="mmSetUp()">Set up ${S.mmPick[0]} & ${S.mmPick[1]} 💘</button>` : ""}
+    ${couples ? `<h3>Couples</h3>${couples}` : ""}
+    ${kids.length ? `<h3>Kids of Animal Burrow</h3><p class="mm-tip">Tap two kids for a playdate or sleepover. Or send everyone to school!</p>
+      <div class="mm-grid">${kids.map(x => `<button class="soft mm-pick ${S.mmKids.includes(x.id) ? "on" : ""}" onclick="mmKidToggle('${x.id}')">${mmKidPic(x.k)}<span>${esc(x.k.name)}<small>${kidStage(x.k)[1]}${x.mine ? " · yours" : ""}</small></span></button>`).join("")}</div>
+      ${S.mmKids.length === 2 ? `<button class="rainbow" onclick="mmPlay('play')">Playdate 🧸</button><button class="rainbow" onclick="mmPlay('sleep')">Sleepover 🌙</button>` : ""}
+      <button class="soft" onclick="mmSchool()">Animal Burrow School 🏫</button>` : ""}
+  </div></div>`;
+  noEmoji(ph);
+}
+function mmToggle(n) { S.mmPick = S.mmPick || []; if (S.mmPick.includes(n)) S.mmPick = S.mmPick.filter(x => x !== n); else { S.mmPick.push(n); if (S.mmPick.length > 2) S.mmPick.shift(); } matchApp(); }
+function mmKidToggle(id) { S.mmKids = S.mmKids || []; if (S.mmKids.includes(id)) S.mmKids = S.mmKids.filter(x => x !== id); else { S.mmKids.push(id); if (S.mmKids.length > 2) S.mmKids.shift(); } matchApp(); }
+function mmPop(html) { closePhone(); popup(html + `<button class="rainbow" onclick="closePopup(); matchApp()">Back to Matchmaker</button>`); }
+function mmSetUp() {
+  const [a, b] = S.mmPick || []; const A = fName(a), B = fName(b); if (!A || !B) return;
+  S.mmPick = []; const yes = Math.random() < .7;
+  if (!yes) { try { textFrom(a, pickOne([`Um, did you try to set me up with ${b}?? 😳 We're just friends! ...For now.`, `${b}?? No way. 😂 Nice try, Cupid.`])); } catch (e) {}
+    return mmPop(`<h2>Not this time... 😅</h2><div class="life-row">${lifeImg(ART[A.emo])}${lifeImg(ART[B.emo])}</div><div class="bubble"><b>${a}:</b> "${voiceLine(A, `${b}? We're just friends! ...I think.`)}"</div><p>Maybe try again another day!</p>`); }
+  mmCouples().push({ a, b, st: 1, since: S.day, kids: [] });
+  mmAlert("Love alert! 💘", `${a} and ${b} are DATING now!`);
+  try { postFeed(a, `Okay so... me and ${b} are DATING now?! 💕 Somebody set us up and I'm not even mad.`); } catch (e) {}
+  setTimeout(() => { try { textFrom(b, `Did YOU set me up with ${a}?? ...Thank you. 😳💕`); } catch (e) {} }, 2500);
+  mmPop(`<h2>It's a match! 💘</h2><div class="life-row">${lifeImg(ART[A.emo])}<span class="life-ring">💕</span>${lifeImg(ART[B.emo])}</div>
+    <p>You set up ${a} and ${b} on a picnic date. They talk for HOURS.</p><div class="bubble"><b>${b}:</b> "${voiceLine(B, `${a}... want to go on another date? Like, tomorrow? 😳`)}"</div>`);
+}
+function mmStep(c, quiet) {
+  const A = fName(c.a), B = fName(c.b); if (!A || !B) return "";
+  if (c.st === 1) { c.st = 2; mmAlert("Engagement alert! 💍", `${c.a} proposed to ${c.b}!`); try { postFeed(c.b, `${c.a} proposed under the Old Oak Tree and I said YES!!! 💍😭`); } catch (e) {}
+    return `<h2>They're engaged! 💍</h2><div class="life-row">${lifeImg(ART[A.emo])}<span class="life-ring">💍</span>${lifeImg(ART[B.emo])}</div><p>${c.a} gets down on one knee under the Old Oak Tree...</p><div class="bubble"><b>${c.b}:</b> "${voiceLine(B, "YES! YES YES YES! 😭💍")}"</div>`; }
+  if (c.st === 2) { c.st = 3; mmAlert("Wedding alert! 💒", `${c.a} and ${c.b} just got MARRIED!`); try { confetti(); } catch (e) {} try { postFeed(c.a, `Just married!!! 💒💕 Thank you everyone for coming! Best. Day. EVER.`); } catch (e) {}
+    return `<h2>Just married! 💒</h2><div class="life-row">${lifeImg(ART[A.emo])}<span class="life-ring">💒</span>${lifeImg(ART[B.emo])}</div><p>Olive the Owl says, "I now pronounce you partners for life!" Everyone in Animal Burrow throws flower petals.</p>`; }
+  if ((c.kids || []).length >= 3) return "";
+  const used = new Set([...friends().map(f => f.name), ...mmAllKids().map(x => x.k.name)]), name = MM_KID_NAMES.find(n => !used.has(n) && Math.random() < .5) || MM_KID_NAMES.find(n => !used.has(n)) || "Bean";
+  const kid = { name, kind: Math.random() < .5 ? ART[A.emo] : ART[B.emo], born: S.day, stage: "Baby" }; c.kids = c.kids || []; c.kids.push(kid);
+  mmAlert("Baby alert! 🍼", `${c.a} and ${c.b} had a baby named ${name}!`); try { confetti(); } catch (e) {}
+  try { postFeed(c.a, `Everyone meet ${name}!!! 🍼💕 Our family just got bigger. I'm crying. Happy crying.`); } catch (e) {}
+  return `<h2>Baby alert! 🍼</h2><div class="life-row">${lifeImg(ART[A.emo])}${lifeImg(kid.kind, "life-pic kid-Baby")}${lifeImg(ART[B.emo])}</div><p>${c.a} and ${c.b} had a baby! Their name is <b>${name}</b>.</p><div class="bubble"><b>${c.b}:</b> "${voiceLine(B, `Look at ${name}'s tiny paws!! 😭💕`)}"</div>`;
+}
+function mmNext(i) { const c = mmCouples()[i]; if (!c) return; const html = mmStep(c); if (html) mmPop(html); else matchApp(); }
+function mmBreak(i) {
+  const c = mmCouples()[i]; if (!c) return; mmCouples().splice(i, 1);
+  mmAlert("Breakup alert! 💔", `${c.a} and ${c.b} broke up!`); try { postFeed(c.a, `I don't want to talk about it. 💔😭`); } catch (e) {}
+  if (c.kids && c.kids.length) S.mmOrphanKids = (S.mmOrphanKids || []).concat(c.kids.map(k => Object.assign(k, { parents: [c.a, c.b] })));
+  mmPop(`<h2>It's over... 💔</h2><div class="life-row">${lifeImg(ART[fName(c.a).emo])}${lifeImg(ART[fName(c.b).emo])}</div><p>${c.a} and ${c.b} broke up. There were tears. There was ice cream. Everyone in Animal Burrow is talking about it.</p>`);
+}
+const MM_PLAY = ["{A} and {B} build the biggest pillow fort EVER. Then it falls down. They laugh for an hour. 😂", "{A} and {B} have a tea party with all the teddies. {B} pours. {A} spills. Classic. 🧸☕", "{A} and {B} play tag all over the meadow until they both fall over giggling. 🌼", "{A} and {B} paint a picture together. Most of the paint ends up on {A}'s nose. 🎨", "{A} and {B} hunt for bugs and find a REALLY big beetle. They name it Gerald. 🐞"];
+const MM_BABY_PLAY = ["{A} and {B} giggle at each other and chew on the same teddy. Best friends already! 🧸", "{A} and {B} play peekaboo. {B} laughs so hard they get the hiccups. 👶"];
+const MM_SLEEP = ["{A} and {B} stay up WAY too late telling spooky stories with a flashlight. 🔦👻", "{A} and {B} have a midnight snack party. Shhh! Don't wake the grown-ups! 🍪🌙", "{A} falls asleep first. {B} draws a tiny mustache on them with a marker. 😂", "{A} and {B} build a blanket fort and make shadow puppets until midnight. 🌙"];
+function mmPlay(kind) {
+  const all = mmAllKids(), [x, y] = (S.mmKids || []).map(id => all.find(k => k.id === id)); if (!x || !y) return; S.mmKids = [];
+  const babies = kidStage(x.k)[1] === "Baby" || kidStage(y.k)[1] === "Baby";
+  const line = pickOne(kind === "sleep" ? MM_SLEEP : babies ? MM_BABY_PLAY : MM_PLAY).replace(/\{A\}/g, esc(x.k.name)).replace(/\{B\}/g, esc(y.k.name));
+  if (kind === "sleep" && babies) return mmPop(`<h2>Too little! 👶</h2><p>Babies can't have sleepovers yet. Try a playdate instead!</p>`);
+  mmAlert(kind === "sleep" ? "Sleepover! 🌙" : "Playdate! 🧸", `${x.k.name} and ${y.k.name} are hanging out!`);
+  mmPop(`<h2>${kind === "sleep" ? "Sleepover! 🌙" : "Playdate! 🧸"}</h2><div class="life-row">${mmKidPic(x.k)}${mmKidPic(y.k)}</div><p>${line}</p>
+    <div class="bubble"><b>${esc(x.k.name)}:</b> "${pickOne(["This is the BEST day ever!!", "Can we do this again tomorrow? PLEASE?", "You're my best friend now. Forever. That's the rule."])}"</div>`);
+}
+const MM_LESSONS = [["Counting acorns", "Everyone counts to 100. {K} counts to 1000 just to show off."], ["Painting rainbows", "The whole class paints rainbows. {K}'s rainbow has 14 colors. That's not how rainbows work, but it's beautiful."], ["Science: why is the sky blue?", "{K} says it's because the sky is sad. Teacher Hoot says that's a very interesting idea."], ["Music class", "The whole class plays kazoos at the same time. Teacher Hoot needs a little rest after that."], ["Reading time", "{K} reads a whole book out loud and does ALL the voices."], ["Show and tell", "{K} brings a very shiny rock and tells everyone it's a dragon egg."]];
+function mmSchool() {
+  const kids = mmAllKids().filter(x => kidStage(x.k)[1] !== "Baby");
+  if (!kids.length) return mmPop(`<h2>Animal Burrow School 🏫</h2><p>All the kids are still babies! When they grow up a little, they can go to school.</p>`);
+  const [title, line] = pickOne(MM_LESSONS), star = pickOne(kids);
+  mmAlert("School! 🏫", `${kids.length} kid${kids.length > 1 ? "s" : ""} went to Animal Burrow School today!`);
+  mmPop(`<h2>Animal Burrow School 🏫</h2><div class="life-row">${lifeImg("owl")}</div><p><b>Teacher Hoot</b> rings the bell. Today's lesson: <b>${title}</b>!</p>
+    <div class="life-row mm-class">${kids.slice(0, 8).map(x => mmKidPic(x.k)).join("")}</div><p>${line.replace(/\{K\}/g, esc(star.k.name))}</p>
+    <div class="bubble"><b>Teacher Hoot:</b> "Hoo hoo! Gold stars for EVERYONE today! ⭐"</div>`);
+}
+// a new day: couples get closer by themselves, babies are born, kids grow up, and you get an alert for each
+const _lifeNewDayMM = lifeNewDay;
+lifeNewDay = function () {
+  _lifeNewDayMM();
+  try {
+    let n = 0;
+    mmCouples().forEach(c => { if (n > 1) return; const ch = c.st === 1 ? .25 : c.st === 2 ? .3 : (c.kids || []).length < 3 ? .25 : 0; if (Math.random() < ch) { n++; setTimeout(() => { try { mmStep(c); } catch (e) {} }, 3500 + n * 3000); } });
+    mmCouples().forEach(c => (c.kids || []).forEach(k => { const st = kidStage(k)[1]; if (k.stage !== st) { const was = k.stage; k.stage = st; if (was) setTimeout(() => mmAlert("Growing up! 🌱", `${k.name} (${c.a} & ${c.b}'s kid) is a ${st.toLowerCase()} now!`), 6000); } }));
+  } catch (e) {}
+};
+document.head.insertAdjacentHTML("beforeend", `<style>
+.ph-screen.mmapp{background:linear-gradient(#ffe8f3,#fff)}.mm-body{overflow-y:auto;padding:0 10px 14px}.mm-body h3{margin:12px 0 4px;color:#c2185b}
+.mm-tip{font-size:13px;color:#7a6a8a;margin:2px 0 6px}.mm-grid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.mm-pick{display:flex;flex-direction:column;align-items:center;width:84px;padding:6px 4px;margin:0;font-size:13px}.mm-pick img{width:56px;height:56px;object-fit:contain}.mm-pick small{display:block;font-size:11px;color:#7a6a8a}
+.mm-pick.on{background:#ffd23b;box-shadow:0 0 0 3px #ff5a9a inset}
+.mmapp .gc-hero{color:#c2185b;background:none;text-shadow:none}.mmapp .gc-hero small{color:#7a4a6a}.mm-faces img,.mm-faces svg,.mm-faces > *{width:44px !important;height:44px !important;max-width:44px;object-fit:contain;flex-shrink:0}.mm-pick > :first-child{width:56px !important;height:56px !important;max-width:56px;object-fit:contain}
+.mm-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid #f3d6e4}.mm-faces{display:flex}.mm-who{flex:1;min-width:120px}.mm-who small{display:block;color:#7a6a8a}
+.mm-acts{display:flex;flex-wrap:wrap;gap:4px;width:100%}.mm-acts button{margin:0;padding:6px 10px;font-size:13px}
+.mm-class img{width:54px;height:54px}
 </style>`);
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
