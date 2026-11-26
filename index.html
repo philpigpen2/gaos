@@ -2140,8 +2140,23 @@ function calmDown(f, raw, r) {
   return { ...r, pts: Math.min(r.pts, 1), mood: kind === "tooSoon" ? "confused" : "nod", deflect: kind === "tooSoon", say: pickOne(NEW_FRIEND[kind]) };
 }
 const OPENERS = ["Okay so, ", "Hehe, ", "Honestly? ", "Aww, ", "Hmm, ", "Oh! ", "Haha, ", "Wait, ", "Okay, okay, "];
+// when you're mad at someone, they say sorry, really sweetly, and beg to stay friends
+const MAD_AT = /\b(i'?m|i am|im) (so |really |very |super |kinda |a bit )?(mad|angry|upset|annoyed|furious|cross) (at|with) (you|u)\b|\bi hate (you|u)\b|\b(say|tell me|said) (you'?re |ur |your )?sorry\b|\bapologi[sz]e\b|\byou (owe me|should say) (an )?(apology|sorry)\b|\b(you'?re|you are|you were|ur|u r|youre) (so |really |very )?(mean|rude|annoying|the worst|a bad friend|not nice)\b|\bhurt my feelings\b|\b(i'?m|im|i am) not your friend\b|\bwe'?re not friends\b|\bi don'?t like (you|u)\b|\b(go away|leave me alone)\b|\bi'?m not talking to (you|u)\b|\bi'?m (so |really )?mad\b/;
+const MAD_SORRY = [
+  "I'm SO sorry. I never ever meant to make you feel bad. You're one of my favorite animals in the whole Burrow. Please, please still be my friend? 🥺",
+  "You're right, and I'm really, really sorry. 💔 I'll do better, I promise. Can we please be friends again? I'll even give you my last cookie. 🍪🥺",
+  "Oh no... I hate that you're mad at me. I'm sorry. Truly. You mean SO much to me. Please don't stop being my friend. 🥺💕",
+  "*hangs head* I'm sorry. I was wrong, and you didn't deserve that. I'll make it up to you, okay? Pinky promise? Please be my friend again! 🥺",
+  "I'm so so SO sorry. 😢 I'll make you a friendship bracelet. I'll carry your stuff. Anything! Just please say we're still friends? 🥺💕",
+  "Please don't be mad at me... I'm really sorry. You're the nicest animal I know and I'd be SO sad without you. Friends forever? Please? 🥺"];
+function madSorry(f) {
+  if (S.fightOpen) delete S.fightOpen[f.name];
+  const sweet = stageOf(f) >= 1 ? pickOne([" I love you SO much. Please forgive me? 💕", " You're my favorite person in the whole world. 💕"]) : "";
+  return { pts: 1, mood: "sad", fixed: true, say: pickOne(MAD_SORRY) + sweet };
+}
 function chatReply(f, text) {
-  const r = calmDown(f, text, chatReply0(f, text));
+  const nt = normalize(text);
+  const r = MAD_AT.test(nt) && !safety(f, nt) ? madSorry(f) : calmDown(f, text, chatReply0(f, text));
   if (r && r.say) {
     S.saidBy = S.saidBy || {};
     const past = S.saidBy[f.name] = S.saidBy[f.name] || [];
