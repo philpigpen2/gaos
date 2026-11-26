@@ -3689,6 +3689,7 @@ function phoneHome() {
     <div class="apps">
       ${app("msgs", "Messages", "linear-gradient(#5fe07a,#2bb673)", "openPhone('msgs')", un)}
       ${app("book", "Burrowbook", "linear-gradient(#7aa7ff,#3a5bd9)", "bookApp()", newPosts)}
+      ${app("baby", "Baby", "linear-gradient(#ffb3d1,#ff5a9a)", "babyApp()", S.preg && !pregDaysLeft() ? "!" : "")}
       ${app("sneaky", "Sneaky Paws", "linear-gradient(#3a1a3a,#0e0a14)", "sneakyApp()")}
       ${app("gossip", "Gossip Cage", "linear-gradient(#ff5aa8,#6a2a9a)", "gossipApp()", S.gossipSeen !== (S.tday || S.day) ? "!" : "")}
       ${app("photos", "Photos", "linear-gradient(#fff,#e9e3f5)", "photosApp()")}
@@ -4519,15 +4520,25 @@ function w3Animal(kind, look, xmas) {
     add(body, SPH, belly, 0, cy - P.bh * .05, P.len * .8, P.w * .62, P.bh * .72, P.len * .26);
     spine = new THREE.Group(); spine.position.set(0, cy + P.bh * .55, P.len * .78); body.add(spine);
     add(spine, CYL, fur, 0, .1 * P.nk, .04 * P.nk, P.w * .55, .3 * P.nk + .06, P.w * .55, false, furM).rotation.x = .45;
-    if (extra !== "rainbow") { const col = add(spine, tor(.14, .03), shirt, 0, .03, .02, P.w * 4, P.w * 4, 1, false, clothM); col.rotation.x = Math.PI / 2 - .45; }
+    // a cosy sweater over the middle of the body, with a ribbed neck and hem (hedgehogs just get a scarf: spikes!)
+    if (kind !== "hedgehog") {
+      const lightC = ((shirt >> 16 & 255) + (shirt >> 8 & 255) + (shirt & 255)) > 600, swC = lightC ? [0xff8fb1, 0x7ec8ff, 0xb48cff][hashStr(kind) % 3] : shirt;
+      const swM = extra !== "rainbow" ? w3Mat(swC, { roughness: .9 }) : w3Mat(0xffffff, { roughness: .9, map: w3Canvas("rainbowKnit", 64, 64, g2 => [0xff3b3b, 0xff9f1c, 0xffd23b, 0x3ddc84, 0x3bb7ff, 0x9b6bff].forEach((c, i) => { g2.fillStyle = "#" + c.toString(16).padStart(6, "0"); g2.fillRect(0, i * 64 / 6, 64, 64 / 6 + 1); })) });
+      add(body, SPH, swC, 0, cy + P.bh * .03, P.len * .16, P.w * 1.07, P.bh * 1.07, P.len * .66, true, swM);
+      const hem = add(body, tor(1, .07), darker(swC, .18), 0, cy + P.bh * .03, P.len * -.42, P.w * .98, P.bh * .98, 1, false, w3Mat(darker(swC, .18), { roughness: .95 }));
+      const neckR = add(spine, tor(.14, .035), extra === "rainbow" ? 0x9b6bff : darker(swC, .18), 0, .03, .02, P.w * 4, P.w * 4, 1, false); neckR.rotation.x = Math.PI / 2 - .45;
+    } else { const col = add(spine, tor(.14, .045), shirt, 0, .03, .02, P.w * 4, P.w * 4, 1, false, clothM); col.rotation.x = Math.PI / 2 - .45; }
     const lenL = P.h - .045, up = lenL * .52, lo = lenL * .48, th = P.th;
-    const leg = (sd, z, front) => { const L = new THREE.Group(); L.position.set(sd * P.w * .58, P.h, z); body.add(L);
-      add(L, SPH, fur, 0, .02, front ? .01 : -.02, th * (front ? 1.7 : 2.2), th * (front ? 2.1 : 2.8), th * (front ? 1.9 : 2.6), true, furM);
-      add(L, cap(+(th).toFixed(3), +(up).toFixed(3)), fur, 0, -up / 2, 0, 1, 1, 1, true, furM);
+    // smooth straight legs: a tapered upper leg that grows out of the body, a tapered lower leg, a soft round paw (no ball joints)
+    const taper = (r1, r2, l) => w3Geo("tp" + r1.toFixed(3) + "_" + r2.toFixed(3) + "_" + l.toFixed(3), () => new THREE.CylinderGeometry(r1, r2, l, 16, 1));
+    const leg = (sd, z, front) => { const L = new THREE.Group(); L.position.set(sd * P.w * .55, P.h, z); body.add(L);
+      const t1 = th * (front ? 1.1 : 1.3), t2 = th * .82, t3 = th * .7, ext = P.bh * .5;
+      add(L, taper(t1, t2, up + ext), fur, 0, (ext - up) / 2, 0, 1, 1, 1, true, furM);
       const kn = new THREE.Group(); kn.position.y = -up; L.add(kn); L.userData.knee = kn; L.userData.elbow = kn;
-      add(kn, cap(+(th * .8).toFixed(3), +(lo).toFixed(3)), lowC || fur, 0, -lo / 2, 0, 1, 1, 1, true, lowM || furM);
-      const pc = lowC || pawC, pz = bun && !front ? .1 : .03;
-      add(kn, SPH, pc, 0, -lo - .005, pz, th * 1.35, .045, bun && !front ? .19 : th * 1.8, true);
+      add(kn, SPH, lowC || fur, 0, 0, 0, t2, t2, t2, false, lowM || furM);
+      add(kn, taper(t2, t3, lo), lowC || fur, 0, -lo / 2, 0, 1, 1, 1, true, lowM || furM);
+      const pc = lowC || pawC, pz = bun && !front ? .09 : .025;
+      add(kn, SPH, pc, 0, -lo + .01, pz, t3 * 1.35, .042, bun && !front ? .18 : t3 * 1.75, true);
       return L; };
     const lz = P.len * .62;
     legs = [leg(-1, -lz, false), leg(1, -lz, false)];
@@ -7011,6 +7022,47 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 .j3row button.on{background:#ffd23b;box-shadow:0 0 0 3px #ff9f1c inset;font-weight:700}.j3serve{margin-top:6px}.j3serve[disabled]{opacity:.45}
 .j3x{position:absolute;top:8px;right:8px;margin:0;padding:6px 10px;font-size:13px}.j3wait{color:#6a5a7a;font-weight:700}
 body.j3mode #snow,body.j3mode #xlights,body.j3mode #sky,body.j3mode #clock,body.j3mode #treeBtn,body.j3mode #phoneBtn,body.j3mode #eyesBtn{display:none !important}
+</style>`);
+
+// ===== Baby app: you and your partner snuggle up and make a baby wish, hearts everywhere, then a baby is on the way =====
+APP_ICON.baby = `<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 8a4.3 4.3 0 0 1 7.5 2.8C19.5 16.4 12 21 12 21Z" fill="#fff"/><circle cx="12" cy="13" r="2.6" fill="#ff7aa8"/><path d="M10.6 15.2h2.8v2.2h-2.8z" fill="#ff7aa8"/></svg>`;
+function babyApp() {
+  const ph = document.getElementById("phone"); ph.style.display = "flex"; ph.dataset.thread = "";
+  const sp = spouse(), kids = S.kids || [];
+  let body;
+  if (!sp) body = `<p class="by-note">You need to be married first! 💍<br>Find someone special, fall in love, and get married. Then come back here to start a family.</p>`;
+  else if (S.preg) body = `<div class="by-pair">${lifeImg(myKind(), "by-pic")}${lifeImg(ART[sp.emo], "by-pic")}</div><p class="by-note"><b>A baby is on the way! 🤰</b><br>${pregDaysLeft() ? `About ${pregDaysLeft()} day${pregDaysLeft() === 1 ? "" : "s"} to go.` : "It's time! Hurry!"}</p>
+    <button class="rainbow" onclick="closePhone(); hospitalVisit()">Go to the Hospital 🏥</button>`;
+  else if (kids.length >= 4) body = `<p class="by-note">Your house is FULL of kids already! 😅 Four is plenty.</p>`;
+  else body = `<div class="by-pair">${lifeImg(myKind(), "by-pic")}<span class="by-h">💕</span>${lifeImg(ART[sp.emo], "by-pic")}</div>
+    <p class="by-note">You and ${sp.name}${kids.length ? ` and ${kids.length === 1 ? esc(kids[0].name) : "the kids"}` : ""}.<br>Ready for a baby?</p>
+    <p class="by-q">Who will have the baby?</p>
+    <button class="rainbow" onclick="babyWish('me')">Me! 🤰</button><button class="rainbow" onclick="babyWish('sp')">${sp.name} 🤰</button>`;
+  ph.innerHTML = `<div class="ph-screen babyapp">${appTop("Baby")}<div class="by-body">${body}</div></div>`;
+}
+function babyWish(who) {
+  const sp = spouse(); if (!sp || S.preg) return;
+  closePhone(); chime();
+  const hearts = Array.from({ length: 46 }, (_, i) => `<i style="left:${Math.round(Math.random() * 96)}%;animation-delay:${(Math.random() * 2.2).toFixed(2)}s;font-size:${18 + Math.round(Math.random() * 30)}px">${["💕", "💖", "💗", "❤️", "💞"][i % 5]}</i>`).join("");
+  document.body.insertAdjacentHTML("beforeend", `<div id="byWish"><div class="by-pair">${lifeImg(myKind(), "by-pic")}${lifeImg(ART[sp.emo], "by-pic")}</div>
+    <p>You and ${sp.name} snuggle up close and make a wish for a baby... ✨</p><div class="by-hearts">${hearts}</div></div>`);
+  try { floatHearts(10); } catch (e) {}
+  setTimeout(() => { const w = document.getElementById("byWish"); if (w) w.classList.add("full"); }, 1400);
+  setTimeout(() => {
+    const w = document.getElementById("byWish"); if (w) w.remove();
+    if (who === "sp") return pregTogether();
+    S.preg = { start: S.day, by: sp.name, who: "me" }; addHearts(sp, 2); pregNews();
+  }, 3800);
+}
+document.head.insertAdjacentHTML("beforeend", `<style>
+.ph-screen.babyapp{background:linear-gradient(#ffe3f0,#fff6fb)}.by-body{padding:14px;text-align:center;overflow-y:auto}
+.by-pair{display:flex;justify-content:center;align-items:center;gap:6px}.by-pic{width:96px;height:96px;object-fit:contain}.by-h{font-size:28px}
+.by-note{font-size:16px;margin:8px 4px}.by-q{font-weight:700;margin:10px 0 4px}
+#byWish{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(#ffb3d1cc,#ff7aa8cc);color:#fff;text-align:center;font-size:20px;font-weight:700;padding:20px;animation:byIn .6s ease-out;overflow:hidden}
+#byWish p{max-width:340px;text-shadow:0 2px 6px #a0306088}#byWish .by-pic{width:120px;height:120px}
+#byWish.full{background:linear-gradient(#ff7aa8,#ff3b80)}#byWish.full .by-pair,#byWish.full p{opacity:0;transition:opacity .8s}
+.by-hearts i{position:absolute;bottom:-60px;font-style:normal;animation:byUp 2.6s ease-in forwards}
+@keyframes byUp{to{transform:translateY(-120vh) rotate(25deg)}}@keyframes byIn{from{opacity:0}}
 </style>`);
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
