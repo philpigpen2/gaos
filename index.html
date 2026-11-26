@@ -7466,6 +7466,161 @@ function kidTalk(f, nt) {
   return null;
 }
 
+// ===== 3D dates: you really sit together. A cafe table with food you both eat, a picnic blanket, side-by-side cinema seats =====
+const DATE3 = { cafe: "table", bakery: "table", icecream: "table", picnic: "blanket", cinema: "seats" };
+const D3_ROOM = { cafe: [0xf1d6b0, 0x9a6a44, 0xffe2b0], bakery: [0xffe0b5, 0xa8703e, 0xfff0c8], icecream: [0xffdbe9, 0xd8f2e6, 0xffffff] };
+const D3_DEF = { cafe: ["mug", "muffin"], bakery: ["cupcake", "mug"], icecream: ["sundae"], picnic: ["strawberries", "sandwich", "cookies"], cinema: ["popcorn"] };
+let D3 = null;
+function d3FoodOf(key, text) {
+  const t = (text || "").toLowerCase();
+  if (/cocoa|tea|milk|coffee|lemonade|juice/.test(t)) return ["mug", "mug"];
+  if (/muffin|cupcake/.test(t)) return [key === "bakery" ? "cupcake" : "muffin"];
+  if (/cookie/.test(t)) return ["cookies"];
+  if (/pie|tart/.test(t)) return ["pie"];
+  if (/cake/.test(t)) return ["cake"];
+  if (/sandwich/.test(t)) return ["sandwich"];
+  if (/strawberr|berr/.test(t)) return [key === "icecream" ? "sundae" : "strawberries"];
+  if (/popcorn|bucket|nachos|candy|snack/.test(t)) return ["popcorn"];
+  if (/scoop|sundae|vanilla|chocolate|mint|sprinkle|flavor|cone/.test(t)) return ["sundae"];
+  return null;
+}
+function d3Food(type, sc, x, y, z) {
+  const g = new THREE.Group(), M = (c, r = .6) => new THREE.MeshStandardMaterial({ color: c, roughness: r });
+  const add = (geo, m, px, py, pz) => { const o = new THREE.Mesh(geo, m); o.position.set(px, py, pz); o.castShadow = true; g.add(o); return o; };
+  if (type !== "popcorn") add(new THREE.CylinderGeometry(.24, .2, .04, 28), M(0xffffff, .3), 0, .02, 0); // plate
+  if (type === "mug") { add(new THREE.CylinderGeometry(.13, .11, .24, 20), M(0xd9534f, .4), 0, .16, 0); add(new THREE.CylinderGeometry(.115, .115, .01, 20), M(0x6b3a1e, .3), 0, .275, 0);
+    const h = add(new THREE.TorusGeometry(.065, .02, 8, 16), M(0xd9534f, .4), .15, .16, 0); h.rotation.y = Math.PI / 2;
+    [[-.04, .02], [.04, -.03], [0, .05]].forEach(([a, b]) => add(new THREE.BoxGeometry(.05, .04, .05), M(0xffffff, .9), a, .29, b)); g.userData.steam = true; }
+  if (type === "muffin" || type === "cupcake") { add(new THREE.CylinderGeometry(.13, .1, .14, 16), M(type === "muffin" ? 0xc98a4a : 0xff9cc2, .7), 0, .11, 0);
+    const top = add(new THREE.SphereGeometry(.15, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), M(type === "muffin" ? 0x8a5a2b : 0xfff3f8, .8), 0, .18, 0); top.scale.y = .8;
+    add(new THREE.SphereGeometry(.035, 8, 6), M(0xe0203a, .3), 0, .3, 0); }
+  if (type === "cookies") [[-.1, 0], [.1, .05], [0, -.1]].forEach(([a, b]) => { add(new THREE.CylinderGeometry(.09, .09, .03, 16), M(0xd29a52, .8), a, .06, b);
+    [[.03, .02], [-.03, -.02]].forEach(([c, d]) => add(new THREE.SphereGeometry(.015, 6, 4), M(0x3a2010, .5), a + c, .08, b + d)); });
+  if (type === "pie" || type === "cake") { const s = add(new THREE.CylinderGeometry(.2, .2, .16, 3, 1, false, 0, Math.PI / 2.2), M(type === "pie" ? 0xd9a050 : 0xfff0f5, .7), 0, .12, 0);
+    add(new THREE.CylinderGeometry(.2, .2, .04, 3, 1, false, 0, Math.PI / 2.2), M(type === "pie" ? 0x8b1e3f : 0xff6fa5, .5), 0, .22, 0); s.rotation.y = .3; }
+  if (type === "sandwich") { [0xf5deb3, 0x7cc44a, 0xf0a030, 0xf5deb3].forEach((c, i) => { const o = add(new THREE.BoxGeometry(.3, .035, .22), M(c, .8), 0, .06 + i * .035, 0); o.rotation.y = .4; }); }
+  if (type === "strawberries") [[-.1, 0], [.06, .08], [.1, -.06], [-.02, -.1], [0, .02]].forEach(([a, b]) => { add(new THREE.ConeGeometry(.05, .1, 10), M(0xe0203a, .35), a, .08, b).rotation.x = Math.PI;
+    add(new THREE.ConeGeometry(.04, .03, 6), M(0x3fa34d, .6), a, .14, b); });
+  if (type === "sundae") { add(new THREE.CylinderGeometry(.12, .05, .2, 18), new THREE.MeshStandardMaterial({ color: 0xdff4ff, roughness: .05, transparent: true, opacity: .55 }), 0, .14, 0);
+    [[0xffb6cf, 0], [0xfff1c8, .08], [0x8a5a3a, .16]].forEach(([c, yy], i) => add(new THREE.SphereGeometry(.1, 14, 10), M(c, .8), (i - 1) * .05, .26 + yy * .4, 0));
+    add(new THREE.SphereGeometry(.035, 8, 6), M(0xe0203a, .25), 0, .42, 0); }
+  if (type === "popcorn") { add(new THREE.CylinderGeometry(.22, .16, .45, 20, 1, true), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .6, side: THREE.DoubleSide, map: w3Canvas("popstripe", 64, 64, gg => { for (let i = 0; i < 8; i++) { gg.fillStyle = i % 2 ? "#ffffff" : "#e8333a"; gg.fillRect(i * 8, 0, 8, 64); } }) }), 0, .22, 0);
+    for (let i = 0; i < 26; i++) { const a = Math.random() * 6.28, r = Math.random() * .17; add(new THREE.IcosahedronGeometry(.045, 0), M(0xfff3c4, .9), Math.cos(a) * r, .45 + Math.random() * .08, Math.sin(a) * r); } }
+  g.position.set(x, y, z); sc.add(g); return g;
+}
+function d3Sit(c, sh) { // sit up on the back legs like a real animal at a table
+  if (!c.quad) { c.legs.forEach(X => { X.rotation.x = -1.45; X.userData.knee.rotation.x = 1.5; }); c.body.position.y = -sh; return; }
+  const P = c.qb ? c.qb.P : { h: .5, len: .5 }, ang = .95;
+  c.body.rotation.x = -ang; c.body.position.y = P.h * .05 + Math.sin(P.len * .8) * .12; c.body.position.z = -P.len * .55;
+  c.legs.forEach(X => { X.rotation.x = -.55; X.userData.knee.rotation.x = 1.2; });
+  c.arms.forEach(X => { X.rotation.x = ang * .7; X.userData.knee.rotation.x = .2; });
+  c.spine.rotation.x += ang * .55; c.head.rotation.x += ang * .45;
+}
+function d3Stop() { if (!D3) return; cancelAnimationFrame(D3.raf); removeEventListener("resize", D3.resize); try { D3.R.dispose(); } catch (e) {} D3 = null; }
+function d3Start(key, f, mood) {
+  const cv = document.getElementById("d3C"); if (!cv || !window.THREE) return; d3Stop();
+  if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+  const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true }); R.setPixelRatio(Math.min(devicePixelRatio || 1, 1.6)); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+  const sc = new THREE.Scene(), type = DATE3[key], M = (c, r = .7) => new THREE.MeshStandardMaterial({ color: c, roughness: r });
+  const box = (w, h, d, c, x, y, z, r) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(c, r)); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; sc.add(o); return o; };
+  const cyl = (r1, r2, h, c, x, y, z, seg = 28) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, h, seg), M(c)); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; sc.add(o); return o; };
+  const key0 = new THREE.DirectionalLight(0xfff0d8, type === "seats" ? .25 : 1.15); key0.position.set(3, 7, 4); key0.castShadow = true; Object.assign(key0.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6 }); key0.shadow.mapSize.set(1024, 1024); sc.add(key0);
+  sc.add(new THREE.HemisphereLight(type === "blanket" ? 0xdff0ff : 0xfff3e0, type === "blanket" ? 0x5a8a3a : 0x7a5a40, type === "seats" ? .25 : .75));
+  const anim = [];
+  let seatA, seatB, faceA, faceB, sitH = 0;
+  if (type === "table") {
+    const [wall, floorC, accent] = D3_ROOM[key]; sc.background = new THREE.Color(wall);
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(14, 10).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: floorC, roughness: .55, map: w3Canvas("d3plank", 256, 256, g => { for (let i = 0; i < 8; i++) { const v = 205 + Math.random() * 40; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(0, i * 32, 256, 32); g.fillStyle = "rgba(0,0,0,.22)"; g.fillRect(0, i * 32 + 30, 256, 2); g.fillRect((i * 97) % 256, i * 32, 2, 32); } }) })); fl.receiveShadow = true; sc.add(fl);
+    const wm = M(wall, .95), back = new THREE.Mesh(new THREE.PlaneGeometry(14, 6), wm); back.position.set(0, 3, -3.2); back.receiveShadow = true; sc.add(back);
+    box(14, 1.1, .06, accent, 0, .55, -3.15, .5); box(14, .06, .1, 0xffffff, 0, 1.12, -3.13, .4);
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.7), new THREE.MeshBasicMaterial({ map: w3Canvas("d3win", 256, 160, g => { const gd = g.createLinearGradient(0, 0, 0, 160); gd.addColorStop(0, "#8fd0ff"); gd.addColorStop(1, "#e8f6ff"); g.fillStyle = gd; g.fillRect(0, 0, 256, 160); g.fillStyle = "#7cc45a"; g.fillRect(0, 118, 256, 42); [[40, 100], [120, 92], [200, 104]].forEach(([x, y]) => { g.fillStyle = "#7a5030"; g.fillRect(x - 4, y, 8, 26); g.fillStyle = "#4f9a3a"; g.beginPath(); g.arc(x, y - 6, 26, 0, 7); g.fill(); }); g.fillStyle = "#fff"; g.beginPath(); g.arc(180, 34, 14, 0, 7); g.arc(196, 30, 18, 0, 7); g.arc(214, 36, 12, 0, 7); g.fill(); }) })); win.position.set(-2.2, 2.4, -3.17); sc.add(win);
+    box(2.8, .1, .12, 0xffffff, -2.2, 1.5, -3.1); box(2.8, .1, .12, 0xffffff, -2.2, 3.3, -3.1); box(.1, 1.9, .12, 0xffffff, -2.2, 2.4, -3.1);
+    [[2.4, 2.4, 0xffd27a], [3.6, 2.1, 0x9ad0ff]].forEach(([x, y, c]) => { box(.8, .6, .05, 0x6b4a2a, x, y, -3.14); box(.66, .46, .03, c, x, y, -3.1); });
+    box(1.6, .9, .7, 0x8a5a3a, 4.6, .45, -2.6); box(1.7, .08, .8, 0xffffff, 4.6, .94, -2.6);
+    // the table, with a cloth to the floor, and two chairs
+    const cloth = new THREE.Mesh(new THREE.CylinderGeometry(.52, .64, .92, 40, 1, true), new THREE.MeshStandardMaterial({ color: key === "icecream" ? 0xbfeede : 0xfff8ee, roughness: .9, side: THREE.DoubleSide })); cloth.position.set(0, .46, 0); cloth.castShadow = true; sc.add(cloth);
+    cyl(.53, .53, .04, key === "icecream" ? 0xd8fff2 : 0xffffff, 0, .93, 0, 40);
+    const DA = 0; [-1, 1].forEach(s => { const ch = new THREE.Group(), cx = .98 * s, cz = 0; ch.position.set(cx, 0, cz); ch.rotation.y = DA;
+      const cb = (w, h, d, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(0x7a4a2a)); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; ch.add(o); };
+      cb(.9, .08, .9, 0, .55, 0); cb(.08, 1.1, .9, s * .43, 1.05, 0); [[-.38, -.38], [.38, -.38], [-.38, .38], [.38, .38]].forEach(([a, b]) => cb(.07, .55, .07, a, .27, b)); sc.add(ch); });
+    const cnd = cyl(.04, .04, .22, 0xfff8e8, 0, 1.06, -.3, 10), flame = new THREE.Mesh(new THREE.ConeGeometry(.03, .09, 8), new THREE.MeshBasicMaterial({ color: 0xffb030 })); flame.position.set(0, 1.22, -.3); sc.add(flame);
+    const lamp = new THREE.PointLight(0xffc880, .9, 6); lamp.position.set(0, 2.6, 0); sc.add(lamp); cyl(.35, .05, .25, 0x3a2a1a, 0, 3.1, 0, 16);
+    anim.push(t => { flame.scale.y = 1 + Math.sin(t * 13) * .18; lamp.intensity = .85 + Math.sin(t * 7) * .05; });
+    seatA = [-.84, .6, 0]; seatB = [.84, .6, 0]; faceA = Math.PI / 2 + DA; faceB = -Math.PI / 2 + DA;
+  } else if (type === "blanket") {
+    sc.background = new THREE.Color(0xa9dcff); sc.fog = new THREE.Fog(0xa9dcff, 14, 34);
+    const gr = new THREE.Mesh(new THREE.PlaneGeometry(80, 80).rotateX(-Math.PI / 2), M(0x7cc45a, .95)); gr.receiveShadow = true; sc.add(gr);
+    const bl = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.6).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ roughness: .9, map: w3Canvas("picnicbl", 128, 128, gg => { for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { gg.fillStyle = (i + j) % 2 ? "#ffffff" : "#e8424f"; gg.fillRect(i * 16, j * 16, 16, 16); } }) })); bl.position.y = .02; bl.receiveShadow = true; sc.add(bl);
+    const bk = box(.7, .45, .5, 0xc8904a, 1.1, .23, -.8); const hd = new THREE.Mesh(new THREE.TorusGeometry(.3, .03, 8, 20, Math.PI), M(0x9a6a2a)); hd.position.set(1.1, .45, -.8); sc.add(hd); bk.rotation.y = .3;
+    for (let i = 0; i < 14; i++) { const a = i / 14 * 6.28 + .3, r = 9 + (i % 3) * 3, x = Math.cos(a) * r, z = Math.sin(a) * r - 3; if (z > 4) continue;
+      cyl(.25, .35, 2.2, 0x7a5030, x, 1.1, z, 8); const top = new THREE.Mesh(new THREE.IcosahedronGeometry(1.6, 1), M([0x4f9a3a, 0x5fae45, 0x3f8a32][i % 3], .9)); top.position.set(x, 3.2, z); top.castShadow = true; sc.add(top); }
+    for (let i = 0; i < 40; i++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(.06, 6, 4), new THREE.MeshBasicMaterial({ color: [0xffffff, 0xffe14d, 0xff8fb8][i % 3] })); fl.position.set((Math.random() - .5) * 16, .05, (Math.random() - .5) * 10 - 1); if (Math.abs(fl.position.x) < 2 && Math.abs(fl.position.z) < 1.6) continue; sc.add(fl); }
+    seatA = [-.8, 0, .25]; seatB = [.8, 0, -.15]; faceA = Math.PI / 2 - .25; faceB = -Math.PI / 2 + .25;
+  } else {
+    sc.background = new THREE.Color(0x14081c);
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(30, 30).rotateX(-Math.PI / 2), M(0x3a1424, .9)); fl.receiveShadow = true; sc.add(fl);
+    const scrM = new THREE.MeshBasicMaterial({ map: w3Canvas("movie" + Math.floor(Math.random() * 3), 256, 128, gg => { const gd = gg.createLinearGradient(0, 0, 0, 128); gd.addColorStop(0, "#6ec6ff"); gd.addColorStop(1, "#ffd27a"); gg.fillStyle = gd; gg.fillRect(0, 0, 256, 128); gg.fillStyle = "#3a8a3a"; gg.beginPath(); gg.ellipse(128, 140, 200, 60, 0, 0, 7); gg.fill(); gg.fillStyle = "#fff59a"; gg.beginPath(); gg.arc(200, 34, 18, 0, 7); gg.fill(); }) });
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(9, 4.2), scrM); scr.position.set(0, 3.4, -7); sc.add(scr);
+    const glow = new THREE.PointLight(0x9fd0ff, 1.4, 16); glow.position.set(0, 3, -5); sc.add(glow);
+    const seat = (x, z, c) => { box(.95, .45, .85, c, x, .42, z); box(.95, 1.0, .18, c, x, .95, z + .42); box(.12, .55, .85, 0x2a0a14, x - .52, .55, z); box(.12, .55, .85, 0x2a0a14, x + .52, .55, z); };
+    for (let row = 0; row < 3; row++) for (let i = -3; i <= 2; i++) seat(i * 1.1 + .55, row * 1.5, 0xa0182e);
+    for (let i = -3; i <= 3; i++) if (Math.abs(i) > 1 && Math.random() < .6) { const h = new THREE.Mesh(new THREE.SphereGeometry(.32, 12, 10), M(0x2a1a24)); h.position.set(i * 1.1 + .55, 1.35, -1.5); sc.add(h); }
+    anim.push(t => { glow.intensity = 1.2 + Math.sin(t * 2.3) * .25 + Math.sin(t * 7.1) * .1; glow.color.setHSL((Math.sin(t * .4) + 1) * .08 + .5, .6, .7); });
+    seatA = [-.55, .5, -.45]; seatB = [.55, .5, -.45]; faceA = Math.PI; faceB = Math.PI;
+  }
+  // the two of you
+  const mk = myKind(), me = w3Animal(mk, [0x9b6bff, 0x2e3a55, 0xffffff, "rainbow"], XMAS()); me.g.scale.setScalar(w3Size(mk) / 2); try { if (pregMe()) w3Bump(me); } catch (e) {}
+  const dk = ART[f.emo], dt0 = w3Animal(dk, W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], XMAS()); dt0.g.scale.setScalar(w3Size(dk) / 2); try { if (pregPartner(f.name)) w3Bump(dt0); } catch (e) {}
+  [[me, seatA, faceA], [dt0, seatB, faceB]].forEach(([c, p, r]) => { c.g.position.set(p[0], p[1], p[2]); c.g.rotation.y = r; c.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); sc.add(c.g); });
+  // food you share
+  const foods = S.d3Food && S.d3Food[key] || D3_DEF[key], plates = [];
+  if (type === "table") { plates.push(d3Food(foods[0], sc, -.27, .95, .08)); plates.push(d3Food(foods[1] || foods[0], sc, .27, .95, .08)); }
+  else if (type === "blanket") { foods.forEach((fd, i) => plates.push(d3Food(fd, sc, (i - (foods.length - 1) / 2) * .55, .02, -.35 + (i % 2) * .3))); }
+  else plates.push(d3Food("popcorn", sc, 0, .82, -.1));
+  const cam = new THREE.PerspectiveCamera(45, 1, .1, 80);
+  const resize = () => { const w = cv.clientWidth || 390, h = cv.clientHeight || 300; R.setSize(w, h, false); cam.aspect = w / h; const narrow = w < h * 1.1; cam.fov = narrow ? 62 : 45; cam.updateProjectionMatrix();
+    if (type === "table") { cam.position.set(0, narrow ? 2.3 : 2, narrow ? 6.8 : 4.2); cam.lookAt(0, 1.1, 0); }
+    else if (type === "blanket") { cam.position.set(.3, narrow ? 2.8 : 2.4, narrow ? 6.2 : 4.6); cam.lookAt(0, .45, 0); }
+    else { cam.position.set(.3, 1.8, narrow ? -4.2 : -3.2); cam.lookAt(0, 1.0, .3); } };
+  resize();
+  D3 = { R, sc, cam, me, dt: dt0, plates, resize, t: 0, last: performance.now(), bite: [2.2, 3.6], mood, type };
+  addEventListener("resize", resize);
+  const loop = () => { if (!D3 || !document.getElementById("d3C")) return d3Stop(); const now = performance.now(), dt = Math.min(.05, (now - D3.last) / 1000); D3.last = now; D3.t += dt; const t = D3.t;
+    [D3.me, D3.dt].forEach((c, n) => { c.look = n ? (Math.sin(t * .3) > -.2 ? 0 : .3) : 0; c.nod = false; w3Anim(c, dt, 0, false, t + n * 2); d3Sit(c, sitH);
+      // eating: lean in, take a bite, chew; on the cinema seats, munch popcorn and look at the screen
+      D3.bite[n] -= dt; const b = D3.bite[n];
+      if (b < .7 && b > 0) { const k = Math.sin((.7 - b) / .7 * Math.PI); c.head.rotation.x = .45 * k; c.spine.rotation.x += .25 * k; c.arms[n ? 1 : 0].rotation.x += .9 * k;
+        if (b < .35 && !c._ate) { c._ate = true; const p = D3.plates[Math.min(n, D3.plates.length - 1)]; if (p && p.scale.x > .55) p.scale.multiplyScalar(.96); } }
+      else if (b <= 0) { D3.bite[n] = 2.6 + Math.random() * 3; c._ate = false; }
+      else if (D3.mood === "blush" || D3.mood === "happy") c.head.rotation.z = Math.sin(t * 1.3 + n) * .06; });
+    D3.plates.forEach(p => { if (p.userData.steam) p.children.forEach((o, i) => { if (i > 2 && o.geometry.type === "BoxGeometry") { o.position.y = .29 + ((t * .25 + i * .3) % .5); o.material.opacity = 1; } }); });
+    anim.forEach(fn => fn(t)); R.render(sc, cam); D3.raf = requestAnimationFrame(loop); };
+  loop();
+}
+function d3StageHtml(f, label) {
+  return `<div class="pov-stage d3-stage"><canvas id="d3C"></canvas><div class="pov-label">${label}</div><button class="pov-exit" onclick="d3Stop(); exitEyes()">Exit</button></div>`;
+}
+// remember what you ordered so it shows up on the table
+const _activityD3 = activity;
+activity = function (key, step, pick = -1) {
+  if (!DATE3[key] || !hasWebGL()) return _activityD3(key, step, pick);
+  const A = ACTS.find(a => a[0] === key);
+  if (step === 0) { S.d3Food = S.d3Food || {}; delete S.d3Food[key]; }
+  if (step === 1 && pick >= 0 && A) { const fd = d3FoodOf(key, A[5][0][1][pick][0]); if (fd) { S.d3Food = S.d3Food || {}; S.d3Food[key] = fd; } }
+  S.d3Want = key; const r = _activityD3(key, step, pick === -1 && step === 0 ? -2 : pick); S.d3Want = null; return r;
+};
+const _povStageD3 = povStage;
+povStage = function (f, bgCss, label, mood = "walk", key = "", extra = "", indoors = false) {
+  const k = S.d3Want; if (k && DATE3[k]) { loadThree().then(() => { try { d3Start(k, f, mood); } catch (e) { console.warn(e); const st = document.querySelector(".d3-stage"); if (st && /[?&]dbg/.test(location.search + (window.DBG ? "?dbg" : ""))) st.insertAdjacentHTML("beforeend", `<pre style="position:absolute;top:60px;color:#fff;white-space:pre-wrap;font-size:10px">${e.stack}</pre>`); } }).catch(() => {}); return d3StageHtml(f, label); }
+  return _povStageD3(f, bgCss, label, mood, key, extra, indoors);
+};
+const _act3DD3 = act3D;
+act3D = function (key) { if (DATE3[key] && hasWebGL()) { try { closePopup(); } catch (e) {} if (W3) { try { w3Stop(); } catch (e) {} } S.act = { i: S.act.i, from: S.act.from === "shop" ? "shop" : "date" }; return activity(key, 0); } return _act3DD3(key); };
+document.head.insertAdjacentHTML("beforeend", `<style>
+.d3-stage{position:relative;height:min(52vh,460px);border-radius:18px;overflow:hidden;background:#222}
+.d3-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+</style>`);
+
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
 </script>
 </body>
