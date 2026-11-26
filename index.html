@@ -2549,7 +2549,7 @@ function msgHTML(m) {
   }
   return `<div class="ph-msg ${m.from}">${esc(m.t)}</div>`;
 }
-const preview = t => t.startsWith("PIC|") ? "Sent you a photo" : t;
+const preview = t => t.startsWith("PIC") ? "Sent you a photo" : t;
 const PHOTO_ASK = /(send|show|take|got|have)( me)?( an?| your| ur)? (pic|pics|picture|pictures|photo|photos|selfie|selfies)|\bselfie\b|pic of (you|u|ur)|picture of (you|u|ur)|what do (you|u) look like/i;
 const KID_PHOTO = /\b(can|could|should|let) (i|me) (send|show)|i('?ll| will| can| want to| wanna) send (you|u)|here'?s (a )?(pic|picture|photo) of me|send (you|u) (a )?(pic|picture|photo)/i;
 function openPhone(thread) {
@@ -4157,8 +4157,8 @@ function sendPicT(name, t) {
   if (!t) return;
   const mine = { from: "me", t, read: true }; texts(name).push(mine);
   const box = document.getElementById("phMsgs"); if (box) { box.insertAdjacentHTML("beforeend", msgHTML(mine)); box.scrollTop = box.scrollHeight; }
-  const st = stageOf(f), isPic2 = t.startsWith("PIC2|"), who = isPic2 ? "" : t.split("|")[3];
-  const hasMe = isPic2 ? t.includes(me + ",") : who === me, hasThem = isPic2 ? t.includes(ART[f.emo] + ",") : who === ART[f.emo];
+  const st = stageOf(f), isPic2 = t.startsWith("PIC2|"), isPic3 = t.startsWith("PIC3|"), who = isPic2 || isPic3 ? "" : t.split("|")[3];
+  const hasMe = isPic3 ? true : isPic2 ? t.includes(me + ",") : who === me, hasThem = isPic3 ? (t.split("|")[2] || "").includes(f.name) : isPic2 ? t.includes(ART[f.emo] + ",") : who === ART[f.emo];
   const line = hasMe && hasThem ? pickOne(st === 0 ? ["Haha, that's us! Nice one.", "We look so funny together! 😂"] : st === 1 ? ["Aww, we look cute together... 🙈", "Can I keep this one? 😳"] : ["US!! I'm framing this. 💖", "Best picture of us EVER. 😍"]) : hasMe ? pickOne(PIC_BACK.me[st]) : hasThem ? pickOne(PIC_BACK.them) : pickOne(PIC_BACK.view);
   S.picDay = S.picDay || {}; let tag = "";
   if (S.picDay[name] !== S.tday) { S.picDay[name] = S.tday; addHearts(f, 1); tag = "  (+1 heart)"; }
@@ -8045,6 +8045,123 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 .ad-list{display:flex;flex-direction:column;gap:6px;margin:6px 0}.ad-baby{display:flex;align-items:center;gap:10px;text-align:left;width:100%}
 .ad-baby img{width:58px;height:58px;object-fit:contain;flex-shrink:0}.ad-baby small{display:block;font-size:12px;opacity:.75;font-weight:500}
 .ad-name{font:inherit;font-size:20px;text-align:center;border:3px solid #ffb3d1;border-radius:14px;padding:8px 12px;width:min(240px,80%)}
+</style>`);
+
+// ===== Real photos: snapshots of the actual 3D world with your animals posing in it =====
+// PIC3|<id>|caption   (the picture itself is kept once in S.photos3[id] as a small JPEG)
+function photo3Src(t) { const id = t.split("|")[1]; return (S.photos3 && S.photos3[id]) || ""; }
+function photo3Save(dataUrl, cap) {
+  S.photos3 = S.photos3 || {}; S.photos3Order = S.photos3Order || [];
+  const id = "p" + Date.now().toString(36) + Math.floor(Math.random() * 99);
+  S.photos3[id] = dataUrl; S.photos3Order.push(id);
+  // keep it light: only the newest 16 real photos are kept
+  while (S.photos3Order.length > 16) { const old = S.photos3Order.shift(); delete S.photos3[old]; }
+  return `PIC3|${id}|${(cap || "").replace(/[|;]/g, " ")}`;
+}
+const _photoInnerP3 = photoInner;
+photoInner = function (t) { if (t.startsWith("PIC3|")) return { place: "", real: photo3Src(t), html: "" }; return _photoInnerP3(t); };
+const _photoThumbP3 = photoThumb;
+photoThumb = function (t, click) { if (t.startsWith("PIC3|")) { const src = photo3Src(t); return `<div class="pthumb" style="background:url(${src}) center/cover,#ccd" onclick="${click}"></div>`; } return _photoThumbP3(t, click); };
+const _msgHTMLP3 = msgHTML;
+msgHTML = function (m) {
+  if (m && typeof m.t === "string" && m.t.startsWith("PIC3|")) { const src = photo3Src(m.t), cap = m.t.split("|")[2];
+    return `<div class="ph-msg ${m.from === "me" ? "me" : "them"} ph-pic" onclick="this.classList.toggle('big')"><div class="photo pic2" style="background:url(${src}) center/cover,#ccd">${src ? "" : "<small>(old photo)</small>"}</div>${cap ? `<div>${esc(cap)}</div>` : ""}</div>`; }
+  return _msgHTMLP3(m);
+};
+function w3Snap(people, cap) {
+  // people: [{kind, look, bump, name}] posed in a row in front of the camera, in the real world, then a photo is taken
+  const W = W3; if (!W || !W.R) return null;
+  const dir = new THREE.Vector3(); W.cam.getWorldDirection(dir); dir.y = 0; if (dir.lengthSq() < 1e-4) dir.set(0, 0, -1); dir.normalize();
+  const n = people.length, gap = 1.15, span = (n - 1) * gap;
+  const cv = W.R.domElement; let sw = cv.width, sh = sw * 3 / 4; if (sh > cv.height) { sh = cv.height; sw = sh * 4 / 3; }
+  const vfull = 2 * Math.atan(Math.tan(19 * Math.PI / 180) * cv.height / sh) * 180 / Math.PI, hcrop = 2 * Math.atan(Math.tan(19 * Math.PI / 180) * 4 / 3);
+  const dist = Math.max(2.6, (span / 2 + .75) / Math.tan(hcrop / 2));
+  // turn to find a clear view: no walls, trees or bushes between the camera and the group
+  const moved = (x, z) => { const q = w3Collide(x, z, true); return Math.hypot(q[0] - x, q[1] - z) > .05; };
+  const clear = d => { const sd = new THREE.Vector3(-d.z, 0, d.x);
+    for (let t = .4; t <= dist + .6; t += .45) { const px = W.x + d.x * t, pz = W.z + d.z * t; if (moved(px, pz)) return false; }
+    const cx0 = W.x - d.x * .2, cz0 = W.z - d.z * .2;
+    for (const u of [-(span / 2 + .6), span / 2 + .6]) { const ex = W.x + d.x * (dist - .2) + sd.x * u, ez = W.z + d.z * (dist - .2) + sd.z * u; for (let t = .12; t <= 1; t += .11) if (moved(cx0 + (ex - cx0) * t, cz0 + (ez - cz0) * t)) return false; }
+    for (let u = -(span / 2 + .5); u <= span / 2 + .5; u += .4) { const px = W.x + d.x * (dist - .2) + sd.x * u, pz = W.z + d.z * (dist - .2) + sd.z * u; if (moved(px, pz) || moved(px + d.x * 1.2, pz + d.z * 1.2)) return false; }
+    return true; };
+  try { for (const k of [0, 1, -1, 2, -2, 3, -3, 4]) { const a = k * Math.PI / 4, d = new THREE.Vector3(dir.x * Math.cos(a) - dir.z * Math.sin(a), 0, dir.x * Math.sin(a) + dir.z * Math.cos(a)); if (clear(d)) { dir.copy(d); break; } } } catch (e) {}
+  const side = new THREE.Vector3(-dir.z, 0, dir.x);
+  const base = new THREE.Vector3(W.x, 0, W.z).addScaledVector(dir, dist - .2);
+  const temp = [], hid = [];
+  people.forEach((p, i) => { const c = w3Animal(p.kind, p.look, XMAS()); if (p.bump) { try { w3Bump(c); } catch (e) {} }
+    c.g.scale.setScalar(w3Size(p.kind) / 2 * (p.sc || 1)); const pos = base.clone().addScaledVector(side, i * gap - span / 2); pos.y = w3HeightAt(pos.x, pos.z);
+    c.g.position.copy(pos); c.g.rotation.y = Math.atan2(-dir.x, -dir.z) + (i - (n - 1) / 2) * -.12; c.g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    // a happy pose: look at the camera, ears up, a little wave for the ones at the ends
+    w3Anim(c, .016, 0, false, i); c.nod = false; W.sc.add(c.g); temp.push(c); });
+  [W.me, W.mch && W.mch.g, W.talk && W.talk.ch && W.talk.ch.g].forEach(o => { if (o && o.visible !== false) { hid.push(o); o.visible = false; } });
+  const pc = new THREE.PerspectiveCamera(vfull, cv.width / cv.height, .1, 400);
+  const mid = base.clone(); mid.y = w3HeightAt(mid.x, mid.z);
+  pc.position.copy(mid).addScaledVector(dir, -dist); pc.position.y = mid.y + 1.5; pc.lookAt(mid.x, mid.y + .68, mid.z);
+  W.R.render(W.sc, pc);
+  // crop a 4:3 picture from the middle and shrink it
+  const out = document.createElement("canvas"); out.width = 480; out.height = 360; const g = out.getContext("2d");
+  g.drawImage(cv, (cv.width - sw) / 2, (cv.height - sh) / 2, sw, sh, 0, 0, 480, 360);
+  // a soft photo look: warm light, a gentle vignette and a white date stamp
+  const vg = g.createRadialGradient(240, 180, 120, 240, 180, 320); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(40,20,10,.28)"); g.fillStyle = vg; g.fillRect(0, 0, 480, 360);
+  g.fillStyle = "rgba(255,210,150,.07)"; g.fillRect(0, 0, 480, 360);
+  g.font = "bold 15px Fredoka, Arial Rounded MT Bold, sans-serif"; g.fillStyle = "rgba(255,190,90,.95)"; g.textAlign = "right"; g.fillText(`Day ${S.day} · ${VILLAGE}`, 468, 348);
+  let url = ""; try { url = out.toDataURL("image/jpeg", .72); } catch (e) {}
+  temp.forEach(c => W.sc.remove(c.g)); hid.forEach(o => o.visible = true);
+  return url && url.length > 2000 ? photo3Save(url, cap) : null;
+}
+const meLook = () => [0x9b6bff, 0x2e3a55, 0xffffff, "rainbow"];
+const fLook = f => W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))];
+// a picture together, in the 3D world: a real photo of the two of you right where you are
+const _picTogetherP3 = picTogether;
+picTogether = function (name, place) {
+  const f = fName(name);
+  if (W3 && W3.R && f) { let t = null;
+    try { t = w3Snap([{ kind: myKind(), look: meLook(), bump: pregMe() }, { kind: ART[f.emo], look: fLook(f), bump: pregPartner(f.name) }], `Me and ${f.name}!`); } catch (e) { console.warn(e); }
+    if (t) { S.myPics = S.myPics || []; S.myPics.push(t); chime(); floatHearts(2); try { flashSnap(); } catch (e) {}
+      S.picTogetherDay = S.picTogetherDay || {}; if (S.picTogetherDay[name] !== S.tday) { S.picTogetherDay[name] = S.tday; addHearts(f, 1); }
+      return picDone(t, name); } }
+  return _picTogetherP3(name, place);
+};
+function flashSnap() { document.body.insertAdjacentHTML("beforeend", `<div class="snapflash"></div>`); setTimeout(() => { const x = document.querySelector(".snapflash"); if (x) x.remove(); }, 600); }
+// the picture maker: pick who is in it and where, and it takes a real photo there
+const PM3_PLACES = [["village", "Town Square"], ["garden", "Flower Garden"], ["picnic", "Picnic Meadow"], ["lake", "The Lake"], ["berries", "Berry Patch"], ["forest", "The Forest"], ["campfire", "Campfire"], ["treehouse", "Treehouse"], ["pond", "Frozen Pond"], ["lanterns", "Lantern Path"], ["stars", "Starry Hill"]];
+let PM3 = null;
+const _photoMakerP3 = photoMaker;
+photoMaker = function () {
+  if (!hasWebGL()) return _photoMakerP3();
+  try { closePhone(); } catch (e) {}
+  PM3 = PM3 || { who: [], place: PM3_PLACES.some(p => p[0] === S.worldAt) ? S.worldAt : "garden", cap: "" };
+  const fr = friends(), kids = (S.kids || []);
+  show(`<h1 style="font-size:32px">Take a real photo</h1>
+    <p class="sub">Pick who is in it and where. Everyone goes there and poses, and you snap it.</p>
+    <div class="box"><h2>Who's in the photo? <small>(up to 4 more)</small></h2>
+      <div class="walk-grid pm-tray"><button class="act-btn date-pick picked" disabled><img src="art/${myKind()}.png" alt=""><span>You</span></button>
+      ${fr.map(f => `<button class="act-btn date-pick ${PM3.who.includes(f.name) ? "picked" : ""}" onclick="pm3Who('${f.name}')"><img src="art/${ART[f.emo]}.png" alt=""><span>${f.name}</span></button>`).join("")}
+      ${kids.map(k => `<button class="act-btn date-pick ${PM3.who.includes("kid:" + k.name) ? "picked" : ""}" onclick="pm3Who('kid:${esc(k.name).replace(/'/g, "")}')"><img src="art/${k.kind}.png" alt=""><span>${esc(k.name)}</span></button>`).join("")}</div>
+      <h2 style="margin-top:10px">Where?</h2><div class="pm3-places">${PM3_PLACES.map(([k, n]) => `<button class="soft ${PM3.place === k ? "picked" : ""}" onclick="PM3.place='${k}'; photoMaker()">${n}</button>`).join("")}</div>
+      <input id="pmCap" maxlength="80" placeholder="Write a caption (optional)" value="${esc(PM3.cap)}" oninput="PM3.cap=this.value" style="width:100%;margin-top:10px;font-size:16px;padding:10px;border-radius:14px;border:2px solid #f0d0e0">
+      <div class="center" style="margin-top:8px"><button class="rainbow" onclick="pm3Go()">Go there and take it 📸</button><button class="soft" onclick="PM3=null; PM=null; _photoMakerP3()">Make a sticker picture instead</button><button class="soft" onclick="PM3=null; mapScreen()">Cancel</button></div></div>`);
+};
+function pm3Who(n) { const i = PM3.who.indexOf(n); if (i >= 0) PM3.who.splice(i, 1); else if (PM3.who.length < 4) PM3.who.push(n); photoMaker(); }
+function pm3Go() {
+  const P = PM3; if (!P) return; const cap = (P.cap || "").replace(/[<>]/g, "").slice(0, 80), t0 = normalize(cap);
+  if (cap && (SAFE.swear.test(" " + t0 + " ") || SAFE.info.test(" " + t0 + " ") || /https?:|www\.|@/.test(cap))) { P.cap = ""; }
+  const people = [{ kind: myKind(), look: meLook(), bump: pregMe() }];
+  P.who.forEach((w, i) => { if (w.startsWith("kid:")) { const k = (S.kids || []).find(x => x.name === w.slice(4)); if (k) people.push({ kind: k.kind, look: W3_OUTFIT[(i * 3 + 2) % W3_OUTFIT.length], sc: kidStage(k)[2] }); }
+    else { const f = fName(w); if (f) people.push({ kind: ART[f.emo], look: fLook(f), bump: pregPartner(f.name) }); } });
+  // put me in the middle
+  if (people.length > 2) { const me = people.shift(); people.splice(Math.floor(people.length / 2), 0, me); }
+  PM3 = null; S.pm3Pending = { people, cap: P.cap || "", at: Date.now() };
+  eyesScreen(P.place);
+  const tryShot = (n) => { if (!S.pm3Pending) return; if (!(W3 && W3.R) && n < 40) return setTimeout(() => tryShot(n + 1), 250);
+    setTimeout(() => { const pend = S.pm3Pending; S.pm3Pending = null; if (!pend || !W3) return; let t = null; try { t = w3Snap(pend.people, pend.cap); } catch (e) { console.warn(e); }
+      if (t) { S.myPics = S.myPics || []; S.myPics.push(t); chime(); try { flashSnap(); } catch (e) {} picDone(t); } }, 1400); };
+  tryShot(0);
+}
+document.head.insertAdjacentHTML("beforeend", `<style>
+.pm3-places{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.pm3-places .soft{margin:0}
+.date-pick.picked{outline:4px solid #ff5aa8;outline-offset:-4px}
+.snapflash{position:fixed;inset:0;background:#fff;z-index:9999;pointer-events:none;animation:snapF .6s ease-out forwards}@keyframes snapF{from{opacity:1}to{opacity:0}}
 </style>`);
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
