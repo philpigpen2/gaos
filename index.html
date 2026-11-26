@@ -5192,7 +5192,7 @@ function h3Start(partner, guest) {
   const wallM = new THREE.MeshStandardMaterial({ color: wallC, roughness: .95 }); const back = new THREE.Mesh(new THREE.PlaneGeometry(10, 4.5), wallM); back.position.set(0, 2.25, -4.2); back.receiveShadow = true; sc.add(back);
   [-1, 1].forEach(s => { const w = new THREE.Mesh(new THREE.PlaneGeometry(8, 4.5), wallM); w.rotation.y = -s * Math.PI / 2; w.position.set(s * 5, 2.25, -.2); w.receiveShadow = true; sc.add(w); });
   const trim = new THREE.Mesh(new THREE.BoxGeometry(10, .25, .08), w3Mat(0xffffff)); trim.position.set(0, .12, -4.16); sc.add(trim);
-  const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.5), new THREE.MeshBasicMaterial({ map: w3Canvas("winview", 256, 160, () => {}) })); win.position.set(2.2, 2.6, -4.18); sc.add(win);
+  const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.5), new THREE.MeshBasicMaterial({ map: w3Canvas("d3win", 256, 160, D3_WIN_DRAW) })); win.position.set(2.2, 2.6, -4.18); sc.add(win);
   const mkItems = () => (S.house || []).map((it, i) => { const m = h3Furn(it.k, it.c); const [x, z] = h3Pos(it); m.position.set(x, 0, m.userData.wall ? -4.1 : z); m.rotation.y = it.r || 0; m.scale.setScalar(Math.max(.4, Math.min(2.5, (it.w || FURN_BIG[it.k] || 16) / (FURN_BIG[it.k] || 16)))); m.userData.i = i; sc.add(m); return m; });
   const items = mkItems();
   const fam = [partner, guest, ...(S.mates || []).filter(n => !guest || n !== guest.name).map(n => friends().find(x => x.name === n))].filter(Boolean).map(f => ({ kind: ART[f.emo], look: W3_OUTFIT[Math.max(0, VOICES.indexOf(voiceOf(f)))], sc: 1, bump: pregPartner(f.name) }));
@@ -7470,6 +7470,7 @@ function kidTalk(f, nt) {
 }
 
 // ===== 3D dates: you really sit together. A cafe table with food you both eat, a picnic blanket, side-by-side cinema seats =====
+const D3_WIN_DRAW = g => { const gd = g.createLinearGradient(0, 0, 0, 160); gd.addColorStop(0, "#8fd0ff"); gd.addColorStop(1, "#e8f6ff"); g.fillStyle = gd; g.fillRect(0, 0, 256, 160); g.fillStyle = "#7cc45a"; g.fillRect(0, 118, 256, 42); [[40, 100], [120, 92], [200, 104]].forEach(([x, y]) => { g.fillStyle = "#7a5030"; g.fillRect(x - 4, y, 8, 26); g.fillStyle = "#4f9a3a"; g.beginPath(); g.arc(x, y - 6, 26, 0, 7); g.fill(); }); g.fillStyle = "#fff"; g.beginPath(); g.arc(180, 34, 14, 0, 7); g.arc(196, 30, 18, 0, 7); g.arc(214, 36, 12, 0, 7); g.fill(); };
 const DATE3 = { cafe: "table", bakery: "table", icecream: "table", picnic: "blanket", cinema: "seats" };
 const D3_ROOM = { cafe: [0xf1d6b0, 0x9a6a44, 0xffe2b0], bakery: [0xffe0b5, 0xa8703e, 0xfff0c8], icecream: [0xffdbe9, 0xd8f2e6, 0xffffff] };
 const D3_DEF = { cafe: ["mug", "muffin"], bakery: ["cupcake", "mug"], icecream: ["sundae"], picnic: ["strawberries", "sandwich", "cookies"], cinema: ["popcorn"] };
@@ -7536,7 +7537,7 @@ function d3Start(key, f, mood) {
     const fl = new THREE.Mesh(new THREE.PlaneGeometry(14, 10).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: floorC, roughness: .55, map: w3Canvas("d3plank", 256, 256, g => { for (let i = 0; i < 8; i++) { const v = 205 + Math.random() * 40; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(0, i * 32, 256, 32); g.fillStyle = "rgba(0,0,0,.22)"; g.fillRect(0, i * 32 + 30, 256, 2); g.fillRect((i * 97) % 256, i * 32, 2, 32); } }) })); fl.receiveShadow = true; sc.add(fl);
     const wm = M(wall, .95), back = new THREE.Mesh(new THREE.PlaneGeometry(14, 6), wm); back.position.set(0, 3, -3.2); back.receiveShadow = true; sc.add(back);
     box(14, 1.1, .06, accent, 0, .55, -3.15, .5); box(14, .06, .1, 0xffffff, 0, 1.12, -3.13, .4);
-    const win = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.7), new THREE.MeshBasicMaterial({ map: w3Canvas("d3win", 256, 160, g => { const gd = g.createLinearGradient(0, 0, 0, 160); gd.addColorStop(0, "#8fd0ff"); gd.addColorStop(1, "#e8f6ff"); g.fillStyle = gd; g.fillRect(0, 0, 256, 160); g.fillStyle = "#7cc45a"; g.fillRect(0, 118, 256, 42); [[40, 100], [120, 92], [200, 104]].forEach(([x, y]) => { g.fillStyle = "#7a5030"; g.fillRect(x - 4, y, 8, 26); g.fillStyle = "#4f9a3a"; g.beginPath(); g.arc(x, y - 6, 26, 0, 7); g.fill(); }); g.fillStyle = "#fff"; g.beginPath(); g.arc(180, 34, 14, 0, 7); g.arc(196, 30, 18, 0, 7); g.arc(214, 36, 12, 0, 7); g.fill(); }) })); win.position.set(-2.2, 2.4, -3.17); sc.add(win);
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.7), new THREE.MeshBasicMaterial({ map: w3Canvas("d3win", 256, 160, D3_WIN_DRAW) })); win.position.set(-2.2, 2.4, -3.17); sc.add(win);
     box(2.8, .1, .12, 0xffffff, -2.2, 1.5, -3.1); box(2.8, .1, .12, 0xffffff, -2.2, 3.3, -3.1); box(.1, 1.9, .12, 0xffffff, -2.2, 2.4, -3.1);
     [[2.4, 2.4, 0xffd27a], [3.6, 2.1, 0x9ad0ff]].forEach(([x, y, c]) => { box(.8, .6, .05, 0x6b4a2a, x, y, -3.14); box(.66, .46, .03, c, x, y, -3.1); });
     box(1.6, .9, .7, 0x8a5a3a, 4.6, .45, -2.6); box(1.7, .08, .8, 0xffffff, 4.6, .94, -2.6);
@@ -7796,6 +7797,45 @@ document.head.insertAdjacentHTML("beforeend", `<style>
 .gc-vote img{width:26px;height:26px;object-fit:contain;position:relative;z-index:1}.gc-vote span,.gc-vote b{position:relative;z-index:1}.gc-vote b{margin-left:auto}
 .gc-vote i{position:absolute;left:0;top:0;bottom:0;background:#ffd6ec}.gc-vote.on{border-color:#ff5aa8}
 </style>`);
+
+// ===== Hire a babysitter: they come straight to your house and watch your kids =====
+const SITTERS = [{ name: "Nanny Bramble", kind: "hedgehog", look: [0x7fb8ff, 0x2e3a55, 0xffffff] }, { name: "Granny Clover", kind: "bunny", look: [0xffb3d1, 0x6a4a5a, 0xffffff] }, { name: "Miss Honey", kind: "bear", look: [0xffd27a, 0x5a3a2a, 0xffffff] }, { name: "Uncle Pip", kind: "otter", look: [0x9be3c0, 0x2e4a3a, 0xffffff] }];
+const SIT_HI = ["Off you go, dear! I've got the little ones. 💛", "Don't worry about a thing! We're going to have SO much fun.", "Hello hello! Who wants to build a pillow fort? 🏰"];
+const SIT_NEWS = ["{K} ate ALL their peas! Gold star! 🥦⭐", "We built a pillow fort. It's very strong. Nobody is allowed in without a password. 🏰", "{K} is napping now. All quiet. 😴", "We read three stories and did a puppet show. {K} was the dragon. 🐉", "Snack time! Apple slices and ONE cookie. Okay, two. 🍎🍪", "{K} drew you a picture. It's you! You have very big ears in it. 🖍️", "We played hide and seek. {K} hid behind the curtain. I pretended not to see. 🙈"];
+const sitterOn = () => S.sitter && S.sitter.until >= (S.day || 0) && (S.kids || []).length;
+const sitterOf = () => SITTERS.find(x => x.name === (S.sitter || {}).name) || SITTERS[0];
+function sitterNews(n) {
+  setTimeout(() => { if (!sitterOn()) return; const k = pickOne(S.kids || [{ name: "The baby" }]);
+    try { notify(sitterOf().name, pickOne(SIT_NEWS).replace(/\{K\}/g, esc(k.name))); chime(); } catch (e) {} if (n > 1) sitterNews(n - 1); }, 20000 + Math.random() * 25000);
+}
+function sitterHire() {
+  if (!(S.kids || []).length) return popup(`<h2>No kids yet!</h2><p>You need a little one before you need a babysitter. 👶</p><button class="rainbow" onclick="closePopup()">Okay</button>`);
+  const s = pickOne(SITTERS); S.sitter = { name: s.name, until: S.day };
+  try { closePhone(); } catch (e) {}
+  chime();
+  popup(`<h2>Babysitter hired! 🍼</h2><div class="life-row">${lifeImg(s.kind)}</div><p><b>*ding dong*</b> ${s.name} is at the door already!</p><div class="bubble"><b>${s.name}:</b> "${pickOne(SIT_HI)}"</div>
+    <p class="sub">${s.name} will watch ${(S.kids || []).map(k => esc(k.name)).join(" and ")} until tomorrow. You're free to go out!</p>
+    <button class="rainbow" onclick="closePopup(); houseScreen()">See them at home</button><button class="soft" onclick="closePopup(); mapScreen()">Go out</button>`);
+  sitterNews(3);
+}
+function sitterBye() { const s = sitterOf(); S.sitter = null; popup(`<h2>Thanks, ${s.name}!</h2><div class="life-row">${lifeImg(s.kind)}</div><div class="bubble"><b>${s.name}:</b> "They were little angels! Call me anytime. 💛"</div><button class="rainbow" onclick="closePopup(); houseScreen()">Bye!</button>`); }
+const _homeBoxSIT = homeBox;
+homeBox = function (guest) {
+  const h = _homeBoxSIT(guest); if (guest || !(S.kids || []).length) return h;
+  const btn = sitterOn() ? `<p class="story"><b>${sitterOf().name}</b> is babysitting right now. 🍼</p><button class="soft" onclick="sitterBye()">Send the babysitter home</button>` : `<button class="rainbow sit-btn" onclick="sitterHire()">Hire a babysitter 🍼</button>`;
+  return h.replace(/<\/div><\/div>$/, `<div style="margin-top:6px">${btn}</div></div></div>`);
+};
+// the babysitter is right there in your 3D house, looking after the kids
+const _h3StartSIT = h3Start;
+h3Start = function (partner, guest) {
+  _h3StartSIT(partner, guest);
+  try { if (!H3 || !sitterOn()) return; const s = sitterOf(), c = w3Animal(s.kind, s.look, XMAS()); c.g.scale.setScalar(w3Size(s.kind) / 2); c.g.position.set(-1.2, 0, 1.4); c.g.traverse(o => { if (o.isMesh) o.castShadow = true; }); H3.sc.add(c.g); H3.people.push(c);
+    const lab = w3Label(s.name); lab.position.set(0, 2.6, 0); lab.scale.multiplyScalar(.6); c.g.add(lab); } catch (e) { console.warn(e); }
+};
+const _babyAppSIT = babyApp;
+babyApp = function () { _babyAppSIT(); try { if (!(S.kids || []).length) return; const b = document.querySelector(".by-body"); if (b) b.insertAdjacentHTML("beforeend", sitterOn() ? `<p class="by-note">${sitterOf().name} is babysitting. 🍼</p>` : `<button class="rainbow" onclick="sitterHire()">Hire a babysitter 🍼</button>`); } catch (e) {} };
+const _lifeNewDaySIT = lifeNewDay;
+lifeNewDay = function () { const was = S.sitter; _lifeNewDaySIT(); if (was && !sitterOn()) { S.sitter = null; try { notify(was.name, "I'm heading home now! The kids had the BEST time. Call me again anytime! 💛"); } catch (e) {} } };
 
 Promise.race([ART_READY, new Promise(r => setTimeout(r, 2500))]).then(titleScreen);
 </script>
